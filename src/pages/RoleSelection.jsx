@@ -65,7 +65,8 @@ const RoleSelection = () => {
         {/* Logo Section */}
         <div className="logo-section">
           <div className="logo">
-            <img src="public\images\cosco.png" alt="logo" />
+          <img src="/images/cosco.png" alt="logo" />
+
           </div>
           <p className="tagline">Healthcare at your fingertips</p>
         </div>
