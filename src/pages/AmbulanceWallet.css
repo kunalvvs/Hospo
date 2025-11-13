@@ -1,0 +1,719 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.ambulance-wallet {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #234f83 0%, #1a3a5f 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  padding-bottom: 40px;
+}
+
+/* Header */
+.wallet-header {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 20px 30px;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-5px);
+}
+
+.wallet-header-content h1 {
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+.wallet-header-content p {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Container */
+.wallet-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Balance Section */
+.balance-section {
+  margin-bottom: 30px;
+}
+
+.main-balance {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.balance-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.balance-icon {
+  font-size: 32px;
+}
+
+.balance-amount {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
+}
+
+.payout-btn {
+  background: white;
+  color: #1e3c72;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.payout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.balance-card {
+  background: white;
+  padding: 24px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #234f83;
+}
+
+.balance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.balance-card h4 {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.balance-card .amount {
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.amount.pending {
+  color: #f59e0b;
+}
+
+.amount.total {
+  color: #10b981;
+}
+
+.amount.month {
+  color: #3b82f6;
+}
+
+.balance-card small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Payout Info Card */
+.payout-info-card {
+  background: white;
+  padding: 24px 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: center;
+}
+
+.payout-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+}
+
+.payout-info-item .label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.payout-info-item .value {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Tabs */
+.wallet-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-bottom: 25px;
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn {
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+
+.tab-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Tab Content */
+.tab-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 400px;
+}
+
+/* Overview Content */
+.overview-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.earnings-chart,
+.quick-stats {
+  background: #f9fafb;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.earnings-chart h3,
+.quick-stats h3 {
+  font-size: 18px;
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.chart-placeholder {
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 20px 10px;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  gap: 15px;
+}
+
+.chart-bar {
+  flex: 1;
+  background: linear-gradient(to top, #667eea, #764ba2);
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 10px;
+  position: relative;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.chart-bar:hover,
+.chart-bar.active {
+  opacity: 1;
+  transform: scaleY(1.05);
+}
+
+.bar-value {
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bar-label {
+  position: absolute;
+  bottom: -25px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 18px;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+/* Transactions Content */
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.transactions-header h3 {
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.filter-dropdown {
+  padding: 10px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.transaction-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transaction-details {
+  flex: 1;
+}
+
+.transaction-details h4 {
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.transaction-meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.booking-id,
+.reference {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.transaction-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.transaction-amount .amount {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.transaction-amount .amount.earning {
+  color: #10b981;
+}
+
+.transaction-amount .amount.payout {
+  color: #ef4444;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-badge.completed,
+.status-badge.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Payouts Content */
+.payouts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.payouts-header h3 {
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.payout-schedule-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.info-card {
+  background: #f0f9ff;
+  border: 2px solid #bfdbfe;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.info-card h4 {
+  font-size: 16px;
+  color: #1e40af;
+  margin-bottom: 10px;
+}
+
+.info-card p {
+  font-size: 14px;
+  color: #1e3a8a;
+  line-height: 1.6;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  text-decoration: underline;
+}
+
+.payouts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.payout-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.payout-item:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.payout-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payout-details {
+  flex: 1;
+}
+
+.payout-details h4 {
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.payout-meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.payout-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.payout-amount .amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wallet-header {
+    padding: 15px 20px;
+  }
+
+  .wallet-header-content h1 {
+    font-size: 24px;
+  }
+
+  .wallet-container {
+    padding: 20px 15px;
+  }
+
+  .balance-amount {
+    font-size: 36px;
+  }
+
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payout-info-card {
+    flex-direction: column;
+  }
+
+  .wallet-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-btn {
+    min-height: 52px;
+  }
+
+  .tab-content {
+    padding: 20px 15px;
+  }
+
+  .overview-content {
+    grid-template-columns: 1fr;
+  }
+
+  .payout-schedule-info {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-header,
+  .payouts-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .transactions-header h3,
+  .payouts-header h3 {
+    font-size: 18px;
+  }
+
+  .filter-dropdown,
+  .btn-primary {
+    width: 100%;
+  }
+
+  .transaction-item,
+  .payout-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .transaction-amount,
+  .payout-amount {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chart-placeholder {
+    height: 200px;
+  }
+
+  .bar-value {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .balance-amount {
+    font-size: 28px;
+  }
+
+  .payout-btn {
+    width: 100%;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .transaction-details h4,
+  .payout-details h4 {
+    font-size: 14px;
+  }
+
+  .transaction-amount .amount,
+  .payout-amount .amount {
+    font-size: 18px;
+  }
+}
