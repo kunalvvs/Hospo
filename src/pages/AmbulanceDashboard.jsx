@@ -103,7 +103,8 @@ const AmbulanceDashboard = () => {
         <div className="sidebar-header">
           <div className="logo">
             {/* <h2>🚑 Hospo</h2> */}
-              <img src="public\images\cosco.png" alt="logo" />
+             <img src="/images/cosco.png" alt="logo" />
+
             <p>Ambulance Portal</p>
           </div>
           <button 
