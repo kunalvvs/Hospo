@@ -97,7 +97,8 @@ const Login = () => {
         {/* Logo Section */}
         <div className="login-logo-section">
           <div className="logo">
-              <img src="public\images\cosco.png" alt="logo" />
+              <img src="/images/cosco.png" alt="logo" />
+
           </div>
           <p className="login-tagline">Healthcare at your fingertips</p>
         </div>
