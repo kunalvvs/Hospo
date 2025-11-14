@@ -126,12 +126,35 @@ const AmbulanceRegistration = () => {
     }
   };
 
+  const handleSkip = () => {
+    // Store minimal data and skip to dashboard
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const minimalData = {
+      serviceName: formData.serviceName || 'Ambulance Service',
+      contactPerson: formData.contactPerson || currentUser.name || 'User',
+      mobile: formData.mobile || currentUser.mobile || '',
+      email: formData.email || currentUser.email || '',
+      businessType: formData.businessType || 'Not specified',
+      serviceArea: formData.serviceArea || 'Not specified',
+      registrationComplete: false,
+      skipped: true
+    };
+    
+    localStorage.setItem('ambulanceData', JSON.stringify(minimalData));
+    
+    alert('Registration skipped. You can complete your profile later from the dashboard.');
+    navigate('/ambulance-dashboard');
+  };
+
   return (
     <div className="ambulance-registration">
       <div className="registration-container">
         <div className="registration-header">
           <h1>🚑 Ambulance Service Registration</h1>
           <p>Complete your profile to start receiving bookings</p>
+          <button type="button" className="skip-registration-btn" onClick={handleSkip}>
+            Skip Registration →
+          </button>
         </div>
 
         {/* Progress Steps */}
@@ -552,6 +575,9 @@ const AmbulanceRegistration = () => {
                 ← Previous
               </button>
             )}
+            <button type="button" className="btn-skip" onClick={handleSkip}>
+              Skip for Now
+            </button>
             {currentStep < 3 ? (
               <button type="button" className="btn-primary" onClick={handleNext}>
                 Next →

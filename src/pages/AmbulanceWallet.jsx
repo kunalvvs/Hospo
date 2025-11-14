@@ -73,6 +73,16 @@ const AmbulanceWallet = () => {
     alert('Payout request submitted! You will receive ₹' + walletData.currentBalance.toFixed(2) + ' within 2-3 working days.');
   };
 
+  const handleBottomNavClick = (section) => {
+    if (section === 'home') {
+      navigate('/ambulance-dashboard');
+    } else if (section === 'ride') {
+      navigate('/ambulance-dashboard', { state: { activeSection: 'ride' } });
+    } else if (section === 'account') {
+      navigate('/ambulance-dashboard', { state: { activeSection: 'account' } });
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -173,7 +183,7 @@ const AmbulanceWallet = () => {
         <div className="tab-content">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="overview-content">
+            <div className="overview-content content-tab">
               <div className="earnings-chart">
                 <h3>📈 Earnings Overview</h3>
                 <div className="chart-placeholder">
@@ -224,7 +234,7 @@ const AmbulanceWallet = () => {
 
           {/* Transactions Tab */}
           {activeTab === 'transactions' && (
-            <div className="transactions-content">
+            <div className="transactions-content content-tab">
               <div className="transactions-header">
                 <h3>💳 Transaction History</h3>
                 <select className="filter-dropdown">
@@ -274,7 +284,7 @@ const AmbulanceWallet = () => {
 
           {/* Payouts Tab */}
           {activeTab === 'payouts' && (
-            <div className="payouts-content">
+            <div className="payouts-content content-tab">
               <div className="payouts-header">
                 <h3>💸 Payout History</h3>
                 <button className="btn-primary" onClick={handleRequestPayout}>
@@ -317,6 +327,37 @@ const AmbulanceWallet = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-bottom-nav">
+        <button 
+          className="bottom-nav-item"
+          onClick={() => handleBottomNavClick('home')}
+        >
+          <span className="bottom-nav-icon">🏠</span>
+          <span className="bottom-nav-label">Home</span>
+        </button>
+        <button 
+          className="bottom-nav-item"
+          onClick={() => handleBottomNavClick('ride')}
+        >
+          <span className="bottom-nav-icon">🚗</span>
+          <span className="bottom-nav-label">Ride</span>
+        </button>
+        <button 
+          className="bottom-nav-item active"
+        >
+          <span className="bottom-nav-icon">💳</span>
+          <span className="bottom-nav-label">Wallet</span>
+        </button>
+        <button 
+          className="bottom-nav-item"
+          onClick={() => handleBottomNavClick('account')}
+        >
+          <span className="bottom-nav-icon">👤</span>
+          <span className="bottom-nav-label">Account</span>
+        </button>
+      </nav>
     </div>
   );
 };

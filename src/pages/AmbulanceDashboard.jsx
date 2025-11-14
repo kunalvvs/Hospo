@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './AmbulanceDashboard.css';
 
 const AmbulanceDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(null);
   const [ambulanceData, setAmbulanceData] = useState(null);
   const [activeSection, setActiveSection] = useState('home');
@@ -45,11 +46,16 @@ const AmbulanceDashboard = () => {
       
       setCurrentUser(userData);
       setLoading(false);
+
+      // Check if there's a state with activeSection
+      if (location.state?.activeSection) {
+        setActiveSection(location.state.activeSection);
+      }
     } catch (error) {
       console.error('Error parsing user data:', error);
       navigate('/login');
     }
-  }, [navigate]);
+  }, [navigate, location]);
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -70,6 +76,15 @@ const AmbulanceDashboard = () => {
     { id: 'operations', icon: '📍', label: 'Operations' },
     { id: 'bank', icon: '🏦', label: 'Bank Details' }
   ];
+
+  const handleBottomNavClick = (section) => {
+    if (section === 'wallet') {
+      navigate('/ambulance-wallet');
+    } else {
+      setActiveSection(section);
+      setIsMobileMenuOpen(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -103,8 +118,7 @@ const AmbulanceDashboard = () => {
         <div className="sidebar-header">
           <div className="logo">
             {/* <h2>🚑 Hospo</h2> */}
-             <img src="/images/cosco.png" alt="logo" />
-
+              <img src="public\images\cosco.png" alt="logo" />
             <p>Ambulance Portal</p>
           </div>
           <button 
@@ -167,9 +181,9 @@ const AmbulanceDashboard = () => {
               onClick={() => navigate('/ambulance-wallet')}
               title="My Wallet"
             >
-              💳
+            Wallet 💳
             </button>
-            <span className="user-badge">🚑 Ambulance Service</span>
+            {/* <span className="user-badge">Ambulance Service</span> */}
             <span className="user-phone">📱 {ambulanceData.mobile}</span>
           </div>
         </header>
@@ -1359,8 +1373,116 @@ const AmbulanceDashboard = () => {
               </div>
             </section>
           )}
+
+          {/* Ride Section */}
+          {activeSection === 'ride' && (
+            <section className="dashboard-section">
+              <div className="section-header">
+                <h2>🚗 My Rides</h2>
+                <p>View and manage all your ride bookings</p>
+              </div>
+
+              {/* Ride Stats */}
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-icon">📊</div>
+                  <div className="stat-info">
+                    <h3>Total Rides</h3>
+                    <p className="stat-number">{bookings.length}</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">⏳</div>
+                  <div className="stat-info">
+                    <h3>Ongoing</h3>
+                    <p className="stat-number">{bookings.filter(b => b.status === 'ongoing').length}</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">🕐</div>
+                  <div className="stat-info">
+                    <h3>Pending</h3>
+                    <p className="stat-number">{bookings.filter(b => b.status === 'pending').length}</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">✅</div>
+                  <div className="stat-info">
+                    <h3>Completed</h3>
+                    <p className="stat-number">{bookings.filter(b => b.status === 'completed').length}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* All Rides */}
+              <div className="recent-bookings" style={{ marginTop: '30px' }}>
+                <h3>All Ride Bookings</h3>
+                <div className="bookings-list">
+                  {bookings.map((booking) => (
+                    <div key={booking.id} className="booking-card">
+                      <div className="booking-header">
+                        <h4>{booking.patient}</h4>
+                        <span className={`status-badge ${booking.status}`}>
+                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        </span>
+                      </div>
+                      <div className="booking-details">
+                        <p>📍 <strong>Pickup:</strong> {booking.pickup}</p>
+                        <p>🏥 <strong>Destination:</strong> {booking.destination}</p>
+                        <p>📅 {booking.date} • ⏰ {booking.time}</p>
+                      </div>
+                      <div className="booking-actions">
+                        <button className="btn-secondary">View Details</button>
+                        {booking.status === 'ongoing' && (
+                          <button className="btn-primary">Track Live</button>
+                        )}
+                        {booking.status === 'pending' && (
+                          <button className="btn-primary">Accept</button>
+                        )}
+                        {booking.status === 'completed' && (
+                          <button className="btn-secondary">View Invoice</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-bottom-nav">
+        <button 
+          className={`bottom-nav-item ${activeSection === 'home' ? 'active' : ''}`}
+          onClick={() => handleBottomNavClick('home')}
+        >
+          <span className="bottom-nav-icon">🏠</span>
+          <span className="bottom-nav-label">Home</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${activeSection === 'ride' ? 'active' : ''}`}
+          onClick={() => handleBottomNavClick('ride')}
+        >
+          <span className="bottom-nav-icon">🚗</span>
+          <span className="bottom-nav-label">Ride</span>
+        </button>
+        <button 
+          className="bottom-nav-item"
+          onClick={() => handleBottomNavClick('wallet')}
+        >
+          <span className="bottom-nav-icon">💳</span>
+          <span className="bottom-nav-label">Wallet</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${activeSection === 'account' ? 'active' : ''}`}
+          onClick={() => handleBottomNavClick('account')}
+        >
+          <span className="bottom-nav-icon">👤</span>
+          <span className="bottom-nav-label">Account</span>
+        </button>
+      </nav>
     </div>
   );
 };

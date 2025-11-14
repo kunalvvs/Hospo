@@ -127,8 +127,7 @@ const VerifyOTP = () => {
         {/* Logo Section */}
         <div className="verify-logo-section">
           <div className="logo">
-            <img src="/images/cosco.png" alt="logo" />
-
+             <img src="public\images\cosco.png" alt="logo" />
           </div>
           <p className="verify-tagline">Healthcare at your fingertips</p>
         </div>

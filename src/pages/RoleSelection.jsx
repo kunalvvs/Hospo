@@ -21,13 +21,13 @@ const RoleSelection = () => {
       icon: '💊',
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
     },
-    {
-      id: 'user',
-      title: 'Patient',
-      description: 'Healthcare Seeker',
-      icon: '👤',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-    },
+    // {
+    //   id: 'user',
+    //   title: 'Patient',
+    //   description: 'Healthcare Seeker',
+    //   icon: '👤',
+    //   gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    // },
     {
       id: 'hospital',
       title: 'Hospital',
@@ -65,8 +65,7 @@ const RoleSelection = () => {
         {/* Logo Section */}
         <div className="logo-section">
           <div className="logo">
-          <img src="/images/cosco.png" alt="logo" />
-
+            <img src="public\images\cosco.png" alt="logo" />
           </div>
           <p className="tagline">Healthcare at your fingertips</p>
         </div>

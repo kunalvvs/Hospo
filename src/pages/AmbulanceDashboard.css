@@ -229,13 +229,15 @@ body {
 }
 
 .wallet-icon-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  background-color: #234f83;
   border: none;
   color: white;
-  width: 45px;
+  width: auto;
   height: 45px;
-  border-radius: 50%;
-  font-size: 22px;
+  border-radius: 20px;
+  padding: 0 10px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -576,6 +578,9 @@ body {
   .form-actions button {
     width: 100%;
   }
+  .wallet-icon-btn{
+    margin-left: auto;
+  }
 }
 
 /* Form Group Styles */
@@ -747,7 +752,72 @@ body {
   line-height: 1.5;
 }
 
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 8px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.bottom-nav-item.active {
+  color: #234f83;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.95);
+}
+
+.bottom-nav-icon {
+  font-size: 24px;
+  transition: transform 0.3s ease;
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: scale(1.15);
+}
+
+.bottom-nav-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .main-content {
+    padding-bottom: 80px;
+  }
+
+  .content-body {
+    padding-bottom: 20px;
+  }
+
   .equipment-details {
     grid-template-columns: 1fr;
   }

@@ -146,8 +146,7 @@ const DoctorDashboard = () => {
       <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
-             <img src="/images/cosco.png" alt="logo" />
-
+              <img src="public\images\cosco.png" alt="logo" />
             <p>Doctor Portal</p>
           </div>
           <button 

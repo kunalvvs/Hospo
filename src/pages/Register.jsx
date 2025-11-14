@@ -111,8 +111,7 @@ const Register = () => {
         {/* Logo Section */}
         <div className="register-logo-section">
           <div className="logo">
-          <img src="/images/cosco.png" alt="logo" />
-
+           <img src="public\images\cosco.png" alt="logo" />
           </div>
           <p className="register-tagline">Healthcare at your fingertips</p>
         </div>
