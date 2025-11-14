@@ -61,8 +61,8 @@ const Login = () => {
       alert(`Welcome Chemist/Pharmacy! Complete your registration.`);
       window.location.href = '/chemist-registration';
     } else if (userRole === 'hospital') {
-      alert(`Welcome Hospital! Dashboard coming soon.`);
-      navigate('/');
+      alert(`Welcome Hospital! Complete your registration.`);
+      window.location.href = '/hospital-registration';
     } else if (userRole === 'pathlab') {
       alert(`Welcome Pathlab! Dashboard coming soon.`);
       navigate('/');

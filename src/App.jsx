@@ -10,6 +10,8 @@ import AmbulanceDashboard from './pages/AmbulanceDashboard';
 import AmbulanceWallet from './pages/AmbulanceWallet';
 import ChemistRegistration from './pages/ChemistRegistration';
 import ChemistDashboard from './pages/ChemistDashboard';
+import HospitalRegistration from './pages/HospitalRegistration';
+import HospitalDashboard from './pages/HospitalDashboard';
 import './App.css';
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
           <Route path="/ambulance-wallet" element={<AmbulanceWallet />} />
           <Route path="/chemist-registration" element={<ChemistRegistration />} />
           <Route path="/chemist-dashboard" element={<ChemistDashboard />} />
+          <Route path="/hospital-registration" element={<HospitalRegistration />} />
+          <Route path="/hospital-dashboard" element={<HospitalDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
