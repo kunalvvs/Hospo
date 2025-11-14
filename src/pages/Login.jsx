@@ -58,8 +58,8 @@ const Login = () => {
       alert(`Welcome Ambulance Service! Complete your registration.`);
       window.location.href = '/ambulance-registration';
     } else if (userRole === 'chemist') {
-      alert(`Welcome Chemist! Dashboard coming soon.`);
-      navigate('/');
+      alert(`Welcome Chemist/Pharmacy! Complete your registration.`);
+      window.location.href = '/chemist-registration';
     } else if (userRole === 'hospital') {
       alert(`Welcome Hospital! Dashboard coming soon.`);
       navigate('/');
