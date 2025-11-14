@@ -11,6 +11,29 @@ const DoctorDashboard = () => {
   const [enquiryFilter, setEnquiryFilter] = useState('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Doctor profile data state
+  const [doctorData, setDoctorData] = useState({
+    profileTitle: '',
+    bio: '',
+    languages: [],
+    awards: '',
+    specializations: [],
+    experience: '',
+    registrationNumber: '',
+    registrationCouncil: '',
+    registrationYear: '',
+    medicalDegree: '',
+    clinicName: '',
+    clinicAddress: '',
+    clinicPhone: '',
+    clinicEmail: '',
+    workingDays: [],
+    consultationFee: '',
+    followUpFee: '',
+    onlineConsultation: false,
+    onlineConsultationFee: ''
+  });
+  
   // Mock data for enquiries
   const [enquiries] = useState([
     { id: 1, patient: 'Rajesh Kumar', phone: '9876543210', message: 'Need appointment for knee pain', status: 'new', date: '2025-11-13' },
@@ -38,6 +61,7 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
+    const doctorDataString = localStorage.getItem('doctorData');
     
     if (!userString) {
       console.log('No user found, redirecting to login');
@@ -57,6 +81,11 @@ const DoctorDashboard = () => {
         return;
       }
       
+      // Load doctor data from localStorage if available
+      if (doctorDataString) {
+        setDoctorData(JSON.parse(doctorDataString));
+      }
+      
       setCurrentUser(userData);
       setLoading(false);
     } catch (error) {
@@ -68,7 +97,22 @@ const DoctorDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('doctorData');
     navigate('/');
+  };
+
+  // Handler to update doctor data
+  const handleDoctorDataChange = (field, value) => {
+    setDoctorData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handler to save doctor data to localStorage
+  const handleSaveDoctorData = (section) => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    alert(`${section} saved successfully!`);
   };
 
   const handleSubmitReview = (e) => {
@@ -259,6 +303,8 @@ const DoctorDashboard = () => {
                   <input 
                     type="text" 
                     placeholder="e.g., Dr. Anil Kumar, MBBS, MD (Pediatrics)"
+                    value={doctorData.profileTitle || ''}
+                    onChange={(e) => handleDoctorDataChange('profileTitle', e.target.value)}
                   />
                   <small>Include your name, degree, and specialization</small>
                 </div>
@@ -268,6 +314,8 @@ const DoctorDashboard = () => {
                   <textarea 
                     rows="4"
                     placeholder="Write a brief summary about your experience, approach, and expertise (1-3 lines)"
+                    value={doctorData.bio || ''}
+                    onChange={(e) => handleDoctorDataChange('bio', e.target.value)}
                   ></textarea>
                   <small>Keep it concise and patient-friendly</small>
                 </div>
@@ -299,14 +347,30 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>Experience (Years)</label>
-                  <input type="number" placeholder="e.g., 10" />
+                  <input 
+                    type="number" 
+                    placeholder="e.g., 10"
+                    value={doctorData.experience || ''}
+                    onChange={(e) => handleDoctorDataChange('experience', e.target.value)}
+                  />
                   <small>Total years of clinical experience</small>
                 </div>
 
                 <div className="form-group full-width">
                   <label>Specializations / Sub-specialities</label>
-                  <input type="text" placeholder="Primary specialization" />
-                  <input type="text" placeholder="Secondary specialization (optional)" className="mt-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Primary specialization"
+                    value={doctorData.primarySpecialization || ''}
+                    onChange={(e) => handleDoctorDataChange('primarySpecialization', e.target.value)}
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Secondary specialization (optional)" 
+                    className="mt-2"
+                    value={doctorData.secondarySpecialization || ''}
+                    onChange={(e) => handleDoctorDataChange('secondarySpecialization', e.target.value)}
+                  />
                 </div>
 
                 <div className="form-group full-width">
@@ -339,7 +403,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Profile</button>
+                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Profile')}>Save Profile</button>
                   <button className="btn-secondary">Preview Public Profile</button>
                 </div>
               </div>
@@ -459,7 +523,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Identity Details</button>
+                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Identity Details')}>Save Identity Details</button>
                   <button className="btn-secondary">Verify KYC</button>
                 </div>
               </div>
@@ -477,7 +541,13 @@ const DoctorDashboard = () => {
               <div className="form-grid">
                 <div className="form-group full-width">
                   <label>Practice / Clinic Name *</label>
-                  <input type="text" placeholder="Enter clinic name (must be unique)" required />
+                  <input 
+                    type="text" 
+                    placeholder="Enter clinic name (must be unique)"
+                    value={doctorData.clinicName || ''}
+                    onChange={(e) => handleDoctorDataChange('clinicName', e.target.value)}
+                    required 
+                  />
                   <small>Should not be too generic - must be searchable</small>
                 </div>
 
@@ -581,7 +651,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Clinic Details</button>
+                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Clinic Details')}>Save Clinic Details</button>
                   <button className="btn-secondary">Preview Listing</button>
                 </div>
               </div>
@@ -986,7 +1056,13 @@ const DoctorDashboard = () => {
                   <label>Consultation Fee (In-Person) *</label>
                   <div className="input-with-icon">
                     <span className="icon">₹</span>
-                    <input type="number" placeholder="Clinic consultation fee" required />
+                    <input 
+                      type="number" 
+                      placeholder="Clinic consultation fee" 
+                      value={doctorData.consultationFee || ''}
+                      onChange={(e) => handleDoctorDataChange('consultationFee', e.target.value)}
+                      required 
+                    />
                   </div>
                   <small>This fee will be displayed on your listing</small>
                 </div>
@@ -995,7 +1071,13 @@ const DoctorDashboard = () => {
                   <label>Consultation Fee (Online) *</label>
                   <div className="input-with-icon">
                     <span className="icon">₹</span>
-                    <input type="number" placeholder="Online consultation fee" required />
+                    <input 
+                      type="number" 
+                      placeholder="Online consultation fee"
+                      value={doctorData.onlineConsultationFee || ''}
+                      onChange={(e) => handleDoctorDataChange('onlineConsultationFee', e.target.value)}
+                      required 
+                    />
                   </div>
                   <small>Can be different from in-person fee</small>
                 </div>
@@ -1059,7 +1141,7 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Payment Details</button>
+                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Payment Details')}>Save Payment Details</button>
                   <button className="btn-secondary">Verify Bank Account</button>
                 </div>
               </div>

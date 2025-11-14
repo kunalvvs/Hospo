@@ -10,6 +10,11 @@ const AmbulanceDashboard = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Edit mode states for each section
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [isEditingDriver, setIsEditingDriver] = useState(false);
+  const [editedData, setEditedData] = useState({});
 
   // Mock bookings data
   const [bookings] = useState([
@@ -61,6 +66,49 @@ const AmbulanceDashboard = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('ambulanceData');
     navigate('/');
+  };
+
+  // Edit mode handlers
+  const handleEditAccount = () => {
+    setEditedData({...ambulanceData});
+    setIsEditingAccount(true);
+  };
+
+  const handleEditDriver = () => {
+    setEditedData({...ambulanceData});
+    setIsEditingDriver(true);
+  };
+
+  const handleCancelEdit = (section) => {
+    if (section === 'account') {
+      setIsEditingAccount(false);
+    } else if (section === 'driver') {
+      setIsEditingDriver(false);
+    }
+    setEditedData({});
+  };
+
+  const handleSaveEdit = (section) => {
+    // Update ambulanceData with edited values
+    setAmbulanceData(editedData);
+    // Save to localStorage
+    localStorage.setItem('ambulanceData', JSON.stringify(editedData));
+    
+    // Exit edit mode
+    if (section === 'account') {
+      setIsEditingAccount(false);
+    } else if (section === 'driver') {
+      setIsEditingDriver(false);
+    }
+    setEditedData({});
+    alert('Details updated successfully!');
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const menuItems = [
@@ -260,7 +308,7 @@ const AmbulanceDashboard = () => {
             </section>
           )}
 
-          {/* Account Details Section (Read-only) */}
+          {/* Account Details Section */}
           {activeSection === 'account' && (
             <section className="dashboard-section">
               <div className="section-header">
@@ -268,40 +316,113 @@ const AmbulanceDashboard = () => {
                 <p>Basic sign-in and business information</p>
               </div>
 
-              <div className="info-display">
-                <div className="info-row">
-                  <label>Service Name:</label>
-                  <span>{ambulanceData.serviceName}</span>
-                </div>
-                <div className="info-row">
-                  <label>Primary Contact Person:</label>
-                  <span>{ambulanceData.contactPerson}</span>
-                </div>
-                <div className="info-row">
-                  <label>Mobile Number:</label>
-                  <span>{ambulanceData.mobile}</span>
-                </div>
-                <div className="info-row">
-                  <label>Email Address:</label>
-                  <span>{ambulanceData.email}</span>
-                </div>
-                <div className="info-row">
-                  <label>Business Type:</label>
-                  <span>{ambulanceData.businessType}</span>
-                </div>
-                <div className="info-row">
-                  <label>Service Area:</label>
-                  <span>{ambulanceData.serviceArea}</span>
-                </div>
-              </div>
+              {!isEditingAccount ? (
+                <>
+                  <div className="info-display">
+                    <div className="info-row">
+                      <label>Service Name:</label>
+                      <span>{ambulanceData.serviceName}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Primary Contact Person:</label>
+                      <span>{ambulanceData.contactPerson}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Mobile Number:</label>
+                      <span>{ambulanceData.mobile}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Email Address:</label>
+                      <span>{ambulanceData.email}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Business Type:</label>
+                      <span>{ambulanceData.businessType}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Service Area:</label>
+                      <span>{ambulanceData.serviceArea}</span>
+                    </div>
+                  </div>
 
-              <div className="form-actions">
-                <button className="btn-secondary">Edit Details</button>
-              </div>
+                  <div className="form-actions">
+                    <button className="btn-secondary" onClick={handleEditAccount}>Edit Details</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Service Name *</label>
+                      <input
+                        type="text"
+                        value={editedData.serviceName || ''}
+                        onChange={(e) => handleInputChange('serviceName', e.target.value)}
+                        placeholder="Enter service name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Primary Contact Person *</label>
+                      <input
+                        type="text"
+                        value={editedData.contactPerson || ''}
+                        onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                        placeholder="Enter contact person name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Mobile Number *</label>
+                      <input
+                        type="tel"
+                        value={editedData.mobile || ''}
+                        onChange={(e) => handleInputChange('mobile', e.target.value)}
+                        placeholder="Enter mobile number"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Email Address *</label>
+                      <input
+                        type="email"
+                        value={editedData.email || ''}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Business Type *</label>
+                      <select
+                        value={editedData.businessType || ''}
+                        onChange={(e) => handleInputChange('businessType', e.target.value)}
+                      >
+                        <option value="">Select type</option>
+                        <option value="Private">Private</option>
+                        <option value="Government">Government</option>
+                        <option value="NGO">NGO</option>
+                        <option value="Hospital-Owned">Hospital-Owned</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Service Area *</label>
+                      <input
+                        type="text"
+                        value={editedData.serviceArea || ''}
+                        onChange={(e) => handleInputChange('serviceArea', e.target.value)}
+                        placeholder="Enter service area"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button className="btn-primary" onClick={() => handleSaveEdit('account')}>Save Changes</button>
+                    <button className="btn-secondary" onClick={() => handleCancelEdit('account')}>Cancel</button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
-          {/* Driver Details Section (Read-only) */}
+          {/* Driver Details Section */}
           {activeSection === 'driver' && (
             <section className="dashboard-section">
               <div className="section-header">
@@ -309,54 +430,181 @@ const AmbulanceDashboard = () => {
                 <p>Driver information and contact details</p>
               </div>
 
-              <div className="info-display">
-                <div className="info-row">
-                  <label>Driver Full Name:</label>
-                  <span>{ambulanceData.driverName}</span>
-                </div>
-                <div className="info-row">
-                  <label>Date of Birth:</label>
-                  <span>{ambulanceData.driverDOB}</span>
-                </div>
-                <div className="info-row">
-                  <label>Age:</label>
-                  <span>{ambulanceData.driverAge || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Gender:</label>
-                  <span>{ambulanceData.driverGender}</span>
-                </div>
-                <div className="info-row">
-                  <label>Mobile Number:</label>
-                  <span>{ambulanceData.driverMobile}</span>
-                </div>
-                <div className="info-row">
-                  <label>Alternate Phone:</label>
-                  <span>{ambulanceData.driverAlternateMobile || 'N/A'}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Permanent Address:</label>
-                  <span>{ambulanceData.driverPermanentAddress}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Current Address:</label>
-                  <span>{ambulanceData.driverCurrentAddress || 'Same as permanent'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Languages Spoken:</label>
-                  <span>{ambulanceData.driverLanguages?.join(', ') || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Emergency Contact:</label>
-                  <span>
-                    {ambulanceData.emergencyContactName} ({ambulanceData.emergencyContactRelation}) - {ambulanceData.emergencyContactPhone}
-                  </span>
-                </div>
-              </div>
+              {!isEditingDriver ? (
+                <>
+                  <div className="info-display">
+                    <div className="info-row">
+                      <label>Driver Full Name:</label>
+                      <span>{ambulanceData.driverName}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Date of Birth:</label>
+                      <span>{ambulanceData.driverDOB}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Age:</label>
+                      <span>{ambulanceData.driverAge || 'N/A'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Gender:</label>
+                      <span>{ambulanceData.driverGender}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Mobile Number:</label>
+                      <span>{ambulanceData.driverMobile}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Alternate Phone:</label>
+                      <span>{ambulanceData.driverAlternateMobile || 'N/A'}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Permanent Address:</label>
+                      <span>{ambulanceData.driverPermanentAddress}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Current Address:</label>
+                      <span>{ambulanceData.driverCurrentAddress || 'Same as permanent'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Languages Spoken:</label>
+                      <span>{ambulanceData.driverLanguages?.join(', ') || 'N/A'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Emergency Contact:</label>
+                      <span>
+                        {ambulanceData.emergencyContactName} ({ambulanceData.emergencyContactRelation}) - {ambulanceData.emergencyContactPhone}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="form-actions">
-                <button className="btn-secondary">Edit Details</button>
-              </div>
+                  <div className="form-actions">
+                    <button className="btn-secondary" onClick={handleEditDriver}>Edit Details</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Driver Full Name *</label>
+                      <input
+                        type="text"
+                        value={editedData.driverName || ''}
+                        onChange={(e) => handleInputChange('driverName', e.target.value)}
+                        placeholder="Enter driver name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Date of Birth *</label>
+                      <input
+                        type="date"
+                        value={editedData.driverDOB || ''}
+                        onChange={(e) => handleInputChange('driverDOB', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Age</label>
+                      <input
+                        type="number"
+                        value={editedData.driverAge || ''}
+                        onChange={(e) => handleInputChange('driverAge', e.target.value)}
+                        placeholder="Age"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Gender *</label>
+                      <select
+                        value={editedData.driverGender || ''}
+                        onChange={(e) => handleInputChange('driverGender', e.target.value)}
+                      >
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Mobile Number *</label>
+                      <input
+                        type="tel"
+                        value={editedData.driverMobile || ''}
+                        onChange={(e) => handleInputChange('driverMobile', e.target.value)}
+                        placeholder="Driver mobile"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Alternate Phone</label>
+                      <input
+                        type="tel"
+                        value={editedData.driverAlternateMobile || ''}
+                        onChange={(e) => handleInputChange('driverAlternateMobile', e.target.value)}
+                        placeholder="Alternate phone"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Permanent Address *</label>
+                      <textarea
+                        rows="2"
+                        value={editedData.driverPermanentAddress || ''}
+                        onChange={(e) => handleInputChange('driverPermanentAddress', e.target.value)}
+                        placeholder="Enter permanent address"
+                      ></textarea>
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Current Address</label>
+                      <textarea
+                        rows="2"
+                        value={editedData.driverCurrentAddress || ''}
+                        onChange={(e) => handleInputChange('driverCurrentAddress', e.target.value)}
+                        placeholder="Enter current address (if different)"
+                      ></textarea>
+                    </div>
+                    <div className="form-group">
+                      <label>Languages Spoken</label>
+                      <input
+                        type="text"
+                        value={editedData.driverLanguages?.join(', ') || ''}
+                        onChange={(e) => handleInputChange('driverLanguages', e.target.value.split(',').map(l => l.trim()))}
+                        placeholder="e.g., English, Hindi, Telugu"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Emergency Contact Name *</label>
+                      <input
+                        type="text"
+                        value={editedData.emergencyContactName || ''}
+                        onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                        placeholder="Emergency contact name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Relation *</label>
+                      <input
+                        type="text"
+                        value={editedData.emergencyContactRelation || ''}
+                        onChange={(e) => handleInputChange('emergencyContactRelation', e.target.value)}
+                        placeholder="Relation"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Emergency Contact Phone *</label>
+                      <input
+                        type="tel"
+                        value={editedData.emergencyContactPhone || ''}
+                        onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                        placeholder="Emergency phone"
+                        maxLength="10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button className="btn-primary" onClick={() => handleSaveEdit('driver')}>Save Changes</button>
+                    <button className="btn-secondary" onClick={() => handleCancelEdit('driver')}>Cancel</button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 

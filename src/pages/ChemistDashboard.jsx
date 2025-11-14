@@ -10,6 +10,12 @@ const ChemistDashboard = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Edit mode states for each section
+  const [isEditingIdentity, setIsEditingIdentity] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editedData, setEditedData] = useState({});
 
   // Mock orders data
   const [orders] = useState([
@@ -61,6 +67,39 @@ const ChemistDashboard = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('chemistData');
     navigate('/');
+  };
+
+  // Edit mode handlers
+  const handleEdit = (section) => {
+    setEditedData({...chemistData});
+    if (section === 'identity') setIsEditingIdentity(true);
+    else if (section === 'address') setIsEditingAddress(true);
+    else if (section === 'contact') setIsEditingContact(true);
+  };
+
+  const handleCancelEdit = (section) => {
+    if (section === 'identity') setIsEditingIdentity(false);
+    else if (section === 'address') setIsEditingAddress(false);
+    else if (section === 'contact') setIsEditingContact(false);
+    setEditedData({});
+  };
+
+  const handleSaveEdit = (section) => {
+    setChemistData(editedData);
+    localStorage.setItem('chemistData', JSON.stringify(editedData));
+    
+    if (section === 'identity') setIsEditingIdentity(false);
+    else if (section === 'address') setIsEditingAddress(false);
+    else if (section === 'contact') setIsEditingContact(false);
+    setEditedData({});
+    alert('Details updated successfully!');
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const menuItems = [
@@ -253,7 +292,7 @@ const ChemistDashboard = () => {
             </section>
           )}
 
-          {/* Basic Identity Section (Read-only - filled during registration) */}
+          {/* Basic Identity Section */}
           {activeSection === 'identity' && (
             <section className="dashboard-section">
               <div className="section-header">
@@ -261,28 +300,73 @@ const ChemistDashboard = () => {
                 <p>Pharmacy basic information (Registered during sign-up)</p>
               </div>
 
-              <div className="info-display">
-                <div className="info-row">
-                  <label>Pharmacy Name:</label>
-                  <span>{chemistData.pharmacyName}</span>
-                </div>
-                <div className="info-row">
-                  <label>Business Type:</label>
-                  <span>{chemistData.businessType}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Tagline:</label>
-                  <span>{chemistData.tagline || 'Not provided'}</span>
-                </div>
-              </div>
+              {!isEditingIdentity ? (
+                <>
+                  <div className="info-display">
+                    <div className="info-row">
+                      <label>Pharmacy Name:</label>
+                      <span>{chemistData.pharmacyName}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Business Type:</label>
+                      <span>{chemistData.businessType}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Tagline:</label>
+                      <span>{chemistData.tagline || 'Not provided'}</span>
+                    </div>
+                  </div>
 
-              <div className="form-actions">
-                <button className="btn-secondary">Request Edit</button>
-              </div>
+                  <div className="form-actions">
+                    <button className="btn-secondary" onClick={() => handleEdit('identity')}>Request Edit</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Pharmacy Name *</label>
+                      <input
+                        type="text"
+                        value={editedData.pharmacyName || ''}
+                        onChange={(e) => handleInputChange('pharmacyName', e.target.value)}
+                        placeholder="Enter pharmacy name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Business Type *</label>
+                      <select
+                        value={editedData.businessType || ''}
+                        onChange={(e) => handleInputChange('businessType', e.target.value)}
+                      >
+                        <option value="">Select type</option>
+                        <option value="Retail Pharmacy">Retail Pharmacy</option>
+                        <option value="Medical Store">Medical Store</option>
+                        <option value="Hospital Pharmacy">Hospital Pharmacy</option>
+                        <option value="Chain Store">Chain Store</option>
+                      </select>
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Tagline</label>
+                      <input
+                        type="text"
+                        value={editedData.tagline || ''}
+                        onChange={(e) => handleInputChange('tagline', e.target.value)}
+                        placeholder="Enter tagline (optional)"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button className="btn-primary" onClick={() => handleSaveEdit('identity')}>Save Changes</button>
+                    <button className="btn-secondary" onClick={() => handleCancelEdit('identity')}>Cancel</button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
-          {/* Address & Location Section (Read-only - filled during registration) */}
+          {/* Address & Location Section */}
           {activeSection === 'address' && (
             <section className="dashboard-section">
               <div className="section-header">
@@ -290,53 +374,149 @@ const ChemistDashboard = () => {
                 <p>Shop location and address details (Registered during sign-up)</p>
               </div>
 
-              <div className="info-display">
-                <div className="info-row">
-                  <label>Shop Number:</label>
-                  <span>{chemistData.shopNumber || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Building:</label>
-                  <span>{chemistData.building || 'N/A'}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Locality:</label>
-                  <span>{chemistData.locality}</span>
-                </div>
-                <div className="info-row">
-                  <label>City:</label>
-                  <span>{chemistData.city}</span>
-                </div>
-                <div className="info-row">
-                  <label>PIN Code:</label>
-                  <span>{chemistData.pin}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Landmark:</label>
-                  <span>{chemistData.landmark || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Latitude:</label>
-                  <span>{chemistData.latitude || 'Not provided'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Longitude:</label>
-                  <span>{chemistData.longitude || 'Not provided'}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Multiple Branches:</label>
-                  <span>{chemistData.branches || 'No additional branches'}</span>
-                </div>
-              </div>
+              {!isEditingAddress ? (
+                <>
+                  <div className="info-display">
+                    <div className="info-row">
+                      <label>Shop Number:</label>
+                      <span>{chemistData.shopNumber || 'N/A'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Building:</label>
+                      <span>{chemistData.building || 'N/A'}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Locality:</label>
+                      <span>{chemistData.locality}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>City:</label>
+                      <span>{chemistData.city}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>PIN Code:</label>
+                      <span>{chemistData.pin}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Landmark:</label>
+                      <span>{chemistData.landmark || 'N/A'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Latitude:</label>
+                      <span>{chemistData.latitude || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Longitude:</label>
+                      <span>{chemistData.longitude || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Multiple Branches:</label>
+                      <span>{chemistData.branches || 'No additional branches'}</span>
+                    </div>
+                  </div>
 
-              <div className="form-actions">
-                <button className="btn-secondary">Request Edit</button>
-                <button className="btn-primary">View on Map</button>
-              </div>
+                  <div className="form-actions">
+                    <button className="btn-secondary" onClick={() => handleEdit('address')}>Request Edit</button>
+                    <button className="btn-primary">View on Map</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Shop Number</label>
+                      <input
+                        type="text"
+                        value={editedData.shopNumber || ''}
+                        onChange={(e) => handleInputChange('shopNumber', e.target.value)}
+                        placeholder="Shop/Door number"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Building</label>
+                      <input
+                        type="text"
+                        value={editedData.building || ''}
+                        onChange={(e) => handleInputChange('building', e.target.value)}
+                        placeholder="Building name"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Locality *</label>
+                      <input
+                        type="text"
+                        value={editedData.locality || ''}
+                        onChange={(e) => handleInputChange('locality', e.target.value)}
+                        placeholder="Locality/Area"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>City *</label>
+                      <input
+                        type="text"
+                        value={editedData.city || ''}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder="City"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>PIN Code *</label>
+                      <input
+                        type="text"
+                        value={editedData.pin || ''}
+                        onChange={(e) => handleInputChange('pin', e.target.value)}
+                        placeholder="PIN Code"
+                        maxLength="6"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Landmark</label>
+                      <input
+                        type="text"
+                        value={editedData.landmark || ''}
+                        onChange={(e) => handleInputChange('landmark', e.target.value)}
+                        placeholder="Nearby landmark"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Latitude</label>
+                      <input
+                        type="text"
+                        value={editedData.latitude || ''}
+                        onChange={(e) => handleInputChange('latitude', e.target.value)}
+                        placeholder="Latitude"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Longitude</label>
+                      <input
+                        type="text"
+                        value={editedData.longitude || ''}
+                        onChange={(e) => handleInputChange('longitude', e.target.value)}
+                        placeholder="Longitude"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Multiple Branches</label>
+                      <textarea
+                        rows="2"
+                        value={editedData.branches || ''}
+                        onChange={(e) => handleInputChange('branches', e.target.value)}
+                        placeholder="List other branch locations if any"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button className="btn-primary" onClick={() => handleSaveEdit('address')}>Save Changes</button>
+                    <button className="btn-secondary" onClick={() => handleCancelEdit('address')}>Cancel</button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
-          {/* Contact Details Section (Read-only - filled during registration) */}
+          {/* Contact Details Section */}
           {activeSection === 'contact' && (
             <section className="dashboard-section">
               <div className="section-header">
@@ -344,44 +524,133 @@ const ChemistDashboard = () => {
                 <p>Contact information (Registered during sign-up)</p>
               </div>
 
-              <div className="info-display">
-                <div className="info-row">
-                  <label>Primary Phone:</label>
-                  <span>{chemistData.primaryPhone}</span>
-                </div>
-                <div className="info-row">
-                  <label>Mobile Number:</label>
-                  <span>{chemistData.mobile}</span>
-                </div>
-                <div className="info-row">
-                  <label>WhatsApp Number:</label>
-                  <span>{chemistData.whatsappNumber || 'Not provided'}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Email:</label>
-                  <span>{chemistData.email}</span>
-                </div>
-                <div className="info-row full-width">
-                  <label>Website:</label>
-                  <span>{chemistData.website || 'Not provided'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Facebook:</label>
-                  <span>{chemistData.facebook || 'Not provided'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Instagram:</label>
-                  <span>{chemistData.instagram || 'Not provided'}</span>
-                </div>
-                <div className="info-row">
-                  <label>Twitter:</label>
-                  <span>{chemistData.twitter || 'Not provided'}</span>
-                </div>
-              </div>
+              {!isEditingContact ? (
+                <>
+                  <div className="info-display">
+                    <div className="info-row">
+                      <label>Primary Phone:</label>
+                      <span>{chemistData.primaryPhone}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Mobile Number:</label>
+                      <span>{chemistData.mobile}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>WhatsApp Number:</label>
+                      <span>{chemistData.whatsappNumber || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Email:</label>
+                      <span>{chemistData.email}</span>
+                    </div>
+                    <div className="info-row full-width">
+                      <label>Website:</label>
+                      <span>{chemistData.website || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Facebook:</label>
+                      <span>{chemistData.facebook || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Instagram:</label>
+                      <span>{chemistData.instagram || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Twitter:</label>
+                      <span>{chemistData.twitter || 'Not provided'}</span>
+                    </div>
+                  </div>
 
-              <div className="form-actions">
-                <button className="btn-secondary">Request Edit</button>
-              </div>
+                  <div className="form-actions">
+                    <button className="btn-secondary" onClick={() => handleEdit('contact')}>Request Edit</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Primary Phone *</label>
+                      <input
+                        type="tel"
+                        value={editedData.primaryPhone || ''}
+                        onChange={(e) => handleInputChange('primaryPhone', e.target.value)}
+                        placeholder="Primary phone"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Mobile Number *</label>
+                      <input
+                        type="tel"
+                        value={editedData.mobile || ''}
+                        onChange={(e) => handleInputChange('mobile', e.target.value)}
+                        placeholder="Mobile number"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>WhatsApp Number</label>
+                      <input
+                        type="tel"
+                        value={editedData.whatsappNumber || ''}
+                        onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                        placeholder="WhatsApp number"
+                        maxLength="10"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Email *</label>
+                      <input
+                        type="email"
+                        value={editedData.email || ''}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="Email address"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Website</label>
+                      <input
+                        type="url"
+                        value={editedData.website || ''}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        placeholder="Website URL"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Facebook</label>
+                      <input
+                        type="text"
+                        value={editedData.facebook || ''}
+                        onChange={(e) => handleInputChange('facebook', e.target.value)}
+                        placeholder="Facebook page URL"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Instagram</label>
+                      <input
+                        type="text"
+                        value={editedData.instagram || ''}
+                        onChange={(e) => handleInputChange('instagram', e.target.value)}
+                        placeholder="Instagram handle"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Twitter</label>
+                      <input
+                        type="text"
+                        value={editedData.twitter || ''}
+                        onChange={(e) => handleInputChange('twitter', e.target.value)}
+                        placeholder="Twitter handle"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button className="btn-primary" onClick={() => handleSaveEdit('contact')}>Save Changes</button>
+                    <button className="btn-secondary" onClick={() => handleCancelEdit('contact')}>Cancel</button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
