@@ -152,9 +152,9 @@ const AmbulanceRegistration = () => {
         <div className="registration-header">
           <h1>🚑 Ambulance Service Registration</h1>
           <p>Complete your profile to start receiving bookings</p>
-          <button type="button" className="skip-registration-btn" onClick={handleSkip}>
+          {/* <button type="button" className="skip-registration-btn" onClick={handleSkip}>
             Skip Registration →
-          </button>
+          </button> */}
         </div>
 
         {/* Progress Steps */}
