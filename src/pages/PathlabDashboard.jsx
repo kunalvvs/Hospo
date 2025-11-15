@@ -138,8 +138,13 @@ const PathlabDashboard = () => {
       <div className={`pathlab-sidebar ${isMobileMenuOpen ? 'pathlab-mobile-open' : ''}`}>
         <div className="pathlab-sidebar-header">
           <div className="pathlab-header-content">
-            <div className="pathlab-logo">🔬</div>
-            <h2>{pathlabData.labName || 'Pathlab'}</h2>
+            {/* <div className="pathlab-logo">🔬</div> */}
+            <div className='logo'>
+    <img src="/images/cosco.png" alt="logo" />
+
+            </div>
+             
+            {/* <h2>{pathlabData.labName || 'Pathlab'}</h2> */}
             <p>{pathlabData.city || 'Not specified'}</p>
           </div>
           <button 
