@@ -64,8 +64,8 @@ const Login = () => {
       alert(`Welcome Hospital! Complete your registration.`);
       window.location.href = '/hospital-registration';
     } else if (userRole === 'pathlab') {
-      alert(`Welcome Pathlab! Dashboard coming soon.`);
-      navigate('/');
+      alert(`Welcome Pathlab! Complete your registration.`);
+      window.location.href = '/pathlab-registration';
     } else {
       alert(`Welcome Patient! Dashboard coming soon.`);
       navigate('/');

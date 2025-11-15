@@ -1,0 +1,839 @@
+/* Pathlab Dashboard Unique Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.pathlab-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  position: relative;
+}
+
+.pathlab-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 20px;
+  color: #234f83;
+}
+
+/* Mobile Overlay */
+.pathlab-mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: pathlab-fadeIn 0.3s ease;
+}
+
+@keyframes pathlab-fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Sidebar Styles */
+.pathlab-sidebar {
+  width: 280px;
+  background-color: #234f83;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.pathlab-sidebar-header {
+  padding: 30px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+}
+
+.pathlab-header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.pathlab-sidebar-close-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pathlab-sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.pathlab-sidebar-close-btn:active {
+  transform: rotate(90deg) scale(0.9);
+}
+
+.pathlab-logo {
+  font-size: 50px;
+  margin-bottom: 15px;
+  text-align: center;
+  width: 100%;
+}
+
+.pathlab-sidebar-header h2 {
+  font-size: 32px;
+  margin-bottom: 5px;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+}
+
+.pathlab-sidebar-header p {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 300;
+  text-align: center;
+  width: 100%;
+}
+
+.pathlab-sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.pathlab-sidebar-nav button {
+  width: 100%;
+  padding: 15px 25px;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.pathlab-sidebar-nav button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 30px;
+}
+
+.pathlab-sidebar-nav button.pathlab-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-left: 4px solid white;
+  font-weight: 600;
+}
+
+.pathlab-logout-btn {
+  width: calc(100% - 40px);
+  margin: 20px 20px;
+  padding: 15px 25px;
+  background: rgba(220, 38, 38, 0.9);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  text-align: left;
+  margin-top: auto;
+}
+
+.pathlab-logout-btn:hover {
+  background: rgba(220, 38, 38, 1);
+  transform: translateY(-2px);
+  padding-left: 30px;
+}
+
+/* Mobile Menu Toggle */
+.pathlab-mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  background: #234f83;
+  border: none;
+  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.pathlab-mobile-menu-toggle:hover {
+  background: #1a3d66;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.pathlab-mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.pathlab-mobile-menu-toggle.pathlab-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+/* Main Content */
+.pathlab-main-content {
+  margin-left: 280px;
+  flex: 1;
+  min-height: 100vh;
+  width: calc(100% - 280px);
+  display: flex;
+  flex-direction: column;
+}
+
+.pathlab-content-header {
+  background: white;
+  padding: 30px 40px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pathlab-content-header h1 {
+  font-size: 28px;
+  color: #111827;
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+.pathlab-content-header p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.pathlab-content-body {
+  padding: 30px 40px;
+  padding-bottom: 100px;
+  flex: 1;
+}
+
+/* Dashboard Section */
+.pathlab-dash-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.pathlab-dash-section h2 {
+  font-size: 24px;
+  color: #234f83;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.pathlab-dash-section h3 {
+  font-size: 18px;
+  color: #234f83;
+  margin: 25px 0 15px;
+  font-weight: 600;
+}
+
+.pathlab-section-desc {
+  color: #6b7280;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+.pathlab-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Stats Grid */
+.pathlab-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.pathlab-stat-card {
+  background: linear-gradient(135deg, #e8f0f8 0%, #d4e4f7 100%);
+  border: 1px solid #b8d4f1;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: transform 0.3s ease;
+}
+
+.pathlab-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(35, 79, 131, 0.15);
+}
+
+.pathlab-stat-icon {
+  font-size: 40px;
+  background: white;
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pathlab-stat-info h3 {
+  font-size: 14px;
+  color: #234f83;
+  margin: 0 0 5px 0;
+  font-weight: 500;
+}
+
+.pathlab-stat-value {
+  font-size: 28px;
+  color: #234f83;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.pathlab-stat-change {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pathlab-stat-change.pathlab-positive {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+/* Orders List */
+.pathlab-orders-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.pathlab-order-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.pathlab-order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+.pathlab-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.pathlab-order-id {
+  font-weight: 700;
+  color: #234f83;
+  font-size: 16px;
+}
+
+.pathlab-status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pathlab-status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pathlab-status-completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pathlab-status-sample-collected {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.pathlab-order-details p {
+  margin: 8px 0;
+  color: #374151;
+  font-size: 14px;
+}
+
+.pathlab-order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.pathlab-btn-small {
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.pathlab-btn-small.pathlab-primary {
+  background: #234f83;
+  color: white;
+}
+
+.pathlab-btn-small.pathlab-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* Info Display */
+.pathlab-info-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.pathlab-info-item {
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #234f83;
+}
+
+.pathlab-label {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.pathlab-value {
+  display: block;
+  font-size: 16px;
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Form Grid */
+.pathlab-dash-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.pathlab-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.pathlab-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.pathlab-form-group input,
+.pathlab-form-group select,
+.pathlab-form-group textarea {
+  padding: 10px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.pathlab-form-group input:focus,
+.pathlab-form-group select:focus,
+.pathlab-form-group textarea:focus {
+  outline: none;
+  border-color: #234f83;
+  box-shadow: 0 0 0 3px rgba(35, 79, 131, 0.1);
+}
+
+/* Edit Actions */
+.pathlab-edit-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.pathlab-edit-btn,
+.pathlab-save-btn,
+.pathlab-cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.pathlab-edit-btn {
+  background: #234f83;
+  color: white;
+}
+
+.pathlab-save-btn {
+  background: #234f83;
+  color: white;
+}
+
+.pathlab-cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pathlab-add-btn {
+  background: #234f83;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pathlab-add-btn:hover,
+.pathlab-edit-btn:hover,
+.pathlab-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(35, 79, 131, 0.3);
+}
+
+/* Licenses Grid */
+.pathlab-licenses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pathlab-license-card {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.pathlab-license-card:hover {
+  border-color: #234f83;
+  background: #e8f0f8;
+}
+
+.pathlab-license-card h4 {
+  color: #234f83;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.pathlab-license-card p {
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.pathlab-upload-btn {
+  background: #234f83;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pathlab-upload-btn:hover {
+  background: #1a3d66;
+}
+
+/* Tests Table */
+.pathlab-tests-table {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.pathlab-tests-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.pathlab-tests-table th {
+  background: #e8f0f8;
+  color: #234f83;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #234f83;
+}
+
+.pathlab-tests-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.pathlab-tests-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.pathlab-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pathlab-badge.pathlab-yes {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pathlab-icon-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 0 5px;
+  transition: transform 0.2s ease;
+}
+
+.pathlab-icon-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Payments Config */
+.pathlab-payments-config {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pathlab-config-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+  background: #fafafa;
+}
+
+.pathlab-config-card h3 {
+  color: #234f83;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.pathlab-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pathlab-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.pathlab-checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Collection Config */
+.pathlab-collection-config {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Mobile Bottom Navigation */
+.pathlab-mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 10px 0;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pathlab-bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  transition: all 0.3s ease;
+  color: #6b7280;
+}
+
+.pathlab-bottom-nav-item.active {
+  color: #234f83;
+}
+
+.pathlab-nav-icon {
+  font-size: 22px;
+}
+
+.pathlab-nav-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pathlab-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .pathlab-sidebar.pathlab-mobile-open {
+    transform: translateX(0);
+  }
+
+  .pathlab-sidebar-close-btn {
+    display: flex;
+  }
+
+  .pathlab-mobile-overlay {
+    display: block;
+  }
+
+  .pathlab-mobile-menu-toggle {
+    display: block;
+  }
+
+  .pathlab-main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pathlab-content-header {
+    padding: 20px 20px 20px 70px;
+  }
+
+  .pathlab-content-body {
+    padding: 20px;
+    padding-bottom: 90px;
+  }
+
+  .pathlab-dash-section {
+    padding: 20px;
+  }
+
+  .pathlab-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-orders-list {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-info-display {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-dash-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-licenses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-payments-config {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-collection-config {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-mobile-bottom-nav {
+    display: flex;
+  }
+
+  .pathlab-tests-table {
+    font-size: 13px;
+  }
+}

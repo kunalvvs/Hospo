@@ -1,0 +1,324 @@
+/* Pathlab Registration Unique Styles */
+.pathlab-registration {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #234f83 0%, #3b6ba8 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.pathlab-reg-container {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-width: 900px;
+  width: 100%;
+  padding: 50px;
+  position: relative;
+}
+
+.pathlab-reg-header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.pathlab-reg-header h1 {
+  font-size: 32px;
+  color: #234f83;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.pathlab-reg-header p {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.pathlab-skip-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: transparent;
+  border: 2px solid #234f83;
+  color: #234f83;
+  padding: 8px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.pathlab-skip-btn:hover {
+  background: #234f83;
+  color: white;
+  transform: translateX(5px);
+}
+
+/* Progress Steps */
+.pathlab-progress-steps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 50px;
+  padding: 0 50px;
+}
+
+.pathlab-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.pathlab-step-number {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #9ca3af;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.pathlab-step.active .pathlab-step-number {
+  background: #234f83;
+  color: white;
+  box-shadow: 0 0 20px rgba(35, 79, 131, 0.4);
+}
+
+.pathlab-step.completed .pathlab-step-number {
+  background: #3b6ba8;
+  color: white;
+}
+
+.pathlab-step.completed .pathlab-step-number::after {
+  content: '✓';
+  position: absolute;
+}
+
+.pathlab-step-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pathlab-step.active .pathlab-step-label {
+  color: #234f83;
+  font-weight: 600;
+}
+
+.pathlab-step-line {
+  flex: 1;
+  height: 3px;
+  background: #e5e7eb;
+  margin: 0 20px 35px;
+  border-radius: 2px;
+}
+
+/* Form Styles */
+.pathlab-reg-form {
+  margin-top: 30px;
+}
+
+.pathlab-form-step {
+  animation: pathlab-fade-in 0.5s ease;
+}
+
+.pathlab-form-step h2 {
+  font-size: 24px;
+  color: #234f83;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.pathlab-step-desc {
+  color: #6b7280;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.pathlab-section-title {
+  grid-column: 1 / -1;
+  font-size: 18px;
+  color: #234f83;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #d4e4f7;
+  font-weight: 600;
+}
+
+.pathlab-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.pathlab-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.pathlab-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.pathlab-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.pathlab-form-group input,
+.pathlab-form-group select,
+.pathlab-form-group textarea {
+  padding: 12px 15px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.pathlab-form-group input:focus,
+.pathlab-form-group select:focus,
+.pathlab-form-group textarea:focus {
+  outline: none;
+  border-color: #234f83;
+  box-shadow: 0 0 0 3px rgba(35, 79, 131, 0.1);
+}
+
+.pathlab-form-group small {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 5px;
+}
+
+/* Navigation Buttons */
+.pathlab-form-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.pathlab-btn-primary,
+.pathlab-btn-secondary,
+.pathlab-btn-skip {
+  padding: 14px 35px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.pathlab-btn-primary {
+  background: linear-gradient(135deg, #234f83, #3b6ba8);
+  color: white;
+  box-shadow: 0 4px 15px rgba(35, 79, 131, 0.3);
+}
+
+.pathlab-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(35, 79, 131, 0.4);
+}
+
+.pathlab-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.pathlab-btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.pathlab-btn-skip {
+  background: transparent;
+  color: #6b7280;
+  border: 2px solid #d1d5db;
+}
+
+.pathlab-btn-skip:hover {
+  border-color: #234f83;
+  color: #234f83;
+}
+
+/* Animation */
+@keyframes pathlab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pathlab-registration {
+    padding: 20px 15px;
+  }
+
+  .pathlab-reg-container {
+    padding: 30px 20px;
+  }
+
+  .pathlab-reg-header h1 {
+    font-size: 24px;
+  }
+
+  .pathlab-skip-btn {
+    position: static;
+    margin-top: 15px;
+    width: 100%;
+  }
+
+  .pathlab-progress-steps {
+    padding: 0 20px;
+  }
+
+  .pathlab-step-number {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .pathlab-step-label {
+    font-size: 12px;
+  }
+
+  .pathlab-step-line {
+    margin: 0 10px 30px;
+  }
+
+  .pathlab-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pathlab-form-nav {
+    flex-direction: column;
+  }
+
+  .pathlab-btn-primary,
+  .pathlab-btn-secondary,
+  .pathlab-btn-skip {
+    width: 100%;
+  }
+}
