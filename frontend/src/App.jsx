@@ -14,6 +14,8 @@ import HospitalRegistration from './pages/HospitalRegistration';
 import HospitalDashboard from './pages/HospitalDashboard';
 import PathlabRegistration from './pages/PathlabRegistration';
 import PathlabDashboard from './pages/PathlabDashboard';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -35,6 +37,8 @@ function App() {
           <Route path="/hospital-dashboard" element={<HospitalDashboard />} />
           <Route path="/pathlab-registration" element={<PathlabRegistration />} />
           <Route path="/pathlab-dashboard" element={<PathlabDashboard />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
