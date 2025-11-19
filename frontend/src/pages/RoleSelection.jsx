@@ -108,7 +108,7 @@ const RoleSelection = () => {
         <div className="footer-text">
           <p>By continuing, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
           <div className="admin-link-container">
-            <a style={{textDecoration:"none"}} href="/admin/login" className="admin-link">⚙️ Admin Panel Login</a>
+            <a style={{textDecoration:"none"}} href="/admin" className="admin-link">⚙️ Admin Panel Login</a>
           </div>
         </div>
       </div>

@@ -37,7 +37,7 @@ function App() {
           <Route path="/hospital-dashboard" element={<HospitalDashboard />} />
           <Route path="/pathlab-registration" element={<PathlabRegistration />} />
           <Route path="/pathlab-dashboard" element={<PathlabDashboard />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

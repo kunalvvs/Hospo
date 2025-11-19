@@ -8,6 +8,78 @@ const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('view'); // 'view', 'add', 'edit'
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalSection, setModalSection] = useState(''); // which section's modal
+  
+  // Expandable hospital row state
+  const [expandedHospitalId, setExpandedHospitalId] = useState(null);
+  const [hospitalManagementTab, setHospitalManagementTab] = useState('kyc'); // 'kyc', 'operational', 'commission', 'majorExpenses'
+  
+  // Edit mode states for each section
+  const [isEditingKyc, setIsEditingKyc] = useState(false);
+  const [isEditingOperational, setIsEditingOperational] = useState(false);
+  const [isEditingCommission, setIsEditingCommission] = useState(false);
+  const [kycFormData, setKycFormData] = useState({});
+  const [operationalFormData, setOperationalFormData] = useState({});
+  const [commissionFormData, setCommissionFormData] = useState({});
+  
+  // Hospital form dropdown states
+  const [showKycSection, setShowKycSection] = useState(false);
+  const [showOperationalSection, setShowOperationalSection] = useState(false);
+  const [showCommissionSection, setShowCommissionSection] = useState(false);
+  
+  // Major Expenses states
+  const [showMajorExpenses, setShowMajorExpenses] = useState(false);
+  const [expenseSubSection, setExpenseSubSection] = useState(''); // 'rooms', 'procedures', 'doctors', 'nursing', 'miscellaneous'
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [expenseModalMode, setExpenseModalMode] = useState('add'); // 'add', 'edit'
+  const [selectedExpenseItem, setSelectedExpenseItem] = useState(null);
+
+  // Toggle hospital row expansion
+  const toggleHospitalExpansion = (hospitalId) => {
+    if (expandedHospitalId === hospitalId) {
+      setExpandedHospitalId(null);
+      // Reset edit modes when closing
+      setIsEditingKyc(false);
+      setIsEditingOperational(false);
+      setIsEditingCommission(false);
+    } else {
+      setExpandedHospitalId(hospitalId);
+      setHospitalManagementTab('kyc'); // Default to KYC tab
+      // Reset edit modes when opening new hospital
+      setIsEditingKyc(false);
+      setIsEditingOperational(false);
+      setIsEditingCommission(false);
+    }
+  };
+
+  // Handle KYC form save
+  const handleKycSave = (hospitalId) => {
+    console.log('Saving KYC data for hospital:', hospitalId, kycFormData);
+    alert('KYC details updated successfully!');
+    setIsEditingKyc(false);
+    // Here you would update the hospital data in state
+  };
+
+  // Handle Operational form save
+  const handleOperationalSave = (hospitalId) => {
+    console.log('Saving Operational data for hospital:', hospitalId, operationalFormData);
+    alert('Operational details updated successfully!');
+    setIsEditingOperational(false);
+    // Here you would update the hospital data in state
+  };
+
+  // Handle Commission form save
+  const handleCommissionSave = (hospitalId) => {
+    console.log('Saving Commission data for hospital:', hospitalId, commissionFormData);
+    alert('Commission details updated successfully!');
+    setIsEditingCommission(false);
+    // Here you would update the hospital data in state
+  };
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('adminUser'));
     if (!user || !user.isAdmin) {
@@ -16,6 +88,60 @@ const AdminDashboard = () => {
     }
     setAdminUser(user);
   }, [navigate]);
+
+  // Modal handlers
+  const openModal = (mode, section, item = null) => {
+    setModalMode(mode);
+    setModalSection(section);
+    setSelectedItem(item);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedItem(null);
+    setModalMode('view');
+    setModalSection('');
+    setShowKycSection(false);
+    setShowOperationalSection(false);
+    setShowCommissionSection(false);
+    setShowMajorExpenses(false);
+  };
+
+  // Expense modal handlers
+  const openExpenseModal = (subSection, mode, item = null) => {
+    setExpenseSubSection(subSection);
+    setExpenseModalMode(mode);
+    setSelectedExpenseItem(item);
+    setShowExpenseModal(true);
+  };
+
+  const closeExpenseModal = () => {
+    setShowExpenseModal(false);
+    setSelectedExpenseItem(null);
+    setExpenseModalMode('add');
+    setExpenseSubSection('');
+  };
+
+  const handleExpenseSave = (data) => {
+    console.log('Saving expense data:', { subSection: expenseSubSection, mode: expenseModalMode, data });
+    alert(`${expenseModalMode === 'add' ? 'Added' : 'Updated'} successfully!`);
+    closeExpenseModal();
+  };
+
+  const handleExpenseDelete = (subSection, id) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      console.log('Deleting:', subSection, id);
+      alert('Deleted successfully!');
+    }
+  };
+
+  const handleSave = (data) => {
+    // Here you would integrate with backend API
+    console.log('Saving data:', { mode: modalMode, section: modalSection, data });
+    alert(`${modalMode === 'add' ? 'Added' : 'Updated'} successfully! (Backend integration pending)`);
+    closeModal();
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('adminUser');
@@ -112,6 +238,218 @@ const AdminDashboard = () => {
       status: 'blocked',
       familyMembers: 0,
       city: 'Chennai'
+    }
+  ]);
+
+  // Mock data for hospitals
+  const [hospitals] = useState([
+    {
+      id: 'HOS001',
+      name: 'City General Hospital',
+      contactPerson: 'Dr. Rajesh Kumar',
+      mobile: '9876543210',
+      email: 'citygeneralhospital@email.com',
+      city: 'Mumbai',
+      pincode: '400001',
+      address: 'Andheri West, Mumbai',
+      status: 'approved',
+      kycStatus: 'approved',
+      totalDoctors: 45,
+      registeredDate: '2023-01-15',
+      // KYC/Legal
+      gstNumber: '27AABCU9603R1ZM',
+      registrationCertificate: 'city_general_registration.pdf',
+      panCard: 'city_general_pan.pdf',
+      aadhaarCard: 'owner_aadhaar.pdf',
+      accountHolderName: 'City General Hospital Pvt Ltd',
+      accountNumber: '123456789012',
+      ifscCode: 'HDFC0001234',
+      bankName: 'HDFC Bank',
+      branchName: 'Andheri West Branch',
+      // Operational Details
+      is24x7: true,
+      openingTime: '00:00',
+      closingTime: '23:59',
+      minConsultFee: 500,
+      maxConsultFee: 2000,
+      availableServices: ['General Consultation', 'Emergency Care', 'Diagnostic Services', 'Pathology', 'Radiology', 'Surgery', 'ICU', 'NICU', 'Pharmacy'],
+      facilities: ['ICU', 'NICU', 'OT', 'Pharmacy', 'Pathology', 'Radiology'],
+      // Commission & Payout
+      commissionType: 'percentage',
+      commissionValue: 15,
+      settlementCycle: 'monthly',
+      paymentMode: 'bank'
+    },
+    {
+      id: 'HOS002',
+      name: 'Metro Clinic',
+      contactPerson: 'Mr. Amit Sharma',
+      mobile: '9876543211',
+      email: 'metroc linic@email.com',
+      city: 'Delhi',
+      pincode: '110001',
+      address: 'Connaught Place, New Delhi',
+      status: 'pending',
+      kycStatus: 'pending',
+      totalDoctors: 12,
+      registeredDate: '2024-10-20'
+    },
+    {
+      id: 'HOS003',
+      name: 'Sunrise Medical Center',
+      contactPerson: 'Dr. Priya Patel',
+      mobile: '9876543212',
+      email: 'sunrisemedical@email.com',
+      city: 'Bangalore',
+      pincode: '560001',
+      address: 'Koramangala, Bangalore',
+      status: 'approved',
+      kycStatus: 'approved',
+      totalDoctors: 28,
+      registeredDate: '2023-06-10',
+      // KYC/Legal
+      gstNumber: '29AABCS1234E1ZN',
+      registrationCertificate: 'sunrise_registration.pdf',
+      accountHolderName: 'Sunrise Medical Center',
+      accountNumber: '987654321098',
+      ifscCode: 'ICIC0005678',
+      bankName: 'ICICI Bank',
+      branchName: 'Koramangala Branch',
+      // Operational Details
+      is24x7: false,
+      openingTime: '08:00',
+      closingTime: '20:00',
+      minConsultFee: 400,
+      maxConsultFee: 1500,
+      availableServices: ['General Consultation', 'Diagnostic Services', 'Pathology', 'Radiology', 'Physiotherapy', 'Vaccination'],
+      facilities: ['Pharmacy', 'Pathology', 'Radiology'],
+      // Commission & Payout
+      commissionType: 'percentage',
+      commissionValue: 12,
+      settlementCycle: '15days',
+      paymentMode: 'upi'
+    },
+    {
+      id: 'HOS004',
+      name: 'Care Plus Hospital',
+      contactPerson: 'Mr. Vikram Singh',
+      mobile: '9876543213',
+      email: 'careplus@email.com',
+      city: 'Pune',
+      pincode: '411001',
+      address: 'Shivaji Nagar, Pune',
+      status: 'rejected',
+      kycStatus: 'rejected',
+      totalDoctors: 8,
+      registeredDate: '2024-09-05'
+    },
+    {
+      id: 'HOS005',
+      name: 'Wellness Clinic',
+      contactPerson: 'Dr. Anjali Desai',
+      mobile: '9876543214',
+      email: 'wellnessclinic@email.com',
+      city: 'Ahmedabad',
+      pincode: '380001',
+      address: 'Satellite, Ahmedabad',
+      status: 'blocked',
+      kycStatus: 'approved',
+      totalDoctors: 15,
+      registeredDate: '2023-11-20'
+    }
+  ]);
+
+  // Mock data for doctors
+  const [doctors] = useState([
+    {
+      id: 'DOC001',
+      name: 'Dr. Priya Sharma',
+      speciality: 'Cardiologist',
+      linkedHospitals: 'City General, Metro Clinic',
+      city: 'Mumbai',
+      experience: 15,
+      mobile: '9876543220',
+      email: 'priya.sharma@doctor.com',
+      qualification: 'MD, DM (Cardiology)',
+      fee: 800,
+      kycStatus: 'approved',
+      status: 'active',
+      registeredDate: '2023-02-10'
+    },
+    {
+      id: 'DOC002',
+      name: 'Dr. Amit Verma',
+      speciality: 'Neurologist',
+      linkedHospitals: 'Sunrise Medical Center',
+      city: 'Bangalore',
+      experience: 12,
+      mobile: '9876543221',
+      email: 'amit.verma@doctor.com',
+      qualification: 'MBBS, MD (Neurology)',
+      fee: 1000,
+      kycStatus: 'approved',
+      status: 'active',
+      registeredDate: '2023-04-15'
+    },
+    {
+      id: 'DOC003',
+      name: 'Dr. Sneha Patel',
+      speciality: 'Pediatrician',
+      linkedHospitals: 'Care Plus Hospital',
+      city: 'Pune',
+      experience: 8,
+      mobile: '9876543222',
+      email: 'sneha.patel@doctor.com',
+      qualification: 'MBBS, MD (Pediatrics)',
+      fee: 500,
+      kycStatus: 'pending',
+      status: 'pending',
+      registeredDate: '2024-10-01'
+    },
+    {
+      id: 'DOC004',
+      name: 'Dr. Rajesh Kumar',
+      speciality: 'Orthopedic',
+      linkedHospitals: 'City General Hospital',
+      city: 'Mumbai',
+      experience: 20,
+      mobile: '9876543223',
+      email: 'rajesh.kumar@doctor.com',
+      qualification: 'MBBS, MS (Orthopedics)',
+      fee: 1200,
+      kycStatus: 'approved',
+      status: 'active',
+      registeredDate: '2022-12-05'
+    },
+    {
+      id: 'DOC005',
+      name: 'Dr. Kavita Reddy',
+      speciality: 'Dermatologist',
+      linkedHospitals: 'Wellness Clinic',
+      city: 'Ahmedabad',
+      experience: 10,
+      mobile: '9876543224',
+      email: 'kavita.reddy@doctor.com',
+      qualification: 'MBBS, MD (Dermatology)',
+      fee: 600,
+      kycStatus: 'approved',
+      status: 'inactive',
+      registeredDate: '2023-08-20'
+    },
+    {
+      id: 'DOC006',
+      name: 'Dr. Vikram Singh',
+      speciality: 'General Physician',
+      linkedHospitals: 'Metro Clinic',
+      city: 'Delhi',
+      experience: 5,
+      mobile: '9876543225',
+      email: 'vikram.singh@doctor.com',
+      qualification: 'MBBS',
+      fee: 300,
+      kycStatus: 'rejected',
+      status: 'blocked',
+      registeredDate: '2024-07-10'
     }
   ]);
 
@@ -522,6 +860,126 @@ const AdminDashboard = () => {
       rating: 3.2,
       lastTrip: '2024-10-20',
       registeredDate: '2024-06-18'
+    }
+  ]);
+
+  // Mock data for rooms and boards
+  const [rooms, setRooms] = useState([
+    {
+      room_id: 'ROOM001',
+      room_type: 'ICU',
+      room_name: 'ICU - Ward A',
+      floor: '3rd Floor',
+      charge_per_day: 5000,
+      max_patients: 1,
+      description: 'Intensive Care Unit with advanced monitoring',
+      status: 'Active'
+    },
+    {
+      room_id: 'ROOM002',
+      room_type: 'General Ward',
+      room_name: 'General Ward B',
+      floor: '1st Floor',
+      charge_per_day: 1500,
+      max_patients: 6,
+      description: 'Standard general ward with basic facilities',
+      status: 'Active'
+    },
+    {
+      room_id: 'ROOM003',
+      room_type: 'Private',
+      room_name: 'Private Room 301',
+      floor: '3rd Floor',
+      charge_per_day: 3000,
+      max_patients: 1,
+      description: 'Private AC room with attached bathroom',
+      status: 'Active'
+    }
+  ]);
+
+  // Mock data for medical procedures
+  const [procedures, setProcedures] = useState([
+    {
+      procedure_id: 'PROC001',
+      procedure_name: 'Appendectomy',
+      procedure_type: 'Major Surgery',
+      base_charge: 50000,
+      ot_charges: 15000,
+      anesthesia_charge: 8000,
+      doctor_fee_default: 25000,
+      description: 'Surgical removal of appendix',
+      status: 'Active'
+    },
+    {
+      procedure_id: 'PROC002',
+      procedure_name: 'C-Section',
+      procedure_type: 'Major Surgery',
+      base_charge: 45000,
+      ot_charges: 12000,
+      anesthesia_charge: 7000,
+      doctor_fee_default: 20000,
+      description: 'Cesarean section delivery',
+      status: 'Active'
+    }
+  ]);
+
+  // Mock data for doctor fees
+  const [doctorFees, setDoctorFees] = useState([
+    {
+      doctor_id: 'DFEE001',
+      name: 'Dr. Rajesh Kumar',
+      specialization: 'Cardiologist',
+      visit_type: 'OPD',
+      visit_fee_opd: 800,
+      visit_fee_ipd_per_visit: 1200,
+      consultation_fee_emergency: 1500,
+      experience: 15,
+      status: 'Active'
+    },
+    {
+      doctor_id: 'DFEE002',
+      name: 'Dr. Priya Sharma',
+      specialization: 'Surgeon',
+      visit_type: 'Surgery',
+      visit_fee_opd: 1000,
+      visit_fee_ipd_per_visit: 1500,
+      consultation_fee_emergency: 2000,
+      experience: 12,
+      status: 'Active'
+    }
+  ]);
+
+  // Mock data for nursing and staff charges
+  const [nursingCharges, setNursingCharges] = useState([
+    {
+      service_id: 'NURS001',
+      service_name: 'Special Nursing Care',
+      charge_type: 'per_day',
+      charge_amount: 2000,
+      status: 'Active'
+    },
+    {
+      service_id: 'NURS002',
+      service_name: 'Physiotherapy Visit',
+      charge_type: 'per_visit',
+      charge_amount: 800,
+      status: 'Active'
+    }
+  ]);
+
+  // Mock data for miscellaneous services
+  const [miscServices, setMiscServices] = useState([
+    {
+      service_id: 'MISC001',
+      service: 'Ambulance Service',
+      charge: 1500,
+      status: 'Active'
+    },
+    {
+      service_id: 'MISC002',
+      service: 'Wheelchair Charges',
+      charge: 200,
+      status: 'Active'
     }
   ]);
 
@@ -1907,11 +2365,11 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>🏥 Hospital Management</h2>
-                <button className="admin-add-btn" onClick={() => alert('Add Hospital form will open')}>
+                <button className="admin-add-btn" onClick={() => openModal('add', 'hospitals')}>
                   + Add Hospital
                 </button>
               </div>
-              
+
               <div className="admin-filters">
                 <input type="text" placeholder="Search by name, city, phone..." className="admin-search-input" />
                 <select className="admin-filter-select">
@@ -1933,6 +2391,7 @@ const AdminDashboard = () => {
                 <table className="admin-table">
                   <thead>
                     <tr>
+                      <th>Hospital ID</th>
                       <th>Hospital Name</th>
                       <th>City</th>
                       <th>Contact Person</th>
@@ -1944,34 +2403,741 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>City General Hospital</td>
-                      <td>Mumbai</td>
-                      <td>Dr. Rajesh Kumar</td>
-                      <td>9876543210</td>
-                      <td><span className="admin-status-badge approved">Approved</span></td>
-                      <td><span className="admin-status-badge approved">Approved</span></td>
-                      <td>45</td>
-                      <td>
-                        <button className="admin-icon-btn" title="View">👁️</button>
-                        <button className="admin-icon-btn" title="Edit">✏️</button>
-                        <button className="admin-icon-btn" title="Block">🚫</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Metro Clinic</td>
-                      <td>Delhi</td>
-                      <td>Mr. Amit Sharma</td>
-                      <td>9876543211</td>
-                      <td><span className="admin-status-badge pending">Pending</span></td>
-                      <td><span className="admin-status-badge pending">Pending</span></td>
-                      <td>12</td>
-                      <td>
-                        <button className="admin-icon-btn" title="View">👁️</button>
-                        <button className="admin-icon-btn" title="Verify">✅</button>
-                        <button className="admin-icon-btn" title="Reject">❌</button>
-                      </td>
-                    </tr>
+                    {hospitals.map(hospital => (
+                      <React.Fragment key={hospital.id}>
+                        <tr style={{background: expandedHospitalId === hospital.id ? '#f0f9ff' : 'transparent'}}>
+                          <td>{hospital.id}</td>
+                          <td>{hospital.name}</td>
+                          <td>{hospital.city}</td>
+                          <td>{hospital.contactPerson}</td>
+                          <td>{hospital.mobile}</td>
+                          <td>
+                            <span className={`admin-status-badge ${hospital.status}`}>
+                              {hospital.status.charAt(0).toUpperCase() + hospital.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`admin-status-badge ${hospital.kycStatus}`}>
+                              {hospital.kycStatus.charAt(0).toUpperCase() + hospital.kycStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td>{hospital.totalDoctors}</td>
+                          <td>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="View Details"
+                              onClick={() => openModal('view', 'hospitals', hospital)}
+                            >
+                              👁️
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="Edit"
+                              onClick={() => openModal('edit', 'hospitals', hospital)}
+                            >
+                              ✏️
+                            </button>
+                            {hospital.status !== 'blocked' ? (
+                              <button className="admin-icon-btn" title="Block">🚫</button>
+                            ) : (
+                              <button className="admin-icon-btn" title="Unblock">✅</button>
+                            )}
+                            <button 
+                              className="admin-icon-btn" 
+                              title="Manage Hospital Details"
+                              onClick={() => toggleHospitalExpansion(hospital.id)}
+                              style={{
+                                background: expandedHospitalId === hospital.id ? '#234f83' : 'transparent',
+                                color: expandedHospitalId === hospital.id ? '#fff' : 'inherit'
+                              }}
+                            >
+                              {expandedHospitalId === hospital.id ? '▼' : '▶'}
+                            </button>
+                          </td>
+                        </tr>
+                        
+                        {/* Expandable Management Section */}
+                        {expandedHospitalId === hospital.id && (
+                          <tr>
+                            <td colSpan="9" style={{padding: 0, background: '#f9fafb'}}>
+                              <div style={{padding: '20px'}}>
+                                {/* Management Tabs */}
+                                <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                  <button
+                                    onClick={() => setHospitalManagementTab('kyc')}
+                                    style={{
+                                      padding: '10px 20px',
+                                      background: hospitalManagementTab === 'kyc' ? '#234f83' : 'transparent',
+                                      color: hospitalManagementTab === 'kyc' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: hospitalManagementTab === 'kyc' ? '3px solid #234f83' : 'none',
+                                      cursor: 'pointer',
+                                      fontWeight: '600',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    📄 KYC/Legal
+                                  </button>
+                                  <button
+                                    onClick={() => setHospitalManagementTab('operational')}
+                                    style={{
+                                      padding: '10px 20px',
+                                      background: hospitalManagementTab === 'operational' ? '#234f83' : 'transparent',
+                                      color: hospitalManagementTab === 'operational' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: hospitalManagementTab === 'operational' ? '3px solid #234f83' : 'none',
+                                      cursor: 'pointer',
+                                      fontWeight: '600',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    ⚙️ Operational
+                                  </button>
+                                  <button
+                                    onClick={() => setHospitalManagementTab('commission')}
+                                    style={{
+                                      padding: '10px 20px',
+                                      background: hospitalManagementTab === 'commission' ? '#234f83' : 'transparent',
+                                      color: hospitalManagementTab === 'commission' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: hospitalManagementTab === 'commission' ? '3px solid #234f83' : 'none',
+                                      cursor: 'pointer',
+                                      fontWeight: '600',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    💰 Commission
+                                  </button>
+                                  <button
+                                    onClick={() => setHospitalManagementTab('majorExpenses')}
+                                    style={{
+                                      padding: '10px 20px',
+                                      background: hospitalManagementTab === 'majorExpenses' ? '#234f83' : 'transparent',
+                                      color: hospitalManagementTab === 'majorExpenses' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: hospitalManagementTab === 'majorExpenses' ? '3px solid #234f83' : 'none',
+                                      cursor: 'pointer',
+                                      fontWeight: '600',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    💸 Major Expenses
+                                  </button>
+                                </div>
+
+                                {/* Tab Content */}
+                                <div style={{background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  {/* KYC Tab Content */}
+                                  {hospitalManagementTab === 'kyc' && (
+                                    <div>
+                                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                        <h3 style={{margin: 0, color: '#234f83'}}>📄 KYC/Legal Documents</h3>
+                                        {!isEditingKyc && (
+                                          <button 
+                                            className="admin-btn-primary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => {
+                                              setIsEditingKyc(true);
+                                              setKycFormData({
+                                                gstNumber: hospital.gstNumber || '',
+                                                panNumber: hospital.panNumber || '',
+                                                aadhaarNumber: hospital.aadhaarNumber || '',
+                                                accountNumber: hospital.accountNumber || '',
+                                                ifscCode: hospital.ifscCode || '',
+                                                bankName: hospital.bankName || ''
+                                              });
+                                            }}
+                                          >
+                                            ✏️ Edit KYC Details
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {isEditingKyc ? (
+                                        <form onSubmit={(e) => { e.preventDefault(); handleKycSave(hospital.id); }}>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div className="admin-form-group">
+                                              <label>GST Number *</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.gstNumber || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, gstNumber: e.target.value})}
+                                                placeholder="Enter GST Number"
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>PAN Number *</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.panNumber || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, panNumber: e.target.value})}
+                                                placeholder="Enter PAN Number"
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Aadhaar Number</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.aadhaarNumber || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, aadhaarNumber: e.target.value})}
+                                                placeholder="Enter Aadhaar Number"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Bank Name *</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.bankName || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, bankName: e.target.value})}
+                                                placeholder="Enter Bank Name"
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Account Number *</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.accountNumber || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, accountNumber: e.target.value})}
+                                                placeholder="Enter Account Number"
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>IFSC Code *</label>
+                                              <input 
+                                                type="text" 
+                                                value={kycFormData.ifscCode || ''} 
+                                                onChange={(e) => setKycFormData({...kycFormData, ifscCode: e.target.value})}
+                                                placeholder="Enter IFSC Code"
+                                                required
+                                              />
+                                            </div>
+                                          </div>
+                                          <div className="admin-form-group" style={{marginTop: '15px'}}>
+                                            <label>Registration Certificate</label>
+                                            <input type="file" accept=".pdf,.jpg,.png" />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>PAN Card Document</label>
+                                            <input type="file" accept=".pdf,.jpg,.png" />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Aadhaar Card Document</label>
+                                            <input type="file" accept=".pdf,.jpg,.png" />
+                                          </div>
+                                          <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                            <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                            <button 
+                                              type="button" 
+                                              className="admin-btn-secondary" 
+                                              style={{padding: '8px 16px'}}
+                                              onClick={() => setIsEditingKyc(false)}
+                                            >
+                                              ✖️ Cancel
+                                            </button>
+                                          </div>
+                                        </form>
+                                      ) : (
+                                        <>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>GST Number:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.gstNumber || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>PAN Number:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.panNumber || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Registration Certificate:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.registrationCertificate ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>PAN Card:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.panCard ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Aadhaar Card:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.aadhaarCard ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Bank Account:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.accountNumber || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>IFSC Code:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.ifscCode || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>KYC Status:</strong>
+                                              <p style={{margin: '5px 0 0 0'}}>
+                                                <span className={`admin-status-badge ${hospital.kycStatus}`}>
+                                                  {hospital.kycStatus.charAt(0).toUpperCase() + hospital.kycStatus.slice(1)}
+                                                </span>
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                            <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✅ Approve KYC</button>
+                                            <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>❌ Reject KYC</button>
+                                            <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>👁️ View Documents</button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Operational Tab Content */}
+                                  {hospitalManagementTab === 'operational' && (
+                                    <div>
+                                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                        <h3 style={{margin: 0, color: '#234f83'}}>⚙️ Operational Details</h3>
+                                        {!isEditingOperational && (
+                                          <button 
+                                            className="admin-btn-primary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => {
+                                              setIsEditingOperational(true);
+                                              setOperationalFormData({
+                                                is24x7: hospital.is24x7 || false,
+                                                openingTime: hospital.openingTime || '',
+                                                closingTime: hospital.closingTime || '',
+                                                minConsultFee: hospital.minConsultFee || '',
+                                                maxConsultFee: hospital.maxConsultFee || '',
+                                                availableServices: hospital.availableServices?.join(', ') || '',
+                                                facilities: hospital.facilities?.join(', ') || '',
+                                                totalBeds: hospital.totalBeds || '',
+                                                icuBeds: hospital.icuBeds || '',
+                                                ventilators: hospital.ventilators || ''
+                                              });
+                                            }}
+                                          >
+                                            ✏️ Edit Operational Details
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {isEditingOperational ? (
+                                        <form onSubmit={(e) => { e.preventDefault(); handleOperationalSave(hospital.id); }}>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div className="admin-form-group">
+                                              <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  checked={operationalFormData.is24x7 || false}
+                                                  onChange={(e) => setOperationalFormData({...operationalFormData, is24x7: e.target.checked})}
+                                                  style={{width: 'auto'}}
+                                                />
+                                                <span>Open 24x7</span>
+                                              </label>
+                                            </div>
+                                            <div></div>
+                                            <div className="admin-form-group">
+                                              <label>Opening Time</label>
+                                              <input 
+                                                type="time" 
+                                                value={operationalFormData.openingTime || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, openingTime: e.target.value})}
+                                                disabled={operationalFormData.is24x7}
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Closing Time</label>
+                                              <input 
+                                                type="time" 
+                                                value={operationalFormData.closingTime || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, closingTime: e.target.value})}
+                                                disabled={operationalFormData.is24x7}
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Min Consultation Fee (₹)</label>
+                                              <input 
+                                                type="number" 
+                                                value={operationalFormData.minConsultFee || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, minConsultFee: e.target.value})}
+                                                placeholder="Minimum fee"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Max Consultation Fee (₹)</label>
+                                              <input 
+                                                type="number" 
+                                                value={operationalFormData.maxConsultFee || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, maxConsultFee: e.target.value})}
+                                                placeholder="Maximum fee"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Total Beds</label>
+                                              <input 
+                                                type="number" 
+                                                value={operationalFormData.totalBeds || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, totalBeds: e.target.value})}
+                                                placeholder="Total beds"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>ICU Beds</label>
+                                              <input 
+                                                type="number" 
+                                                value={operationalFormData.icuBeds || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, icuBeds: e.target.value})}
+                                                placeholder="ICU beds"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Ventilators</label>
+                                              <input 
+                                                type="number" 
+                                                value={operationalFormData.ventilators || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, ventilators: e.target.value})}
+                                                placeholder="Number of ventilators"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                              <label>Available Services (comma-separated)</label>
+                                              <textarea 
+                                                value={operationalFormData.availableServices || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, availableServices: e.target.value})}
+                                                placeholder="e.g., Emergency, Surgery, Cardiology, Neurology"
+                                                rows="3"
+                                              />
+                                            </div>
+                                            <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                              <label>Facilities (comma-separated)</label>
+                                              <textarea 
+                                                value={operationalFormData.facilities || ''} 
+                                                onChange={(e) => setOperationalFormData({...operationalFormData, facilities: e.target.value})}
+                                                placeholder="e.g., Pharmacy, Parking, Cafeteria, Lab"
+                                                rows="3"
+                                              />
+                                            </div>
+                                          </div>
+                                          <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                            <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                            <button 
+                                              type="button" 
+                                              className="admin-btn-secondary" 
+                                              style={{padding: '8px 16px'}}
+                                              onClick={() => setIsEditingOperational(false)}
+                                            >
+                                              ✖️ Cancel
+                                            </button>
+                                          </div>
+                                        </form>
+                                      ) : (
+                                        <>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>24x7 Status:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                                <span className={`admin-status-badge ${hospital.is24x7 ? 'approved' : 'pending'}`}>
+                                                  {hospital.is24x7 ? '24x7 Open' : 'Limited Hours'}
+                                                </span>
+                                              </p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Operating Hours:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.openingTime || 'N/A'} - {hospital.closingTime || 'N/A'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Consultation Fee Range:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{hospital.minConsultFee || 0} - ₹{hospital.maxConsultFee || 0}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Available Services:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.availableServices?.length || 0} Services</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Facilities:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.facilities?.length || 0} Facilities</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Total Beds:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.totalBeds || 'Not specified'}</p>
+                                            </div>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Commission Tab Content */}
+                                  {hospitalManagementTab === 'commission' && (
+                                    <div>
+                                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                        <h3 style={{margin: 0, color: '#234f83'}}>💰 Commission & Payout</h3>
+                                        {!isEditingCommission && (
+                                          <button 
+                                            className="admin-btn-primary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => {
+                                              setIsEditingCommission(true);
+                                              setCommissionFormData({
+                                                commissionType: hospital.commissionType || '',
+                                                commissionValue: hospital.commissionValue || '',
+                                                settlementCycle: hospital.settlementCycle || '',
+                                                paymentMode: hospital.paymentMode || '',
+                                                accountNumber: hospital.accountNumber || '',
+                                                ifscCode: hospital.ifscCode || ''
+                                              });
+                                            }}
+                                          >
+                                            ✏️ Edit Commission
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {isEditingCommission ? (
+                                        <form onSubmit={(e) => { e.preventDefault(); handleCommissionSave(hospital.id); }}>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div className="admin-form-group">
+                                              <label>Commission Type *</label>
+                                              <select 
+                                                value={commissionFormData.commissionType || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, commissionType: e.target.value})}
+                                                required
+                                              >
+                                                <option value="">Select Commission Type</option>
+                                                <option value="percentage">Percentage (%)</option>
+                                                <option value="fixed">Fixed Amount (₹)</option>
+                                              </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Commission Value *</label>
+                                              <input 
+                                                type="number" 
+                                                value={commissionFormData.commissionValue || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, commissionValue: e.target.value})}
+                                                placeholder={commissionFormData.commissionType === 'percentage' ? 'Enter %' : 'Enter ₹'}
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Settlement Cycle *</label>
+                                              <select 
+                                                value={commissionFormData.settlementCycle || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, settlementCycle: e.target.value})}
+                                                required
+                                              >
+                                                <option value="">Select Settlement Cycle</option>
+                                                <option value="weekly">Weekly</option>
+                                                <option value="15days">Every 15 Days</option>
+                                                <option value="monthly">Monthly</option>
+                                              </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Payment Mode *</label>
+                                              <select 
+                                                value={commissionFormData.paymentMode || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, paymentMode: e.target.value})}
+                                                required
+                                              >
+                                                <option value="">Select Payment Mode</option>
+                                                <option value="bank">Bank Transfer</option>
+                                                <option value="upi">UPI</option>
+                                                <option value="cheque">Cheque</option>
+                                              </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Bank Account Number *</label>
+                                              <input 
+                                                type="text" 
+                                                value={commissionFormData.accountNumber || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, accountNumber: e.target.value})}
+                                                placeholder="Enter Account Number"
+                                                required
+                                              />
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>IFSC Code *</label>
+                                              <input 
+                                                type="text" 
+                                                value={commissionFormData.ifscCode || ''} 
+                                                onChange={(e) => setCommissionFormData({...commissionFormData, ifscCode: e.target.value})}
+                                                placeholder="Enter IFSC Code"
+                                                required
+                                              />
+                                            </div>
+                                          </div>
+                                          <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                            <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                            <button 
+                                              type="button" 
+                                              className="admin-btn-secondary" 
+                                              style={{padding: '8px 16px'}}
+                                              onClick={() => setIsEditingCommission(false)}
+                                            >
+                                              ✖️ Cancel
+                                            </button>
+                                          </div>
+                                        </form>
+                                      ) : (
+                                        <>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Commission Type:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                                <span className={`admin-status-badge ${hospital.commissionType === 'percentage' ? 'approved' : 'pending'}`}>
+                                                  {hospital.commissionType?.charAt(0).toUpperCase() + hospital.commissionType?.slice(1) || 'N/A'}
+                                                </span>
+                                              </p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Commission Value:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>
+                                                {hospital.commissionType === 'percentage' 
+                                                  ? `${hospital.commissionValue}%` 
+                                                  : `₹${hospital.commissionValue || 0}`}
+                                              </p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Settlement Cycle:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.settlementCycle || 'Not set'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Payment Mode:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.paymentMode || 'Not set'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Bank Account:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.accountNumber || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Last Settlement:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{hospital.registeredDate || 'N/A'}</p>
+                                            </div>
+                                          </div>
+                                          <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                            <button className="admin-btn-primary" style={{padding: '8px 16px'}}>💳 Process Payout</button>
+                                            <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📊 View Payout History</button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Major Expenses Tab Content */}
+                                  {hospitalManagementTab === 'majorExpenses' && (
+                                    <div>
+                                      <h3 style={{marginTop: 0, color: '#234f83', marginBottom: '20px'}}>💸 Major Expenses</h3>
+                                      
+                                      {/* Category Cards */}
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px'}}>
+                                        <div style={{padding: '15px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '8px', color: '#fff', textAlign: 'center'}}>
+                                          <div style={{fontSize: '32px', marginBottom: '10px'}}>🛏️</div>
+                                          <strong>Rooms & Boards</strong>
+                                          <p style={{fontSize: '24px', fontWeight: 'bold', margin: '10px 0'}}>{rooms.length}</p>
+                                          <button 
+                                            onClick={() => openExpenseModal('rooms', 'add')}
+                                            style={{padding: '6px 12px', background: '#fff', color: '#667eea', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}
+                                          >
+                                            + Add Room
+                                          </button>
+                                        </div>
+                                        <div style={{padding: '15px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '8px', color: '#fff', textAlign: 'center'}}>
+                                          <div style={{fontSize: '32px', marginBottom: '10px'}}>🏥</div>
+                                          <strong>Medical Procedures</strong>
+                                          <p style={{fontSize: '24px', fontWeight: 'bold', margin: '10px 0'}}>{procedures.length}</p>
+                                          <button 
+                                            onClick={() => openExpenseModal('procedures', 'add')}
+                                            style={{padding: '6px 12px', background: '#fff', color: '#f5576c', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}
+                                          >
+                                            + Add Procedure
+                                          </button>
+                                        </div>
+                                        <div style={{padding: '15px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '8px', color: '#fff', textAlign: 'center'}}>
+                                          <div style={{fontSize: '32px', marginBottom: '10px'}}>👨‍⚕️</div>
+                                          <strong>Doctor Fees</strong>
+                                          <p style={{fontSize: '24px', fontWeight: 'bold', margin: '10px 0'}}>{doctorFees.length}</p>
+                                          <button 
+                                            onClick={() => openExpenseModal('doctorFees', 'add')}
+                                            style={{padding: '6px 12px', background: '#fff', color: '#00f2fe', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '600', fontSize: '12px'}}
+                                          >
+                                            + Add Fee
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Expense Tables */}
+                                      <div style={{marginTop: '20px'}}>
+                                        <h4 style={{color: '#234f83', marginBottom: '15px'}}>🛏️ Rooms & Boards</h4>
+                                        <div style={{overflowX: 'auto', marginBottom: '20px'}}>
+                                          <table className="admin-table" style={{fontSize: '13px'}}>
+                                            <thead>
+                                              <tr>
+                                                <th>Room Type</th>
+                                                <th>Name</th>
+                                                <th>Floor</th>
+                                                <th>Charge/Day</th>
+                                                <th>Max Beds</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {rooms.slice(0, 3).map(room => (
+                                                <tr key={room.room_id}>
+                                                  <td>{room.room_type}</td>
+                                                  <td>{room.room_name}</td>
+                                                  <td>{room.floor}</td>
+                                                  <td>₹{room.charge_per_day}</td>
+                                                  <td>{room.max_patients}</td>
+                                                  <td><span className={`admin-status-badge ${room.status.toLowerCase()}`}>{room.status}</span></td>
+                                                  <td>
+                                                    <button className="admin-icon-btn" onClick={() => openExpenseModal('rooms', 'edit', room)}>✏️</button>
+                                                    <button className="admin-icon-btn" onClick={() => handleExpenseDelete('rooms', room.room_id)}>🗑️</button>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+
+                                        <h4 style={{color: '#234f83', marginBottom: '15px'}}>🏥 Medical Procedures</h4>
+                                        <div style={{overflowX: 'auto'}}>
+                                          <table className="admin-table" style={{fontSize: '13px'}}>
+                                            <thead>
+                                              <tr>
+                                                <th>Procedure Name</th>
+                                                <th>Type</th>
+                                                <th>Base Charge</th>
+                                                <th>OT Charges</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {procedures.slice(0, 3).map(proc => (
+                                                <tr key={proc.procedure_id}>
+                                                  <td>{proc.procedure_name}</td>
+                                                  <td>{proc.procedure_type}</td>
+                                                  <td>₹{proc.base_charge}</td>
+                                                  <td>₹{proc.ot_charges}</td>
+                                                  <td><span className={`admin-status-badge ${proc.status.toLowerCase()}`}>{proc.status}</span></td>
+                                                  <td>
+                                                    <button className="admin-icon-btn" onClick={() => openExpenseModal('procedures', 'edit', proc)}>✏️</button>
+                                                    <button className="admin-icon-btn" onClick={() => handleExpenseDelete('procedures', proc.procedure_id)}>🗑️</button>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1983,7 +3149,7 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>👨‍⚕️ Doctor Management</h2>
-                <button className="admin-add-btn">+ Add Doctor</button>
+                <button className="admin-add-btn" onClick={() => openModal('add', 'doctors')}>+ Add Doctor</button>
               </div>
               
               <div className="admin-filters">
@@ -2011,27 +3177,55 @@ const AdminDashboard = () => {
                       <th>Linked Hospitals</th>
                       <th>City</th>
                       <th>Experience</th>
+                      <th>Fee (₹)</th>
                       <th>KYC Status</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>DOC001</td>
-                      <td>Dr. Priya Sharma</td>
-                      <td>Cardiologist</td>
-                      <td>City General, Metro Clinic</td>
-                      <td>Mumbai</td>
-                      <td>15 years</td>
-                      <td><span className="admin-status-badge approved">Approved</span></td>
-                      <td><span className="admin-status-badge approved">Active</span></td>
-                      <td>
-                        <button className="admin-icon-btn">👁️</button>
-                        <button className="admin-icon-btn">✏️</button>
-                        <button className="admin-icon-btn">🚫</button>
-                      </td>
-                    </tr>
+                    {doctors.map(doctor => (
+                      <tr key={doctor.id}>
+                        <td>{doctor.id}</td>
+                        <td>{doctor.name}</td>
+                        <td>{doctor.speciality}</td>
+                        <td>{doctor.linkedHospitals}</td>
+                        <td>{doctor.city}</td>
+                        <td>{doctor.experience} years</td>
+                        <td>₹{doctor.fee}</td>
+                        <td>
+                          <span className={`admin-status-badge ${doctor.kycStatus}`}>
+                            {doctor.kycStatus.charAt(0).toUpperCase() + doctor.kycStatus.slice(1)}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`admin-status-badge ${doctor.status}`}>
+                            {doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1)}
+                          </span>
+                        </td>
+                        <td>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Details"
+                            onClick={() => openModal('view', 'doctors', doctor)}
+                          >
+                            👁️
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Edit"
+                            onClick={() => openModal('edit', 'doctors', doctor)}
+                          >
+                            ✏️
+                          </button>
+                          {doctor.status !== 'blocked' ? (
+                            <button className="admin-icon-btn" title="Block">🚫</button>
+                          ) : (
+                            <button className="admin-icon-btn" title="Unblock">✅</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -2105,7 +3299,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="admin-stat-card">
                   <h4>Clicked</h4>
-                  <p className="admin-stat-value" style={{color: '#8b5cf6'}}>
+                  <p className="admin-stat-value" style={{color: '#234f83'}}>
                     {notifications.reduce((acc, n) => acc + n.clicked, 0).toLocaleString()}
                   </p>
                 </div>
@@ -2171,26 +3365,26 @@ const AdminDashboard = () => {
                         </td>
                         <td>{notification.sentDate || notification.scheduledDate}</td>
                         <td className="admin-actions">
-                          <button className="admin-action-btn view" onClick={() => alert('View details: ' + notification.id)}>
+                          <button className="admin-action-btn  notification-btn " onClick={() => alert('View details: ' + notification.id)}>
                             👁️ View
                           </button>
                           {notification.status === 'draft' && (
-                            <button className="admin-action-btn edit" onClick={() => alert('Edit: ' + notification.id)}>
+                            <button className="admin-action-btn edit notification-btn" onClick={() => alert('Edit: ' + notification.id)}>
                               ✏️ Edit
                             </button>
                           )}
                           {notification.status === 'scheduled' && (
-                            <button className="admin-action-btn edit" onClick={() => alert('Reschedule: ' + notification.id)}>
+                            <button className="admin-action-btn edit notification-btn" onClick={() => alert('Reschedule: ' + notification.id)}>
                               📅 Reschedule
                             </button>
                           )}
                           {notification.status === 'sent' && (
-                            <button className="admin-action-btn view" onClick={() => alert('Analytics: ' + notification.id)}>
+                            <button className="admin-action-btn view notification-btn" onClick={() => alert('Analytics: ' + notification.id)}>
                               📊 Analytics
                             </button>
                           )}
                           {notification.status === 'failed' && (
-                            <button className="admin-action-btn edit" onClick={() => alert('Retry: ' + notification.id)}>
+                            <button className="admin-action-btn edit notification-btn" onClick={() => alert('Retry: ' + notification.id)}>
                               🔄 Retry
                             </button>
                           )}
@@ -2288,7 +3482,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="admin-stat-card">
                   <h4>Scheduled</h4>
-                  <p className="admin-stat-value" style={{color: '#8b5cf6'}}>
+                  <p className="admin-stat-value" style={{color: '#234f83'}}>
                     {reports.filter(r => r.status === 'scheduled').length}
                   </p>
                 </div>
@@ -2952,7 +4146,7 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>💊 Chemist/Pharmacy Management</h2>
-                <button className="admin-add-btn" onClick={() => alert('Add Chemist form will open')}>
+                <button className="admin-add-btn" onClick={() => openModal('add', 'chemists')}>
                   + Add Chemist
                 </button>
               </div>
@@ -3027,9 +4221,27 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button className="admin-icon-btn" title="View Details">👁️</button>
-                          <button className="admin-icon-btn" title="View Products">📦</button>
-                          <button className="admin-icon-btn" title="Edit">✏️</button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Details"
+                            onClick={() => openModal('view', 'chemists', chemist)}
+                          >
+                            👁️
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Products"
+                            onClick={() => alert('View products for ' + chemist.name)}
+                          >
+                            📦
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Edit"
+                            onClick={() => openModal('edit', 'chemists', chemist)}
+                          >
+                            ✏️
+                          </button>
                           {chemist.status === 'pending' ? (
                             <>
                               <button className="admin-icon-btn" title="Approve">✅</button>
@@ -3064,7 +4276,7 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>🚑 Ambulance Management</h2>
-                <button className="admin-add-btn" onClick={() => alert('Add Ambulance form will open')}>
+                <button className="admin-add-btn" onClick={() => openModal('add', 'ambulances')}>
                   + Add Ambulance
                 </button>
               </div>
@@ -3161,9 +4373,27 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button className="admin-icon-btn" title="View Details">👁️</button>
-                          <button className="admin-icon-btn" title="Trip History">📋</button>
-                          <button className="admin-icon-btn" title="Edit">✏️</button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Details"
+                            onClick={() => openModal('view', 'ambulances', ambulance)}
+                          >
+                            👁️
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Trip History"
+                            onClick={() => alert('View trip history for ' + ambulance.vehicleNumber)}
+                          >
+                            📋
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Edit"
+                            onClick={() => openModal('edit', 'ambulances', ambulance)}
+                          >
+                            ✏️
+                          </button>
                           {ambulance.status === 'pending' ? (
                             <>
                               <button className="admin-icon-btn" title="Approve">✅</button>
@@ -3198,7 +4428,7 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>🔬 Pathlab Management</h2>
-                <button className="admin-add-btn" onClick={() => alert('Add Pathlab form will open')}>
+                <button className="admin-add-btn" onClick={() => openModal('add', 'pathlabs')}>
                   + Add Pathlab
                 </button>
               </div>
@@ -3290,9 +4520,27 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button className="admin-icon-btn" title="View Details">👁️</button>
-                          <button className="admin-icon-btn" title="View Tests">🧪</button>
-                          <button className="admin-icon-btn" title="Edit">✏️</button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Details"
+                            onClick={() => openModal('view', 'pathlabs', lab)}
+                          >
+                            👁️
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Tests"
+                            onClick={() => alert('View test catalog for ' + lab.name)}
+                          >
+                            🧪
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Edit"
+                            onClick={() => openModal('edit', 'pathlabs', lab)}
+                          >
+                            ✏️
+                          </button>
                           {lab.status === 'pending' ? (
                             <>
                               <button className="admin-icon-btn" title="Approve">✅</button>
@@ -3327,8 +4575,8 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>👥 Patient Management</h2>
-                <button className="admin-add-btn" onClick={() => alert('Patient details view')}>
-                  👁️ View All Patients
+                <button className="admin-add-btn" onClick={() => openModal('add', 'patients')}>
+                  + Add Patient
                 </button>
               </div>
               
@@ -3401,9 +4649,27 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button className="admin-icon-btn" title="View Details">👁️</button>
-                          <button className="admin-icon-btn" title="View History">📋</button>
-                          <button className="admin-icon-btn" title="Edit">✏️</button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View Details"
+                            onClick={() => openModal('view', 'patients', patient)}
+                          >
+                            👁️
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="View History"
+                            onClick={() => alert('View appointment history for ' + patient.name)}
+                          >
+                            📋
+                          </button>
+                          <button 
+                            className="admin-icon-btn" 
+                            title="Edit"
+                            onClick={() => openModal('edit', 'patients', patient)}
+                          >
+                            ✏️
+                          </button>
                           {patient.status !== 'blocked' ? (
                             <button className="admin-icon-btn" title="Block User">🚫</button>
                           ) : (
@@ -3612,6 +4878,1149 @@ const AdminDashboard = () => {
           )}
         </div>
       </main>
+
+      {/* Universal Modal for All Sections */}
+      {showModal && (
+        <div className="admin-modal-overlay" onClick={closeModal}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2>
+                {modalMode === 'view' && '👁️ View Details'}
+                {modalMode === 'add' && '➕ Add New'}
+                {modalMode === 'edit' && '✏️ Edit Details'}
+              </h2>
+              <button className="admin-modal-close" onClick={closeModal}>✕</button>
+            </div>
+            
+            <div className="admin-modal-body">
+              {modalMode === 'view' ? (
+                // View Mode - Display details
+                <div className="admin-view-details">
+                  {selectedItem && Object.entries(selectedItem).map(([key, value]) => (
+                    <div key={key} className="admin-detail-row">
+                      <span className="admin-detail-label">{key.replace(/([A-Z])/g, ' $1').toUpperCase()}:</span>
+                      <span className="admin-detail-value">{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Add/Edit Mode - Display form
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const data = Object.fromEntries(formData);
+                  handleSave(data);
+                }} className="admin-modal-form">
+                  {modalSection === 'hospitals' && (
+                    <>
+                      <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#234f83', borderBottom: '2px solid #e9d5ff', paddingBottom: '10px' }}>Basic Information</h3>
+                      
+                      <div className="admin-form-group">
+                        <label>Hospital Name *</label>
+                        <input type="text" name="name" defaultValue={selectedItem?.name} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Contact Person *</label>
+                          <input type="text" name="contactPerson" defaultValue={selectedItem?.contactPerson} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Mobile *</label>
+                          <input type="tel" name="mobile" defaultValue={selectedItem?.mobile} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Email *</label>
+                        <input type="email" name="email" defaultValue={selectedItem?.email} required />
+                      </div>
+                      <div className="admin-form-group">
+                        <label >Website URL </label>
+                        <input type="website" name='website' defaultValue={selectedItem?.website}  required/>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Pincode *</label>
+                          <input type="text" name="pincode" defaultValue={selectedItem?.pincode} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Address *</label>
+                        <textarea name="address" defaultValue={selectedItem?.address} required rows="3"></textarea>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </div>
+                        <div className="admin-form-group">
+                          <label>KYC Status</label>
+                          <select name="kycStatus" defaultValue={selectedItem?.kycStatus || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* KYC/Legal Documents Dropdown */}
+                      <div style={{ marginTop: '30px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div 
+                          onClick={() => setShowKycSection(!showKycSection)}
+                          style={{ 
+                            padding: '15px 20px', 
+                            background: '#f8f9fa', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: showKycSection ? '1px solid #e5e7eb' : 'none'
+                          }}
+                        >
+                          <h3 style={{ margin: 0, color: '#234f83', fontSize: '16px' }}>KYC/Legal Documents</h3>
+                          <span style={{ fontSize: '20px', color: '#234f83' }}>{showKycSection ? '▼' : '▶'}</span>
+                        </div>
+                        
+                        {showKycSection && (
+                          <div style={{ padding: '20px' }}>
+                            <div className="admin-form-group">
+                              <label>GST Number</label>
+                              <input type="text" name="gstNumber" defaultValue={selectedItem?.gstNumber} placeholder="Enter GST Number" />
+                                  </div>
+                            <div className="admin-form-group">
+                              <label>Hospital Registration Certificate</label>
+                              <input type="file" name="registrationCertificate" accept="image/*,application/pdf" />
+                              {selectedItem?.registrationCertificate && (
+                                <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>Current: {selectedItem.registrationCertificate}</small>
+                              )}
+                            </div>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>PAN Card</label>
+                                <input type="file" name="panCard" accept="image/*,application/pdf" />
+                                {selectedItem?.panCard && (
+                                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>Current: {selectedItem.panCard}</small>
+                                )}
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Owner Aadhaar Card</label>
+                                <input type="file" name="aadhaarCard" accept="image/*,application/pdf" />
+                                {selectedItem?.aadhaarCard && (
+                                  <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>Current: {selectedItem.aadhaarCard}</small>
+                                )}
+                              </div>
+                            </div>
+
+                            <h4 style={{ marginTop: '20px', marginBottom: '15px', color: '#234f83' }}>Bank Details</h4>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>Account Holder Name</label>
+                                <input type="text" name="accountHolderName" defaultValue={selectedItem?.accountHolderName} placeholder="Enter Account Holder Name" />
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Account Number</label>
+                                <input type="text" name="accountNumber" defaultValue={selectedItem?.accountNumber} placeholder="Enter Account Number" />
+                              </div>
+                            </div>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>IFSC Code</label>
+                                <input type="text" name="ifscCode" defaultValue={selectedItem?.ifscCode} placeholder="Enter IFSC Code" />
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Bank Name</label>
+                                <input type="text" name="bankName" defaultValue={selectedItem?.bankName} placeholder="Enter Bank Name" />
+                              </div>
+                            </div>
+                            <div className="admin-form-group">
+                              <label>Branch Name</label>
+                              <input type="text" name="branchName" defaultValue={selectedItem?.branchName} placeholder="Enter Branch Name" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Operational Details Dropdown */}
+                      <div style={{ marginTop: '20px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div 
+                          onClick={() => setShowOperationalSection(!showOperationalSection)}
+                          style={{ 
+                            padding: '15px 20px', 
+                            background: '#f8f9fa', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: showOperationalSection ? '1px solid #e5e7eb' : 'none'
+                          }}
+                        >
+                          <h3 style={{ margin: 0, color: '#234f83', fontSize: '16px' }}>Operational Details</h3>
+                          <span style={{ fontSize: '20px', color: '#234f83' }}>{showOperationalSection ? '▼' : '▶'}</span>
+                        </div>
+                        
+                        {showOperationalSection && (
+                          <div style={{ padding: '20px' }}>
+                            <div className="admin-form-group">
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="is24x7" defaultChecked={selectedItem?.is24x7} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>Open 24x7</span>
+                              </label>
+                            </div>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>Opening Time</label>
+                                <input type="time" name="openingTime" defaultValue={selectedItem?.openingTime} />
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Closing Time</label>
+                                <input type="time" name="closingTime" defaultValue={selectedItem?.closingTime} />
+                              </div>
+                            </div>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>Min Consultation Fee (₹)</label>
+                                <input type="number" name="minConsultFee" defaultValue={selectedItem?.minConsultFee} placeholder="Enter Min Fee" />
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Max Consultation Fee (₹)</label>
+                                <input type="number" name="maxConsultFee" defaultValue={selectedItem?.maxConsultFee} placeholder="Enter Max Fee" />
+                              </div>
+                            </div>
+                            
+                            <div className="admin-form-group">
+                              <label>Available Services</label>
+                              <select name="availableServices" multiple style={{ height: '120px' }} defaultValue={selectedItem?.availableServices || []}>
+                                <option value="General Consultation">General Consultation</option>
+                                <option value="Emergency Care">Emergency Care</option>
+                                <option value="Diagnostic Services">Diagnostic Services</option>
+                                <option value="Pathology">Pathology</option>
+                                <option value="Radiology">Radiology</option>
+                                <option value="Pharmacy">Pharmacy</option>
+                                <option value="Surgery">Surgery</option>
+                                <option value="ICU">ICU</option>
+                                <option value="NICU">NICU</option>
+                                <option value="Dialysis">Dialysis</option>
+                                <option value="Physiotherapy">Physiotherapy</option>
+                                <option value="Vaccination">Vaccination</option>
+                              </select>
+                              <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>Hold Ctrl/Cmd to select multiple services</small>
+                            </div>
+
+                            <h4 style={{ marginTop: '20px', marginBottom: '15px', color: '#234f83' }}>Facilities Available</h4>
+                            <div className="admin-form-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_icu" defaultChecked={selectedItem?.facilities?.includes('ICU')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>ICU (Intensive Care Unit)</span>
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_nicu" defaultChecked={selectedItem?.facilities?.includes('NICU')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>NICU (Neonatal ICU)</span>
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_ot" defaultChecked={selectedItem?.facilities?.includes('OT')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>Operation Theatre (OT)</span>
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_pharmacy" defaultChecked={selectedItem?.facilities?.includes('Pharmacy')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>Pharmacy</span>
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_pathology" defaultChecked={selectedItem?.facilities?.includes('Pathology')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>Pathology Lab</span>
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input type="checkbox" name="facility_radiology" defaultChecked={selectedItem?.facilities?.includes('Radiology')} style={{ width: 'auto', marginRight: '10px' }} />
+                                <span>Radiology/Imaging</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Commission & Payout Dropdown */}
+                      <div style={{ marginTop: '20px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div 
+                          onClick={() => setShowCommissionSection(!showCommissionSection)}
+                          style={{ 
+                            padding: '15px 20px', 
+                            background: '#f8f9fa', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: showCommissionSection ? '1px solid #e5e7eb' : 'none'
+                          }}
+                        >
+                          <h3 style={{ margin: 0, color: '#234f83', fontSize: '16px' }}>Commission & Payout</h3>
+                          <span style={{ fontSize: '20px', color: '#234f83' }}>{showCommissionSection ? '▼' : '▶'}</span>
+                        </div>
+                        
+                        {showCommissionSection && (
+                          <div style={{ padding: '20px' }}>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>Commission Type</label>
+                                <select name="commissionType" defaultValue={selectedItem?.commissionType || 'percentage'}>
+                                  <option value="percentage">Percentage (%)</option>
+                                  <option value="fixed">Fixed Amount (₹)</option>
+                                </select>
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Commission Value</label>
+                                <input type="number" name="commissionValue" defaultValue={selectedItem?.commissionValue} placeholder="Enter Commission Value" step="0.01" />
+                              </div>
+                            </div>
+                            <div className="admin-form-row">
+                              <div className="admin-form-group">
+                                <label>Settlement Cycle</label>
+                                <select name="settlementCycle" defaultValue={selectedItem?.settlementCycle || 'monthly'}>
+                                  <option value="weekly">Weekly</option>
+                                  <option value="15days">15 Days</option>
+                                  <option value="monthly">Monthly</option>
+                                </select>
+                              </div>
+                              <div className="admin-form-group">
+                                <label>Payment Mode</label>
+                                <select name="paymentMode" defaultValue={selectedItem?.paymentMode || 'bank'}>
+                                  <option value="bank">Bank Transfer</option>
+                                  <option value="upi">UPI</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Major Expenses Dropdown */}
+                      <div style={{ marginTop: '20px', marginBottom: '20px', border: '2px solid #234f83', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div 
+                          onClick={() => setShowMajorExpenses(!showMajorExpenses)}
+                          style={{ 
+                            padding: '15px 20px', 
+                            background: 'linear-gradient(135deg, #234f83 0%, #1a3d66 100%)', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: showMajorExpenses ? '2px solid #234f83' : 'none'
+                          }}
+                        >
+                          <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: '600' }}>💰 Major Expenses</h3>
+                          <span style={{ fontSize: '24px', color: '#fff', fontWeight: 'bold' }}>{showMajorExpenses ? '▼' : '▶'}</span>
+                        </div>
+                        
+                        {showMajorExpenses && (
+                          <div style={{ padding: '20px', background: '#f9fafb' }}>
+                            {/* Rooms & Boards Section */}
+                            <div style={{ marginBottom: '30px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '15px', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h4 style={{ margin: 0, color: '#234f83' }}>🛏️ Rooms & Boards</h4>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); openExpenseModal('rooms', 'add'); }}
+                                  style={{ 
+                                    padding: '8px 16px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: '6px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                  }}
+                                >
+                                  + Add Room
+                                </button>
+                              </div>
+                              <div className="admin-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="admin-table" style={{ fontSize: '13px' }}>
+                                  <thead>
+                                    <tr>
+                                      <th>Room Type</th>
+                                      <th>Name</th>
+                                      <th>Floor</th>
+                                      <th>Charge/Day</th>
+                                      <th>Max Beds</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {rooms.map(room => (
+                                      <tr key={room.room_id}>
+                                        <td>{room.room_type}</td>
+                                        <td>{room.room_name}</td>
+                                        <td>{room.floor}</td>
+                                        <td>₹{room.charge_per_day}</td>
+                                        <td>{room.max_patients}</td>
+                                        <td><span className={`admin-status-badge ${room.status.toLowerCase()}`}>{room.status}</span></td>
+                                        <td>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); openExpenseModal('rooms', 'edit', room); }}>✏️</button>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); handleExpenseDelete('rooms', room.room_id); }}>🗑️</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Medical Procedures Section */}
+                            <div style={{ marginBottom: '30px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '15px', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h4 style={{ margin: 0, color: '#234f83' }}>🏥 Medical Procedures</h4>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); openExpenseModal('procedures', 'add'); }}
+                                  style={{ 
+                                    padding: '8px 16px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: '6px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                  }}
+                                >
+                                  + Add Procedure
+                                </button>
+                              </div>
+                              <div className="admin-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="admin-table" style={{ fontSize: '13px' }}>
+                                  <thead>
+                                    <tr>
+                                      <th>Procedure</th>
+                                      <th>Type</th>
+                                      <th>Base Charge</th>
+                                      <th>OT Charge</th>
+                                      <th>Anesthesia</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {procedures.map(proc => (
+                                      <tr key={proc.procedure_id}>
+                                        <td>{proc.procedure_name}</td>
+                                        <td>{proc.procedure_type}</td>
+                                        <td>₹{proc.base_charge}</td>
+                                        <td>₹{proc.ot_charges || 0}</td>
+                                        <td>₹{proc.anesthesia_charge || 0}</td>
+                                        <td><span className={`admin-status-badge ${proc.status.toLowerCase()}`}>{proc.status}</span></td>
+                                        <td>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); openExpenseModal('procedures', 'edit', proc); }}>✏️</button>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); handleExpenseDelete('procedures', proc.procedure_id); }}>🗑️</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Doctor Fees Section */}
+                            <div style={{ marginBottom: '30px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '15px', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h4 style={{ margin: 0, color: '#234f83' }}>👨‍⚕️ Doctor & Specialist Fees</h4>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); openExpenseModal('doctorFees', 'add'); }}
+                                  style={{ 
+                                    padding: '8px 16px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: '6px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                  }}
+                                >
+                                  + Add Doctor Fee
+                                </button>
+                              </div>
+                              <div className="admin-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="admin-table" style={{ fontSize: '13px' }}>
+                                  <thead>
+                                    <tr>
+                                      <th>Doctor Name</th>
+                                      <th>Specialization</th>
+                                      <th>OPD Fee</th>
+                                      <th>IPD Fee</th>
+                                      <th>Emergency</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {doctorFees.map(doc => (
+                                      <tr key={doc.doctor_id}>
+                                        <td>{doc.name}</td>
+                                        <td>{doc.specialization}</td>
+                                        <td>₹{doc.visit_fee_opd}</td>
+                                        <td>₹{doc.visit_fee_ipd_per_visit || 0}</td>
+                                        <td>₹{doc.consultation_fee_emergency || 0}</td>
+                                        <td><span className={`admin-status-badge ${doc.status.toLowerCase()}`}>{doc.status}</span></td>
+                                        <td>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); openExpenseModal('doctorFees', 'edit', doc); }}>✏️</button>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); handleExpenseDelete('doctorFees', doc.doctor_id); }}>🗑️</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Nursing & Staff Charges Section */}
+                            <div style={{ marginBottom: '30px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '15px', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h4 style={{ margin: 0, color: '#234f83' }}>👩‍⚕️ Nursing & Staff Charges</h4>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); openExpenseModal('nursing', 'add'); }}
+                                  style={{ 
+                                    padding: '8px 16px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: '6px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                  }}
+                                >
+                                  + Add Service
+                                </button>
+                              </div>
+                              <div className="admin-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="admin-table" style={{ fontSize: '13px' }}>
+                                  <thead>
+                                    <tr>
+                                      <th>Service Name</th>
+                                      <th>Charge Type</th>
+                                      <th>Amount</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {nursingCharges.map(nurs => (
+                                      <tr key={nurs.service_id}>
+                                        <td>{nurs.service_name}</td>
+                                        <td>{nurs.charge_type.replace('_', ' ')}</td>
+                                        <td>₹{nurs.charge_amount}</td>
+                                        <td><span className={`admin-status-badge ${nurs.status.toLowerCase()}`}>{nurs.status}</span></td>
+                                        <td>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); openExpenseModal('nursing', 'edit', nurs); }}>✏️</button>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); handleExpenseDelete('nursing', nurs.service_id); }}>🗑️</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Miscellaneous Services Section */}
+                            <div style={{ marginBottom: '20px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '15px', background: '#fff' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h4 style={{ margin: 0, color: '#234f83' }}>🔧 Miscellaneous Services</h4>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); openExpenseModal('miscellaneous', 'add'); }}
+                                  style={{ 
+                                    padding: '8px 16px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: '6px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                  }}
+                                >
+                                  + Add Service
+                                </button>
+                              </div>
+                              <div className="admin-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                <table className="admin-table" style={{ fontSize: '13px' }}>
+                                  <thead>
+                                    <tr>
+                                      <th>Service</th>
+                                      <th>Charge</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {miscServices.map(misc => (
+                                      <tr key={misc.service_id}>
+                                        <td>{misc.service}</td>
+                                        <td>₹{misc.charge}</td>
+                                        <td><span className={`admin-status-badge ${misc.status.toLowerCase()}`}>{misc.status}</span></td>
+                                        <td>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); openExpenseModal('miscellaneous', 'edit', misc); }}>✏️</button>
+                                          <button type="button" className="admin-icon-btn" onClick={(e) => { e.preventDefault(); handleExpenseDelete('miscellaneous', misc.service_id); }}>🗑️</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {modalSection === 'doctors' && (
+                    <>
+                      <div className="admin-form-group">
+                        <label>Doctor Name *</label>
+                        <input type="text" name="name" defaultValue={selectedItem?.name} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Speciality *</label>
+                          <select name="speciality" defaultValue={selectedItem?.speciality} required>
+                            <option value="">Select Speciality</option>
+                            <option value="Cardiologist">Cardiologist</option>
+                            <option value="Neurologist">Neurologist</option>
+                            <option value="Pediatrician">Pediatrician</option>
+                            <option value="Orthopedic">Orthopedic</option>
+                            <option value="Dermatologist">Dermatologist</option>
+                            <option value="General Physician">General Physician</option>
+                          </select>
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Experience (years) *</label>
+                          <input type="number" name="experience" defaultValue={selectedItem?.experience} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Mobile *</label>
+                          <input type="tel" name="mobile" defaultValue={selectedItem?.mobile} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Email *</label>
+                          <input type="email" name="email" defaultValue={selectedItem?.email} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Qualification *</label>
+                        <input type="text" name="qualification" defaultValue={selectedItem?.qualification} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Consultation Fee (₹) *</label>
+                          <input type="number" name="fee" defaultValue={selectedItem?.fee} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </div>
+                        <div className="admin-form-group">
+                          <label>KYC Status</label>
+                          <select name="kycStatus" defaultValue={selectedItem?.kycStatus || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {modalSection === 'patients' && (
+                    <>
+                      <div className="admin-form-group">
+                        <label>Patient Name *</label>
+                        <input type="text" name="name" defaultValue={selectedItem?.name} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Mobile *</label>
+                          <input type="tel" name="mobile" defaultValue={selectedItem?.mobile} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Email *</label>
+                          <input type="email" name="email" defaultValue={selectedItem?.email} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'active'}>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {modalSection === 'chemists' && (
+                    <>
+                      <div className="admin-form-group">
+                        <label>Pharmacy Name *</label>
+                        <input type="text" name="name" defaultValue={selectedItem?.name} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Owner Name *</label>
+                          <input type="text" name="owner" defaultValue={selectedItem?.owner} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>License Number *</label>
+                          <input type="text" name="license" defaultValue={selectedItem?.license} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Mobile *</label>
+                          <input type="tel" name="mobile" defaultValue={selectedItem?.mobile} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Email *</label>
+                          <input type="email" name="email" defaultValue={selectedItem?.email} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {modalSection === 'ambulances' && (
+                    <>
+                      <div className="admin-form-group">
+                        <label>Provider Name *</label>
+                        <input type="text" name="providerName" defaultValue={selectedItem?.providerName} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Vehicle Number *</label>
+                          <input type="text" name="vehicleNumber" defaultValue={selectedItem?.vehicleNumber} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Vehicle Type *</label>
+                          <select name="vehicleType" defaultValue={selectedItem?.vehicleType} required>
+                            <option value="basic">Basic</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="icu">ICU</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Driver Name *</label>
+                          <input type="text" name="driverName" defaultValue={selectedItem?.driverName} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Driver Mobile *</label>
+                          <input type="tel" name="driverMobile" defaultValue={selectedItem?.driverMobile} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Base Fare (₹) *</label>
+                          <input type="number" name="baseFare" defaultValue={selectedItem?.baseFare} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'available'}>
+                            <option value="available">Available</option>
+                            <option value="busy">Busy</option>
+                            <option value="offline">Offline</option>
+                            <option value="maintenance">Maintenance</option>
+                          </select>
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Verification Status</label>
+                          <select name="verified" defaultValue={selectedItem?.verified || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {modalSection === 'pathlabs' && (
+                    <>
+                      <div className="admin-form-group">
+                        <label>Lab Name *</label>
+                        <input type="text" name="name" defaultValue={selectedItem?.name} required />
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Owner/Director *</label>
+                          <input type="text" name="owner" defaultValue={selectedItem?.owner} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>License Number *</label>
+                          <input type="text" name="license" defaultValue={selectedItem?.license} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Mobile *</label>
+                          <input type="tel" name="mobile" defaultValue={selectedItem?.mobile} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Email *</label>
+                          <input type="email" name="email" defaultValue={selectedItem?.email} required />
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>City *</label>
+                          <input type="text" name="city" defaultValue={selectedItem?.city} required />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Sample Collection</label>
+                          <select name="sampleCollection" defaultValue={selectedItem?.sampleCollection || 'no'}>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="admin-form-row">
+                        <div className="admin-form-group">
+                          <label>Status</label>
+                          <select name="status" defaultValue={selectedItem?.status || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </div>
+                        <div className="admin-form-group">
+                          <label>KYC Status</label>
+                          <select name="kycStatus" defaultValue={selectedItem?.kycStatus || 'pending'}>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {(modalSection === 'payments' || modalSection === 'reviews' || 
+                    modalSection === 'notifications' || modalSection === 'reports') && (
+                    <div className="admin-info-message">
+                      <p>📝 Forms for {modalSection} section will be available after backend integration.</p>
+                      <p>Currently showing view-only mode for these sections.</p>
+                    </div>
+                  )}
+
+                  <div className="admin-modal-actions">
+                    <button type="button" className="admin-btn-secondary" onClick={closeModal}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="admin-btn-primary">
+                      {modalMode === 'add' ? 'Add' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Major Expenses Modal */}
+      {showExpenseModal && (
+        <div className="admin-modal-overlay" onClick={closeExpenseModal}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '900px' }}>
+            <div className="admin-modal-header">
+              <h2>
+                {expenseModalMode === 'add' ? '➕ Add' : '✏️ Edit'} {' '}
+                {expenseSubSection === 'rooms' && 'Room/Board'}
+                {expenseSubSection === 'procedures' && 'Medical Procedure'}
+                {expenseSubSection === 'doctorFees' && 'Doctor Fee'}
+                {expenseSubSection === 'nursing' && 'Nursing/Staff Charge'}
+                {expenseSubSection === 'miscellaneous' && 'Miscellaneous Service'}
+              </h2>
+              <button className="admin-close-btn" onClick={closeExpenseModal}>✕</button>
+            </div>
+            <div className="admin-modal-body">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                handleExpenseSave(data);
+              }} className="admin-modal-form">
+                
+                {/* Rooms & Boards Form */}
+                {expenseSubSection === 'rooms' && (
+                  <>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Room Type *</label>
+                        <select name="room_type" defaultValue={selectedExpenseItem?.room_type} required>
+                          <option value="">Select Room Type</option>
+                          <option value="General Ward">General Ward</option>
+                          <option value="Semi Private">Semi Private</option>
+                          <option value="Private">Private</option>
+                          <option value="Deluxe">Deluxe</option>
+                          <option value="ICU">ICU</option>
+                          <option value="NICU">NICU</option>
+                          <option value="PICU">PICU</option>
+                          <option value="CCU">CCU</option>
+                        </select>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Room Name *</label>
+                        <input type="text" name="room_name" defaultValue={selectedExpenseItem?.room_name} required placeholder="e.g., ICU Ward A" />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Floor</label>
+                        <input type="text" name="floor" defaultValue={selectedExpenseItem?.floor} placeholder="e.g., 3rd Floor" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Charge Per Day (₹) *</label>
+                        <input type="number" name="charge_per_day" defaultValue={selectedExpenseItem?.charge_per_day} required placeholder="Enter charge" />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Max Patients *</label>
+                        <input type="number" name="max_patients" defaultValue={selectedExpenseItem?.max_patients} required placeholder="Number of beds" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Status</label>
+                        <select name="status" defaultValue={selectedExpenseItem?.status || 'Active'}>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="admin-form-group">
+                      <label>Description</label>
+                      <textarea name="description" defaultValue={selectedExpenseItem?.description} rows="3" placeholder="Room details and facilities"></textarea>
+                    </div>
+                  </>
+                )}
+
+                {/* Medical Procedures Form */}
+                {expenseSubSection === 'procedures' && (
+                  <>
+                    <div className="admin-form-group">
+                      <label>Procedure Name *</label>
+                      <input type="text" name="procedure_name" defaultValue={selectedExpenseItem?.procedure_name} required placeholder="e.g., Appendectomy" />
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Procedure Type *</label>
+                        <select name="procedure_type" defaultValue={selectedExpenseItem?.procedure_type} required>
+                          <option value="">Select Type</option>
+                          <option value="Minor Surgery">Minor Surgery</option>
+                          <option value="Major Surgery">Major Surgery</option>
+                          <option value="Minor Procedure">Minor Procedure</option>
+                          <option value="Major Procedure">Major Procedure</option>
+                        </select>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Base Charge (₹) *</label>
+                        <input type="number" name="base_charge" defaultValue={selectedExpenseItem?.base_charge} required placeholder="Base cost" />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>OT Charges (₹)</label>
+                        <input type="number" name="ot_charges" defaultValue={selectedExpenseItem?.ot_charges} placeholder="Operation theatre charges" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Anesthesia Charge (₹)</label>
+                        <input type="number" name="anesthesia_charge" defaultValue={selectedExpenseItem?.anesthesia_charge} placeholder="Anesthesia cost" />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Default Doctor Fee (₹)</label>
+                        <input type="number" name="doctor_fee_default" defaultValue={selectedExpenseItem?.doctor_fee_default} placeholder="Doctor fee" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Status</label>
+                        <select name="status" defaultValue={selectedExpenseItem?.status || 'Active'}>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="admin-form-group">
+                      <label>Description</label>
+                      <textarea name="description" defaultValue={selectedExpenseItem?.description} rows="3" placeholder="Procedure details"></textarea>
+                    </div>
+                  </>
+                )}
+
+                {/* Doctor Fees Form */}
+                {expenseSubSection === 'doctorFees' && (
+                  <>
+                    <div className="admin-form-group">
+                      <label>Doctor Name *</label>
+                      <input type="text" name="name" defaultValue={selectedExpenseItem?.name} required placeholder="Full name" />
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Specialization *</label>
+                        <input type="text" name="specialization" defaultValue={selectedExpenseItem?.specialization} required placeholder="e.g., Cardiologist" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Visit Type *</label>
+                        <select name="visit_type" defaultValue={selectedExpenseItem?.visit_type} required>
+                          <option value="">Select Type</option>
+                          <option value="OPD">OPD</option>
+                          <option value="IPD">IPD</option>
+                          <option value="Consultation">Consultation</option>
+                          <option value="Surgery">Surgery</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>OPD Visit Fee (₹) *</label>
+                        <input type="number" name="visit_fee_opd" defaultValue={selectedExpenseItem?.visit_fee_opd} required placeholder="OPD fee" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>IPD Visit Fee (₹)</label>
+                        <input type="number" name="visit_fee_ipd_per_visit" defaultValue={selectedExpenseItem?.visit_fee_ipd_per_visit} placeholder="IPD per visit" />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Emergency Consultation (₹)</label>
+                        <input type="number" name="consultation_fee_emergency" defaultValue={selectedExpenseItem?.consultation_fee_emergency} placeholder="Emergency fee" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Experience (years)</label>
+                        <input type="number" name="experience" defaultValue={selectedExpenseItem?.experience} placeholder="Years of experience" />
+                      </div>
+                    </div>
+                    <div className="admin-form-group">
+                      <label>Status</label>
+                      <select name="status" defaultValue={selectedExpenseItem?.status || 'Active'}>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* Nursing & Staff Charges Form */}
+                {expenseSubSection === 'nursing' && (
+                  <>
+                    <div className="admin-form-group">
+                      <label>Service Name *</label>
+                      <input type="text" name="service_name" defaultValue={selectedExpenseItem?.service_name} required placeholder="e.g., Special Nursing Care" />
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Charge Type *</label>
+                        <select name="charge_type" defaultValue={selectedExpenseItem?.charge_type} required>
+                          <option value="">Select Type</option>
+                          <option value="per_day">Per Day</option>
+                          <option value="per_visit">Per Visit</option>
+                        </select>
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Charge Amount (₹) *</label>
+                        <input type="number" name="charge_amount" defaultValue={selectedExpenseItem?.charge_amount} required placeholder="Enter amount" />
+                      </div>
+                    </div>
+                    <div className="admin-form-group">
+                      <label>Status</label>
+                      <select name="status" defaultValue={selectedExpenseItem?.status || 'Active'}>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* Miscellaneous Services Form */}
+                {expenseSubSection === 'miscellaneous' && (
+                  <>
+                    <div className="admin-form-group">
+                      <label>Service Name *</label>
+                      <input type="text" name="service" defaultValue={selectedExpenseItem?.service} required placeholder="e.g., Ambulance Service" />
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Charge (₹) *</label>
+                        <input type="number" name="charge" defaultValue={selectedExpenseItem?.charge} required placeholder="Enter charge" />
+                      </div>
+                      <div className="admin-form-group">
+                        <label>Status</label>
+                        <select name="status" defaultValue={selectedExpenseItem?.status || 'Active'}>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="admin-modal-actions">
+                  <button type="button" className="admin-btn-secondary" onClick={closeExpenseModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="admin-btn-primary">
+                    {expenseModalMode === 'add' ? 'Add' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
