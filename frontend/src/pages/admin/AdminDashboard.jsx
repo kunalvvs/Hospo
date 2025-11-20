@@ -100,6 +100,22 @@ const AdminDashboard = () => {
   const [pricingFormData, setPricingFormData] = useState({});
   const [documentsFormData, setDocumentsFormData] = useState({});
 
+  // Pathlab Management States
+  const [pathlabSectionTab, setPathlabSectionTab] = useState('labs'); // 'labs', 'tests', 'orders'
+  const [expandedPathlabId, setExpandedPathlabId] = useState(null);
+  const [expandedTestId, setExpandedTestId] = useState(null);
+  const [expandedLabOrderId, setExpandedLabOrderId] = useState(null);
+  const [pathlabManagementTab, setPathlabManagementTab] = useState('kyc'); // 'kyc'
+  const [testManagementTab, setTestManagementTab] = useState('details'); // 'details', 'pricing', 'reference'
+  const [isEditingLabKyc, setIsEditingLabKyc] = useState(false);
+  const [isEditingTestDetails, setIsEditingTestDetails] = useState(false);
+  const [isEditingTestPricing, setIsEditingTestPricing] = useState(false);
+  const [isEditingTestReference, setIsEditingTestReference] = useState(false);
+  const [labKycFormData, setLabKycFormData] = useState({});
+  const [testDetailsFormData, setTestDetailsFormData] = useState({});
+  const [testPricingFormData, setTestPricingFormData] = useState({});
+  const [testReferenceFormData, setTestReferenceFormData] = useState({});
+
   // Toggle hospital row expansion
   const toggleHospitalExpansion = (hospitalId) => {
     if (expandedHospitalId === hospitalId) {
@@ -352,6 +368,71 @@ const AdminDashboard = () => {
   // Toggle medicine order row expansion
   const toggleOrderExpansion = (orderId) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+  };
+
+  // Toggle pathlab row expansion
+  const togglePathlabExpansion = (pathlabId) => {
+    if (expandedPathlabId === pathlabId) {
+      setExpandedPathlabId(null);
+      setIsEditingLabKyc(false);
+    } else {
+      setExpandedPathlabId(pathlabId);
+      setPathlabManagementTab('kyc');
+      setIsEditingLabKyc(false);
+    }
+  };
+
+  // Handle Lab KYC form save
+  const handleLabKycSave = (e, pathlabId) => {
+    e.preventDefault();
+    console.log('Saving Lab KYC data for pathlab:', pathlabId, labKycFormData);
+    alert('Lab KYC details updated successfully!');
+    setIsEditingLabKyc(false);
+  };
+
+  // Toggle test row expansion
+  const toggleTestExpansion = (testId) => {
+    if (expandedTestId === testId) {
+      setExpandedTestId(null);
+      setIsEditingTestDetails(false);
+      setIsEditingTestPricing(false);
+      setIsEditingTestReference(false);
+    } else {
+      setExpandedTestId(testId);
+      setTestManagementTab('details');
+      setIsEditingTestDetails(false);
+      setIsEditingTestPricing(false);
+      setIsEditingTestReference(false);
+    }
+  };
+
+  // Handle Test Details form save
+  const handleTestDetailsSave = (e, testId) => {
+    e.preventDefault();
+    console.log('Saving Test Details for test:', testId, testDetailsFormData);
+    alert('Test details updated successfully!');
+    setIsEditingTestDetails(false);
+  };
+
+  // Handle Test Pricing form save
+  const handleTestPricingSave = (e, testId) => {
+    e.preventDefault();
+    console.log('Saving Test Pricing for test:', testId, testPricingFormData);
+    alert('Test pricing updated successfully!');
+    setIsEditingTestPricing(false);
+  };
+
+  // Handle Test Reference Range form save
+  const handleTestReferenceSave = (e, testId) => {
+    e.preventDefault();
+    console.log('Saving Test Reference Range for test:', testId, testReferenceFormData);
+    alert('Test reference range updated successfully!');
+    setIsEditingTestReference(false);
+  };
+
+  // Toggle lab order row expansion
+  const toggleLabOrderExpansion = (orderId) => {
+    setExpandedLabOrderId(expandedLabOrderId === orderId ? null : orderId);
   };
 
   useEffect(() => {
@@ -1775,7 +1856,160 @@ const AdminDashboard = () => {
     }
   ]);
 
-  // Mock data for payments & transactions
+    // Extended mock data for pathlab KYC documents
+    const [pathlabsExtended] = useState([
+      {
+        id: 'LAB001',
+        name: 'PathCare Diagnostics',
+        owner: 'Dr. Suresh Mehta',
+        mobile: '9876543240',
+        email: 'pathcare@email.com',
+        city: 'Mumbai',
+        address: 'Plot 12, Andheri West',
+        licenseNumber: 'LAB-MH-2020-1001',
+        licenseExpiry: '2026-12-31',
+        regCertificate: 'REG-LAB-MH-001.pdf',
+        drugsLicense: 'DRUGS-LAB-MH-001.pdf',
+        clinicalEstablishment: 'CER-LAB-MH-001.pdf',
+        gstPan: '27AABCU9603R1ZX',
+        ownerIdentity: 'Aadhar-XXXX-XXXX',
+        totalTests: 285,
+        totalOrders: 2450,
+        kycStatus: 'approved',
+        status: 'active'
+      },
+      {
+        id: 'LAB002',
+        name: 'LifeLine Labs',
+        owner: 'Dr. Anjali Verma',
+        mobile: '9876543241',
+        email: 'lifeline.labs@email.com',
+        city: 'Delhi',
+        address: 'Sector 9, Rohini',
+        licenseNumber: 'LAB-DL-2021-1002',
+        licenseExpiry: '2027-06-30',
+        regCertificate: 'REG-LAB-DL-002.pdf',
+        drugsLicense: 'DRUGS-LAB-DL-002.pdf',
+        clinicalEstablishment: 'CER-LAB-DL-002.pdf',
+        gstPan: '07AABCU9603R1ZY',
+        ownerIdentity: 'PAN-AABCU9603R',
+        totalTests: 340,
+        totalOrders: 3890,
+        kycStatus: 'approved',
+        status: 'active'
+      },
+      {
+        id: 'LAB003',
+        name: 'HealthCheck Diagnostics',
+        owner: 'Dr. Ramesh Patel',
+        mobile: '9876543242',
+        email: 'healthcheck@email.com',
+        city: 'Bangalore',
+        address: 'MG Road',
+        licenseNumber: 'LAB-KA-2023-1003',
+        licenseExpiry: '2028-03-31',
+        regCertificate: 'REG-LAB-KA-003.pdf',
+        drugsLicense: 'DRUGS-LAB-KA-003.pdf',
+        clinicalEstablishment: 'CER-LAB-KA-003.pdf',
+        gstPan: '29AABCU9603R1ZZ',
+        ownerIdentity: 'Aadhar-YYYY-YYYY',
+        totalTests: 195,
+        totalOrders: 1120,
+        kycStatus: 'pending',
+        status: 'pending'
+      }
+    ]);
+
+    // Mock data for lab tests (Test Catalogue)
+    const [labTests] = useState([
+      {
+        id: 'TEST001',
+        testName: 'Complete Blood Count',
+        shortCode: 'CBC',
+        category: 'Hematology',
+        sampleType: 'Blood',
+        fastingRequired: 'No',
+        tat: '24 hrs',
+        price: 250,
+        discount: 0,
+        referenceRange: { male: '4.5-11.0 x10^9/L', female: '4.0-10.5 x10^9/L', child: '5.0-13.0 x10^9/L' },
+        instructions: 'No fasting required. Avoid heavy exercise before sample collection.',
+        status: 'active',
+        labId: 'LAB001'
+      },
+      {
+        id: 'TEST002',
+        testName: 'Lipid Profile',
+        shortCode: 'LIPID',
+        category: 'Biochemistry',
+        sampleType: 'Blood',
+        fastingRequired: 'Yes',
+        tat: '48 hrs',
+        price: 800,
+        discount: 10,
+        referenceRange: { male: 'Total Cholesterol <200 mg/dL', female: 'Total Cholesterol <200 mg/dL', child: 'Refer pediatric ranges' },
+        instructions: '12 hours fasting required. Avoid fatty meals prior to test.',
+        status: 'active',
+        labId: 'LAB002'
+      },
+      {
+        id: 'TEST003',
+        testName: 'Liver Function Test',
+        shortCode: 'LFT',
+        category: 'Biochemistry',
+        sampleType: 'Blood',
+        fastingRequired: 'No',
+        tat: '24 hrs',
+        price: 600,
+        discount: 5,
+        referenceRange: { male: 'ALT: 7-56 U/L', female: 'ALT: 7-56 U/L', child: 'Refer pediatric ranges' },
+        instructions: 'No heavy meal before test. Morning sample preferred.',
+        status: 'active',
+        labId: 'LAB001'
+      }
+    ]);
+
+    // Mock data for lab orders / bookings
+    const [labOrders] = useState([
+      {
+        id: 'ORDER001',
+        orderId: 'ORD-20241117001',
+        orderTime: '2024-11-17 09:05 AM',
+        patientName: 'Rahul Verma',
+        patientAge: 45,
+        patientGender: 'Male',
+        contactNumber: '9876543210',
+        hospitalRef: 'City General Hospital / Dr. Priya Sharma',
+        testsList: [ { testId: 'TEST001', testName: 'Complete Blood Count', status: 'Completed', reportFile: 'CBC-ORD001.pdf' }, { testId: 'TEST003', testName: 'Liver Function Test', status: 'Completed', reportFile: 'LFT-ORD001.pdf' } ],
+        sampleCollectionType: 'Home Collection',
+        collectionStatus: 'Collected',
+        paymentStatus: 'paid',
+        reportStatus: 'Delivered',
+        totalAmount: 850,
+        transactionId: 'TXN123458',
+        publishToPatientApp: true
+      },
+      {
+        id: 'ORDER002',
+        orderId: 'ORD-20241117002',
+        orderTime: '2024-11-17 11:30 AM',
+        patientName: 'Amit Kumar',
+        patientAge: 30,
+        patientGender: 'Male',
+        contactNumber: '9876543220',
+        hospitalRef: 'Max Hospital / Dr. Rajesh Kumar',
+        testsList: [ { testId: 'TEST002', testName: 'Lipid Profile', status: 'Pending', reportFile: null } ],
+        sampleCollectionType: 'Lab Visit',
+        collectionStatus: 'Pending',
+        paymentStatus: 'pending',
+        reportStatus: 'Pending',
+        totalAmount: 720,
+        transactionId: null,
+        publishToPatientApp: false
+      }
+    ]);
+
+    // Mock data for payments & transactions
   const [payments] = useState([
     {
       id: 'TXN123456',
@@ -7859,145 +8093,1057 @@ const menuSections = [
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>🔬 Pathlab Management</h2>
-                <button className="admin-add-btn" onClick={() => openModal('add', 'pathlabs')}>
-                  + Add Pathlab
-                </button>
-              </div>
-              
-              <div className="admin-filters">
-                <input 
-                  type="text" 
-                  placeholder="Search by lab name, license, owner..." 
-                  className="admin-search-input" 
-                />
-                <select className="admin-filter-select">
-                  <option value="">All Cities</option>
-                  <option value="mumbai">Mumbai</option>
-                  <option value="delhi">Delhi</option>
-                  <option value="bangalore">Bangalore</option>
-                  <option value="pune">Pune</option>
-                  <option value="hyderabad">Hyderabad</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">Sample Collection</option>
-                  <option value="yes">Available</option>
-                  <option value="no">Not Available</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="blocked">Blocked</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">KYC Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Lab ID</th>
-                      <th>Lab Name</th>
-                      <th>Owner Name</th>
-                      <th>City</th>
-                      <th>License Number</th>
-                      <th>License Expiry</th>
-                      <th>Total Tests</th>
-                      <th>Total Orders</th>
-                      <th>Rating</th>
-                      <th>Sample Collection</th>
-                      <th>KYC Status</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pathlabs.map(lab => (
-                      <tr key={lab.id}>
-                        <td>{lab.id}</td>
-                        <td>{lab.name}</td>
-                        <td>{lab.owner}</td>
-                        <td>{lab.city}</td>
-                        <td><small>{lab.license}</small></td>
-                        <td>{new Date(lab.licenseExpiry).toLocaleDateString('en-IN')}</td>
-                        <td>{lab.totalTests}</td>
-                        <td>{lab.totalOrders}</td>
-                        <td>
-                          {lab.rating > 0 ? (
-                            <span style={{color: '#f59e0b'}}>⭐ {lab.rating}</span>
-                          ) : (
-                            <span style={{color: '#9ca3af'}}>No rating</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className={`admin-collection-badge ${lab.sampleCollection}`}>
-                            {lab.sampleCollection === 'yes' ? 'Available' : 'Not Available'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${lab.kycStatus}`}>
-                            {lab.kycStatus.charAt(0).toUpperCase() + lab.kycStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${lab.status}`}>
-                            {lab.status.charAt(0).toUpperCase() + lab.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Details"
-                            onClick={() => openModal('view', 'pathlabs', lab)}
-                          >
-                            👁️
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Tests"
-                            onClick={() => alert('View test catalog for ' + lab.name)}
-                          >
-                            🧪
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Edit"
-                            onClick={() => openModal('edit', 'pathlabs', lab)}
-                          >
-                            ✏️
-                          </button>
-                          {lab.status === 'pending' ? (
-                            <>
-                              <button className="admin-icon-btn" title="Approve">✅</button>
-                              <button className="admin-icon-btn" title="Reject">❌</button>
-                            </>
-                          ) : lab.status !== 'blocked' ? (
-                            <button className="admin-icon-btn" title="Block">🚫</button>
-                          ) : (
-                            <button className="admin-icon-btn" title="Unblock">✅</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="admin-section-footer">
-                <p>Showing {pathlabs.length} pathlabs</p>
-                <div className="admin-pagination">
-                  <button className="admin-page-btn">Previous</button>
-                  <button className="admin-page-btn admin-active-page">1</button>
-                  <button className="admin-page-btn">2</button>
-                  <button className="admin-page-btn">Next</button>
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button className="admin-add-btn">+ Add Lab</button>
+                  <button className="admin-add-btn">+ Add Test</button>
                 </div>
               </div>
+
+              {/* Three Main Tabs */}
+              <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                <button 
+                  onClick={() => setPathlabSectionTab('labs')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: pathlabSectionTab === 'labs' ? '#234f83' : 'transparent',
+                    color: pathlabSectionTab === 'labs' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: pathlabSectionTab === 'labs' ? 'bold' : 'normal'
+                  }}
+                >
+                  🔬 Labs / KYC Documents
+                </button>
+                <button 
+                  onClick={() => setPathlabSectionTab('tests')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: pathlabSectionTab === 'tests' ? '#234f83' : 'transparent',
+                    color: pathlabSectionTab === 'tests' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: pathlabSectionTab === 'tests' ? 'bold' : 'normal'
+                  }}
+                >
+                  🧪 Test Catalogue
+                </button>
+                <button 
+                  onClick={() => setPathlabSectionTab('orders')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: pathlabSectionTab === 'orders' ? '#234f83' : 'transparent',
+                    color: pathlabSectionTab === 'orders' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: pathlabSectionTab === 'orders' ? 'bold' : 'normal'
+                  }}
+                >
+                  📋 Lab Orders
+                </button>
+              </div>
+
+              {/* LABS TAB */}
+              {pathlabSectionTab === 'labs' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by lab name, owner..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Cities</option>
+                      <option value="mumbai">Mumbai</option>
+                      <option value="delhi">Delhi</option>
+                      <option value="bangalore">Bangalore</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">KYC Status</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Lab ID</th>
+                          <th>Lab Name</th>
+                          <th>Owner</th>
+                          <th>Mobile</th>
+                          <th>City</th>
+                          <th>Total Tests</th>
+                          <th>Total Orders</th>
+                          <th>KYC Status</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pathlabsExtended.map(lab => (
+                          <React.Fragment key={lab.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => togglePathlabExpansion(lab.id)}>
+                              <td>{lab.id}</td>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{lab.name}</td>
+                              <td>{lab.owner}</td>
+                              <td>{lab.mobile}</td>
+                              <td>{lab.city}</td>
+                              <td>{lab.totalTests}</td>
+                              <td>{lab.totalOrders}</td>
+                              <td>
+                                <span className={`admin-status-badge ${lab.kycStatus === 'approved' ? 'active' : lab.kycStatus}`}>
+                                  {lab.kycStatus.charAt(0).toUpperCase() + lab.kycStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${lab.status}`}>
+                                  {lab.status.charAt(0).toUpperCase() + lab.status.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedPathlabId === lab.id ? '🔼' : '🔽'}
+                                </button>
+                                <button className="admin-icon-btn" title="View Tests">🧪</button>
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Lab KYC Documents */}
+                            {expandedPathlabId === lab.id && (
+                              <tr>
+                                <td colSpan="10" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📄 Lab KYC Documents</h3>
+                                      {!isEditingLabKyc ? (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          onClick={() => {
+                                            setIsEditingLabKyc(true);
+                                            setLabKycFormData({
+                                              email: lab.email,
+                                              address: lab.address,
+                                              licenseNumber: lab.licenseNumber,
+                                              licenseExpiry: lab.licenseExpiry,
+                                              regCertificate: lab.regCertificate,
+                                              drugsLicense: lab.drugsLicense,
+                                              clinicalEstablishment: lab.clinicalEstablishment,
+                                              gstPan: lab.gstPan,
+                                              ownerIdentity: lab.ownerIdentity
+                                            });
+                                          }}
+                                          style={{padding: '8px 16px'}}
+                                        >
+                                          ✏️ Edit KYC
+                                        </button>
+                                      ) : null}
+                                    </div>
+
+                                    {isEditingLabKyc ? (
+                                      <form onSubmit={(e) => handleLabKycSave(e, lab.id)}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Email *</label>
+                                            <input 
+                                              type="email" 
+                                              value={labKycFormData.email || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, email: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Address *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.address || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, address: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>License Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.licenseNumber || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, licenseNumber: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>License Expiry *</label>
+                                            <input 
+                                              type="date" 
+                                              value={labKycFormData.licenseExpiry || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, licenseExpiry: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Lab Registration Certificate *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.regCertificate || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, regCertificate: e.target.value})}
+                                              placeholder="Upload filename or URL"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Drugs & Diagnostic License *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.drugsLicense || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, drugsLicense: e.target.value})}
+                                              placeholder="Upload filename or URL"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Clinical Establishment Registration *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.clinicalEstablishment || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, clinicalEstablishment: e.target.value})}
+                                              placeholder="Upload filename or URL"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>GST/PAN *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.gstPan || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, gstPan: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Owner Identity *</label>
+                                            <input 
+                                              type="text" 
+                                              value={labKycFormData.ownerIdentity || ''} 
+                                              onChange={(e) => setLabKycFormData({...labKycFormData, ownerIdentity: e.target.value})}
+                                              placeholder="Aadhar/PAN"
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingLabKyc(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Email:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.email}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Address:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.address}, {lab.city}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>License Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.licenseNumber}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>License Expiry:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{new Date(lab.licenseExpiry).toLocaleDateString('en-IN')}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Lab Registration Certificate:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.regCertificate}</p>
+                                          <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Drugs & Diagnostic License:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.drugsLicense}</p>
+                                          <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Clinical Establishment Reg:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.clinicalEstablishment}</p>
+                                          <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>GST/PAN:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.gstPan}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Owner Identity:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{lab.ownerIdentity}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {pathlabsExtended.length} labs</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TESTS TAB */}
+              {pathlabSectionTab === 'tests' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by test name, code..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Categories</option>
+                      <option value="biochemistry">Biochemistry</option>
+                      <option value="hematology">Hematology</option>
+                      <option value="serology">Serology</option>
+                      <option value="microbiology">Microbiology</option>
+                      <option value="radiology">Radiology</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Sample Type</option>
+                      <option value="blood">Blood</option>
+                      <option value="urine">Urine</option>
+                      <option value="stool">Stool</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Test ID</th>
+                          <th>Test Name</th>
+                          <th>Short Code</th>
+                          <th>Category</th>
+                          <th>Sample Type</th>
+                          <th>Fasting</th>
+                          <th>TAT</th>
+                          <th>Price (₹)</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labTests.map(test => (
+                          <React.Fragment key={test.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => toggleTestExpansion(test.id)}>
+                              <td>{test.id}</td>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{test.testName}</td>
+                              <td>{test.shortCode}</td>
+                              <td>
+                                <span className="admin-status-badge active" style={{fontSize: '12px'}}>
+                                  {test.category}
+                                </span>
+                              </td>
+                              <td>{test.sampleType}</td>
+                              <td>{test.fastingRequired === 'Yes' ? '✅' : '❌'}</td>
+                              <td>{test.tat}</td>
+                              <td style={{fontWeight: 'bold'}}>₹{test.price}</td>
+                              <td>
+                                <span className={`admin-status-badge ${test.status}`}>
+                                  {test.status.charAt(0).toUpperCase() + test.status.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedTestId === test.id ? '🔼' : '🔽'}
+                                </button>
+                                <button className="admin-icon-btn" title="Edit">✏️</button>
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Test Details with 3 Sub-tabs */}
+                            {expandedTestId === test.id && (
+                              <tr>
+                                <td colSpan="10" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    
+                                    {/* Test Sub-tabs */}
+                                    <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                      <button 
+                                        onClick={() => setTestManagementTab('details')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: testManagementTab === 'details' ? '#234f83' : 'transparent',
+                                          color: testManagementTab === 'details' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: testManagementTab === 'details' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        📋 Test Details
+                                      </button>
+                                      <button 
+                                        onClick={() => setTestManagementTab('pricing')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: testManagementTab === 'pricing' ? '#234f83' : 'transparent',
+                                          color: testManagementTab === 'pricing' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: testManagementTab === 'pricing' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        💰 Pricing
+                                      </button>
+                                      <button 
+                                        onClick={() => setTestManagementTab('reference')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: testManagementTab === 'reference' ? '#234f83' : 'transparent',
+                                          color: testManagementTab === 'reference' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: testManagementTab === 'reference' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        📊 Reference Range
+                                      </button>
+                                    </div>
+
+                                    {/* Test Details Sub-tab */}
+                                    {testManagementTab === 'details' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>📋 Test Details</h3>
+                                          {!isEditingTestDetails ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingTestDetails(true);
+                                                setTestDetailsFormData({
+                                                  testName: test.testName,
+                                                  shortCode: test.shortCode,
+                                                  category: test.category,
+                                                  sampleType: test.sampleType,
+                                                  fastingRequired: test.fastingRequired,
+                                                  tat: test.tat,
+                                                  instructions: test.instructions
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Details
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingTestDetails ? (
+                                          <form onSubmit={(e) => handleTestDetailsSave(e, test.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>Test Name *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testDetailsFormData.testName || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, testName: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Short Code *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testDetailsFormData.shortCode || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, shortCode: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Category *</label>
+                                                <select 
+                                                  value={testDetailsFormData.category || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, category: e.target.value})}
+                                                  required
+                                                  style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%'}}
+                                                >
+                                                  <option value="">Select Category</option>
+                                                  <option value="Biochemistry">Biochemistry</option>
+                                                  <option value="Hematology">Hematology</option>
+                                                  <option value="Serology">Serology</option>
+                                                  <option value="Microbiology">Microbiology</option>
+                                                  <option value="Radiology">Radiology</option>
+                                                </select>
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Sample Type *</label>
+                                                <select 
+                                                  value={testDetailsFormData.sampleType || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, sampleType: e.target.value})}
+                                                  required
+                                                  style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%'}}
+                                                >
+                                                  <option value="">Select Sample Type</option>
+                                                  <option value="Blood">Blood</option>
+                                                  <option value="Urine">Urine</option>
+                                                  <option value="Stool">Stool</option>
+                                                  <option value="Image">Image/Radiology</option>
+                                                </select>
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Fasting Required *</label>
+                                                <select 
+                                                  value={testDetailsFormData.fastingRequired || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, fastingRequired: e.target.value})}
+                                                  required
+                                                  style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%'}}
+                                                >
+                                                  <option value="Yes">Yes</option>
+                                                  <option value="No">No</option>
+                                                </select>
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Report TAT *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testDetailsFormData.tat || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, tat: e.target.value})}
+                                                  placeholder="e.g., 24 hrs"
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                                <label>Test Instructions</label>
+                                                <textarea 
+                                                  value={testDetailsFormData.instructions || ''} 
+                                                  onChange={(e) => setTestDetailsFormData({...testDetailsFormData, instructions: e.target.value})}
+                                                  rows="3"
+                                                  style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%'}}
+                                                  placeholder="Special instructions, fasting hours, precautions..."
+                                                />
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingTestDetails(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Test Name:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.testName}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Short Code:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.shortCode}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Category:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.category}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Sample Type:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.sampleType}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Fasting Required:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.fastingRequired}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Report TAT:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.tat}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                              <strong style={{color: '#666'}}>Instructions:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.instructions}</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Pricing Sub-tab */}
+                                    {testManagementTab === 'pricing' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>💰 Test Pricing</h3>
+                                          {!isEditingTestPricing ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingTestPricing(true);
+                                                setTestPricingFormData({
+                                                  price: test.price,
+                                                  discount: test.discount
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Pricing
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingTestPricing ? (
+                                          <form onSubmit={(e) => handleTestPricingSave(e, test.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>Price / MRP (₹) *</label>
+                                                <input 
+                                                  type="number" 
+                                                  value={testPricingFormData.price || ''} 
+                                                  onChange={(e) => setTestPricingFormData({...testPricingFormData, price: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Discount (%) </label>
+                                                <input 
+                                                  type="number" 
+                                                  value={testPricingFormData.discount || ''} 
+                                                  onChange={(e) => setTestPricingFormData({...testPricingFormData, discount: e.target.value})}
+                                                  placeholder="Optional discount percentage"
+                                                />
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingTestPricing(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>MRP:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#234f83'}}>₹{test.price}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Discount:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#10b981'}}>{test.discount}%</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#d1fae5', borderRadius: '8px', border: '2px solid #10b981'}}>
+                                              <strong style={{color: '#666'}}>Final Price:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#234f83'}}>
+                                                ₹{test.price - (test.price * test.discount / 100)}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Reference Range Sub-tab */}
+                                    {testManagementTab === 'reference' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>📊 Reference Range</h3>
+                                          {!isEditingTestReference ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingTestReference(true);
+                                                setTestReferenceFormData({
+                                                  male: test.referenceRange.male || '',
+                                                  female: test.referenceRange.female || '',
+                                                  child: test.referenceRange.child || ''
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Reference Range
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingTestReference ? (
+                                          <form onSubmit={(e) => handleTestReferenceSave(e, test.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>Male Reference Range</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testReferenceFormData.male || ''} 
+                                                  onChange={(e) => setTestReferenceFormData({...testReferenceFormData, male: e.target.value})}
+                                                  placeholder="e.g., 4.5-11.0 x10^9/L"
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Female Reference Range</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testReferenceFormData.female || ''} 
+                                                  onChange={(e) => setTestReferenceFormData({...testReferenceFormData, female: e.target.value})}
+                                                  placeholder="e.g., 4.0-10.5 x10^9/L"
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Child Reference Range</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={testReferenceFormData.child || ''} 
+                                                  onChange={(e) => setTestReferenceFormData({...testReferenceFormData, child: e.target.value})}
+                                                  placeholder="e.g., 5.0-13.0 x10^9/L"
+                                                />
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingTestReference(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Male Reference Range:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.referenceRange.male || 'Not specified'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Female Reference Range:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.referenceRange.female || 'Not specified'}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Child Reference Range:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{test.referenceRange.child || 'Not specified'}</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {labTests.length} tests</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ORDERS TAB */}
+              {pathlabSectionTab === 'orders' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by order ID, patient name..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">Collection Type</option>
+                      <option value="home">Home Collection</option>
+                      <option value="lab">Lab Visit</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Collection Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="collected">Collected</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Report Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Payment Status</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Order Time</th>
+                          <th>Patient Name</th>
+                          <th>Contact</th>
+                          <th>Hospital/Doctor</th>
+                          <th>Tests Count</th>
+                          <th>Collection</th>
+                          <th>Report Status</th>
+                          <th>Payment</th>
+                          <th>Total (₹)</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labOrders.map(order => (
+                          <React.Fragment key={order.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => toggleLabOrderExpansion(order.id)}>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{order.orderId}</td>
+                              <td>{order.orderTime}</td>
+                              <td>{order.patientName}</td>
+                              <td>{order.contactNumber}</td>
+                              <td><small>{order.hospitalRef}</small></td>
+                              <td>{order.testsList.length}</td>
+                              <td>
+                                <span className={`admin-status-badge ${order.collectionStatus === 'Collected' ? 'active' : 'pending'}`}>
+                                  {order.collectionStatus}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${order.reportStatus === 'Delivered' ? 'active' : order.reportStatus === 'Completed' ? 'active' : 'pending'}`}>
+                                  {order.reportStatus}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${order.paymentStatus === 'paid' ? 'active' : 'pending'}`}>
+                                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td style={{fontWeight: 'bold'}}>₹{order.totalAmount}</td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedLabOrderId === order.id ? '🔼' : '🔽'}
+                                </button>
+                                <button className="admin-icon-btn" title="Upload Report">📤</button>
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Order Details */}
+                            {expandedLabOrderId === order.id && (
+                              <tr>
+                                <td colSpan="11" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    
+                                    <h3 style={{margin: '0 0 20px 0', color: '#234f83'}}>📋 Lab Order Details - {order.orderId}</h3>
+
+                                    {/* Patient Information */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>👤 Patient Information</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Patient Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.patientName}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Age:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.patientAge} years</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Gender:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.patientGender}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Contact:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.contactNumber}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                          <strong style={{color: '#666'}}>Hospital/Doctor Reference:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.hospitalRef}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Tests List */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>🧪 Ordered Tests</h4>
+                                      <table className="admin-table" style={{marginTop: 0}}>
+                                        <thead>
+                                          <tr>
+                                            <th>Test ID</th>
+                                            <th>Test Name</th>
+                                            <th>Status</th>
+                                            <th>Report File</th>
+                                            <th>Actions</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {order.testsList.map((test, idx) => (
+                                            <tr key={idx}>
+                                              <td>{test.testId}</td>
+                                              <td>{test.testName}</td>
+                                              <td>
+                                                <span className={`admin-status-badge ${test.status === 'Completed' ? 'active' : test.status === 'Collected' ? 'pending' : 'rejected'}`}>
+                                                  {test.status}
+                                                </span>
+                                              </td>
+                                              <td>
+                                                {test.reportFile ? (
+                                                  <span style={{color: '#10b981'}}>✅ {test.reportFile}</span>
+                                                ) : (
+                                                  <span style={{color: '#9ca3af'}}>Not uploaded</span>
+                                                )}
+                                              </td>
+                                              <td>
+                                                {test.reportFile ? (
+                                                  <button className="admin-btn-secondary" style={{padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                                ) : (
+                                                  <button className="admin-btn-primary" style={{padding: '6px 12px', fontSize: '13px'}}>📤 Upload Report</button>
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+
+                                    {/* Sample Collection */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>🩸 Sample Collection</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Collection Type:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.sampleCollectionType}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Collection Status:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            <span className={`admin-status-badge ${order.collectionStatus === 'Collected' ? 'active' : 'pending'}`}>
+                                              {order.collectionStatus}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Payment Information */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>💳 Payment Information</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Total Amount:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#234f83'}}>₹{order.totalAmount}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Payment Status:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            <span className={`admin-status-badge ${order.paymentStatus === 'paid' ? 'active' : 'pending'}`}>
+                                              {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                                            </span>
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Transaction ID:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{order.transactionId || 'N/A'}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Report Status & Publishing */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>📄 Report Status & Publishing</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Report Status:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            <span className={`admin-status-badge ${order.reportStatus === 'Delivered' ? 'active' : order.reportStatus === 'Completed' ? 'active' : 'pending'}`}>
+                                              {order.reportStatus}
+                                            </span>
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: order.publishToPatientApp ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Published to Patient App:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px'}}>
+                                            {order.publishToPatientApp ? '✅ Yes' : '❌ No'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div style={{marginTop: '25px', display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                                      {order.collectionStatus === 'Pending' && (
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✅ Mark as Collected</button>
+                                      )}
+                                      {order.reportStatus === 'Pending' && order.collectionStatus === 'Collected' && (
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>🔄 Update to In Progress</button>
+                                      )}
+                                      {order.reportStatus === 'In Progress' && (
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✅ Mark as Completed</button>
+                                      )}
+                                      {order.reportStatus === 'Completed' && !order.publishToPatientApp && (
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>📱 Publish to Patient App</button>
+                                      )}
+                                      <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📤 Upload All Reports</button>
+                                      <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📥 Download Reports</button>
+                                      <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📞 Call Patient</button>
+                                    </div>
+
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {labOrders.length} orders</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
