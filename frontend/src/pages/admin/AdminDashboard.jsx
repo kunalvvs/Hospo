@@ -26,6 +26,51 @@ const AdminDashboard = () => {
   const [operationalFormData, setOperationalFormData] = useState({});
   const [commissionFormData, setCommissionFormData] = useState({});
   
+  // Expandable doctor row state
+  const [expandedDoctorId, setExpandedDoctorId] = useState(null);
+  const [doctorManagementTab, setDoctorManagementTab] = useState('professional'); // 'professional', 'hospitalLinks', 'consultationFees', 'availability', 'kyc'
+  
+  // Edit mode states for doctor sections
+  const [isEditingProfessional, setIsEditingProfessional] = useState(false);
+  const [isEditingHospitalLinks, setIsEditingHospitalLinks] = useState(false);
+  const [isEditingConsultationFees, setIsEditingConsultationFees] = useState(false);
+  const [isEditingAvailability, setIsEditingAvailability] = useState(false);
+  const [isEditingDoctorKyc, setIsEditingDoctorKyc] = useState(false);
+  const [professionalFormData, setProfessionalFormData] = useState({});
+  const [hospitalLinksFormData, setHospitalLinksFormData] = useState({});
+  const [consultationFeesFormData, setConsultationFeesFormData] = useState({});
+  const [availabilityFormData, setAvailabilityFormData] = useState({});
+  const [doctorKycFormData, setDoctorKycFormData] = useState({});
+  
+  // Expandable patient row state
+  const [expandedPatientId, setExpandedPatientId] = useState(null);
+  const [patientManagementTab, setPatientManagementTab] = useState('basicInfo'); // 'basicInfo', 'familyMembers', 'appointmentHistory', 'emergencyContact'
+  
+  // Edit mode states for patient sections
+  const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
+  const [isEditingFamilyMembers, setIsEditingFamilyMembers] = useState(false);
+  const [isEditingEmergencyContact, setIsEditingEmergencyContact] = useState(false);
+  const [basicInfoFormData, setBasicInfoFormData] = useState({});
+  const [familyMembersFormData, setFamilyMembersFormData] = useState({});
+  const [emergencyContactFormData, setEmergencyContactFormData] = useState({});
+  
+  // Expandable appointment row state
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState(null);
+  
+  // Expandable chemist row state
+  const [expandedChemistId, setExpandedChemistId] = useState(null);
+  const [chemistSectionTab, setChemistSectionTab] = useState('pharmacies'); // pharmacies or orders
+  const [chemistManagementTab, setChemistManagementTab] = useState('license'); // 'license', 'service', 'financials', 'products'
+  const [isEditingLicense, setIsEditingLicense] = useState(false);
+  const [isEditingService, setIsEditingService] = useState(false);
+  const [isEditingFinancials, setIsEditingFinancials] = useState(false);
+  const [licenseFormData, setLicenseFormData] = useState({});
+  const [serviceFormData, setServiceFormData] = useState({});
+  const [financialsFormData, setFinancialsFormData] = useState({});
+  
+  // Expandable medicine order row state
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  
   // Hospital form dropdown states
   const [showKycSection, setShowKycSection] = useState(false);
   const [showOperationalSection, setShowOperationalSection] = useState(false);
@@ -37,6 +82,23 @@ const AdminDashboard = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseModalMode, setExpenseModalMode] = useState('add'); // 'add', 'edit'
   const [selectedExpenseItem, setSelectedExpenseItem] = useState(null);
+
+  // Ambulance Management States
+  const [ambulanceSectionTab, setAmbulanceSectionTab] = useState('providers'); // 'providers', 'vehicles', 'bookings'
+  const [expandedProviderId, setExpandedProviderId] = useState(null);
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [expandedBookingId, setExpandedBookingId] = useState(null);
+  const [vehicleManagementTab, setVehicleManagementTab] = useState('basic'); // 'basic', 'equipment', 'pricing', 'documents'
+  const [isEditingProviderKyc, setIsEditingProviderKyc] = useState(false);
+  const [isEditingVehicleBasic, setIsEditingVehicleBasic] = useState(false);
+  const [isEditingEquipment, setIsEditingEquipment] = useState(false);
+  const [isEditingPricing, setIsEditingPricing] = useState(false);
+  const [isEditingDocuments, setIsEditingDocuments] = useState(false);
+  const [providerKycFormData, setProviderKycFormData] = useState({});
+  const [vehicleBasicFormData, setVehicleBasicFormData] = useState({});
+  const [equipmentFormData, setEquipmentFormData] = useState({});
+  const [pricingFormData, setPricingFormData] = useState({});
+  const [documentsFormData, setDocumentsFormData] = useState({});
 
   // Toggle hospital row expansion
   const toggleHospitalExpansion = (hospitalId) => {
@@ -78,6 +140,218 @@ const AdminDashboard = () => {
     alert('Commission details updated successfully!');
     setIsEditingCommission(false);
     // Here you would update the hospital data in state
+  };
+
+  // Toggle doctor row expansion
+  const toggleDoctorExpansion = (doctorId) => {
+    if (expandedDoctorId === doctorId) {
+      setExpandedDoctorId(null);
+      // Reset edit modes when closing
+      setIsEditingProfessional(false);
+      setIsEditingHospitalLinks(false);
+      setIsEditingConsultationFees(false);
+      setIsEditingAvailability(false);
+      setIsEditingDoctorKyc(false);
+    } else {
+      setExpandedDoctorId(doctorId);
+      setDoctorManagementTab('professional'); // Default to Professional Info tab
+      // Reset edit modes when opening new doctor
+      setIsEditingProfessional(false);
+      setIsEditingHospitalLinks(false);
+      setIsEditingConsultationFees(false);
+      setIsEditingAvailability(false);
+      setIsEditingDoctorKyc(false);
+    }
+  };
+
+  // Handle Professional Info form save
+  const handleProfessionalSave = (doctorId) => {
+    console.log('Saving Professional data for doctor:', doctorId, professionalFormData);
+    alert('Professional details updated successfully!');
+    setIsEditingProfessional(false);
+  };
+
+  // Handle Hospital Links form save
+  const handleHospitalLinksSave = (doctorId) => {
+    console.log('Saving Hospital Links data for doctor:', doctorId, hospitalLinksFormData);
+    alert('Hospital links updated successfully!');
+    setIsEditingHospitalLinks(false);
+  };
+
+  // Handle Consultation Fees form save
+  const handleConsultationFeesSave = (doctorId) => {
+    console.log('Saving Consultation Fees data for doctor:', doctorId, consultationFeesFormData);
+    alert('Consultation fees updated successfully!');
+    setIsEditingConsultationFees(false);
+  };
+
+  // Handle Availability form save
+  const handleAvailabilitySave = (doctorId) => {
+    console.log('Saving Availability data for doctor:', doctorId, availabilityFormData);
+    alert('Availability updated successfully!');
+    setIsEditingAvailability(false);
+  };
+
+  // Handle Doctor KYC form save
+  const handleDoctorKycSave = (doctorId) => {
+    console.log('Saving KYC data for doctor:', doctorId, doctorKycFormData);
+    alert('KYC details updated successfully!');
+    setIsEditingDoctorKyc(false);
+  };
+
+  // Toggle patient row expansion
+  const togglePatientExpansion = (patientId) => {
+    if (expandedPatientId === patientId) {
+      setExpandedPatientId(null);
+      // Reset edit modes when closing
+      setIsEditingBasicInfo(false);
+      setIsEditingFamilyMembers(false);
+      setIsEditingEmergencyContact(false);
+    } else {
+      setExpandedPatientId(patientId);
+      setPatientManagementTab('basicInfo'); // Default to Basic Info tab
+      // Reset edit modes when opening new patient
+      setIsEditingBasicInfo(false);
+      setIsEditingFamilyMembers(false);
+      setIsEditingEmergencyContact(false);
+    }
+  };
+
+  // Handle Basic Info form save
+  const handleBasicInfoSave = (patientId) => {
+    console.log('Saving Basic Info data for patient:', patientId, basicInfoFormData);
+    alert('Basic information updated successfully!');
+    setIsEditingBasicInfo(false);
+  };
+
+  // Handle Family Members form save
+  const handleFamilyMembersSave = (patientId) => {
+    console.log('Saving Family Members data for patient:', patientId, familyMembersFormData);
+    alert('Family members updated successfully!');
+    setIsEditingFamilyMembers(false);
+  };
+
+  // Handle Emergency Contact form save
+  const handleEmergencyContactSave = (patientId) => {
+    console.log('Saving Emergency Contact data for patient:', patientId, emergencyContactFormData);
+    alert('Emergency contact updated successfully!');
+    setIsEditingEmergencyContact(false);
+  };
+
+  // Toggle appointment row expansion
+  const toggleAppointmentExpansion = (appointmentId) => {
+    setExpandedAppointmentId(expandedAppointmentId === appointmentId ? null : appointmentId);
+  };
+
+  // Toggle chemist row expansion
+  const toggleChemistExpansion = (chemistId) => {
+    if (expandedChemistId === chemistId) {
+      setExpandedChemistId(null);
+      setIsEditingLicense(false);
+      setIsEditingService(false);
+      setIsEditingFinancials(false);
+    } else {
+      setExpandedChemistId(chemistId);
+      setChemistManagementTab('license');
+      setIsEditingLicense(false);
+      setIsEditingService(false);
+      setIsEditingFinancials(false);
+    }
+  };
+
+  // Handle License form save
+  const handleLicenseSave = (chemistId) => {
+    console.log('Saving License data for chemist:', chemistId, licenseFormData);
+    alert('License details updated successfully!');
+    setIsEditingLicense(false);
+  };
+
+  // Handle Service form save
+  const handleServiceSave = (chemistId) => {
+    console.log('Saving Service data for chemist:', chemistId, serviceFormData);
+    alert('Service settings updated successfully!');
+    setIsEditingService(false);
+  };
+
+  // Handle Financials form save
+  const handleFinancialsSave = (chemistId) => {
+    console.log('Saving Financials data for chemist:', chemistId, financialsFormData);
+    alert('Financial details updated successfully!');
+    setIsEditingFinancials(false);
+  };
+
+  // Toggle provider row expansion
+  const toggleProviderExpansion = (providerId) => {
+    if (expandedProviderId === providerId) {
+      setExpandedProviderId(null);
+      setIsEditingProviderKyc(false);
+    } else {
+      setExpandedProviderId(providerId);
+      setIsEditingProviderKyc(false);
+    }
+  };
+
+  // Handle Provider KYC form save
+  const handleProviderKycSave = (providerId) => {
+    console.log('Saving Provider KYC data:', providerId, providerKycFormData);
+    alert('Provider KYC details updated successfully!');
+    setIsEditingProviderKyc(false);
+  };
+
+  // Toggle vehicle row expansion
+  const toggleVehicleExpansion = (vehicleId) => {
+    if (expandedVehicleId === vehicleId) {
+      setExpandedVehicleId(null);
+      setIsEditingVehicleBasic(false);
+      setIsEditingEquipment(false);
+      setIsEditingPricing(false);
+      setIsEditingDocuments(false);
+    } else {
+      setExpandedVehicleId(vehicleId);
+      setVehicleManagementTab('basic');
+      setIsEditingVehicleBasic(false);
+      setIsEditingEquipment(false);
+      setIsEditingPricing(false);
+      setIsEditingDocuments(false);
+    }
+  };
+
+  // Handle Vehicle Basic form save
+  const handleVehicleBasicSave = (vehicleId) => {
+    console.log('Saving Vehicle Basic data:', vehicleId, vehicleBasicFormData);
+    alert('Vehicle basic details updated successfully!');
+    setIsEditingVehicleBasic(false);
+  };
+
+  // Handle Equipment form save
+  const handleEquipmentSave = (vehicleId) => {
+    console.log('Saving Equipment data:', vehicleId, equipmentFormData);
+    alert('Equipment details updated successfully!');
+    setIsEditingEquipment(false);
+  };
+
+  // Handle Pricing form save
+  const handlePricingSave = (vehicleId) => {
+    console.log('Saving Pricing data:', vehicleId, pricingFormData);
+    alert('Pricing details updated successfully!');
+    setIsEditingPricing(false);
+  };
+
+  // Handle Documents form save
+  const handleDocumentsSave = (vehicleId) => {
+    console.log('Saving Documents data:', vehicleId, documentsFormData);
+    alert('Documents updated successfully!');
+    setIsEditingDocuments(false);
+  };
+
+  // Toggle booking row expansion
+  const toggleBookingExpansion = (bookingId) => {
+    setExpandedBookingId(expandedBookingId === bookingId ? null : bookingId);
+  };
+
+  // Toggle medicine order row expansion
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
   useEffect(() => {
@@ -238,6 +512,85 @@ const AdminDashboard = () => {
       status: 'blocked',
       familyMembers: 0,
       city: 'Chennai'
+    }
+  ]);
+
+  // Mock data for medicine orders
+  const [medicineOrders] = useState([
+    {
+      id: 'ORD001',
+      date: '2024-11-17',
+      time: '10:45 AM',
+      userName: 'Rahul Verma',
+      userId: 'PAT001',
+      pharmacyName: 'MedPlus Pharmacy',
+      pharmacyId: 'CHM001',
+      type: 'With Prescription',
+      prescriptionFile: 'presc_ORD001.pdf',
+      items: [
+        { id: 'MED001', name: 'Paracetamol 500mg', qty: 2, mrp: 25, discount: 0, finalPrice: 50 },
+        { id: 'MED010', name: 'Cough Syrup', qty: 1, mrp: 145, discount: 10, finalPrice: 130 }
+      ],
+      totalAmount: 180,
+      deliveryAddress: '12, MG Road, Mumbai, 400001',
+      deliveryMode: 'Home Delivery',
+      paymentMethod: 'Razorpay',
+      paymentStatus: 'paid',
+      orderStatus: 'delivered',
+      statusLogs: [
+        { time: '2024-11-17 10:46', status: 'Placed' },
+        { time: '2024-11-17 11:10', status: 'Confirmed' },
+        { time: '2024-11-17 13:05', status: 'Out for Delivery' },
+        { time: '2024-11-17 14:20', status: 'Delivered' }
+      ]
+    },
+    {
+      id: 'ORD002',
+      date: '2024-11-17',
+      time: '11:15 AM',
+      userName: 'Priya Sharma',
+      userId: 'PAT002',
+      pharmacyName: 'Apollo Pharmacy',
+      pharmacyId: 'CHM002',
+      type: 'Without Prescription',
+      prescriptionFile: null,
+      items: [
+        { id: 'MED002', name: 'Amoxicillin 250mg', qty: 1, mrp: 85, discount: 0, finalPrice: 85 }
+      ],
+      totalAmount: 85,
+      deliveryAddress: '45, Park Lane, Delhi, 110001',
+      deliveryMode: 'Store Pickup',
+      paymentMethod: 'Cash on Delivery',
+      paymentStatus: 'pending',
+      orderStatus: 'ready_for_pickup',
+      statusLogs: [
+        { time: '2024-11-17 11:16', status: 'Placed' },
+        { time: '2024-11-17 11:30', status: 'Ready for Pickup' }
+      ]
+    },
+    {
+      id: 'ORD003',
+      date: '2024-11-16',
+      time: '09:20 AM',
+      userName: 'Vikram Singh',
+      userId: 'PAT005',
+      pharmacyName: 'CureCare Chemist',
+      pharmacyId: 'CHM005',
+      type: 'With Prescription',
+      prescriptionFile: 'presc_ORD003.pdf',
+      items: [
+        { id: 'MED005', name: 'Vitamin D3 Tablets', qty: 2, mrp: 320, discount: 20, finalPrice: 640 }
+      ],
+      totalAmount: 640,
+      deliveryAddress: '78, Central Ave, Hyderabad, 500001',
+      deliveryMode: 'Home Delivery',
+      paymentMethod: 'GPay',
+      paymentStatus: 'failed',
+      orderStatus: 'payment_failed',
+      statusLogs: [
+        { time: '2024-11-16 09:21', status: 'Placed' },
+        { time: '2024-11-16 09:45', status: 'Payment Failed' }
+      ]
     }
   ]);
 
@@ -709,7 +1062,306 @@ const AdminDashboard = () => {
     }
   ]);
 
-  // Mock data for ambulances
+  // Mock data for ambulance providers/fleet owners
+  const [ambulanceProviders] = useState([
+    {
+      id: 'PROV001',
+      providerName: 'LifeSaver Ambulance Services',
+      contactPerson: 'Rajesh Kumar',
+      phone: '9876543210',
+      alternatePhone: '9876543211',
+      email: 'lifesaver@ambulance.com',
+      address: 'Plot No. 45, Sector 18',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      pincode: '400001',
+      companyRegCert: 'CERT-MH-2020-001',
+      gst: '27AABCU9603R1ZX',
+      bankAccountNumber: '123456789012',
+      ifscCode: 'HDFC0001234',
+      bankName: 'HDFC Bank',
+      kycStatus: 'verified',
+      status: 'active',
+      totalVehicles: 12,
+      totalBookings: 456,
+      rating: 4.7,
+      registeredDate: '2024-01-15'
+    },
+    {
+      id: 'PROV002',
+      providerName: 'QuickCare Ambulance Fleet',
+      contactPerson: 'Priya Sharma',
+      phone: '9876543220',
+      alternatePhone: '9876543221',
+      email: 'quickcare@ambulance.com',
+      address: 'Building 12, Nehru Place',
+      city: 'Delhi',
+      state: 'Delhi',
+      pincode: '110019',
+      companyRegCert: 'CERT-DL-2021-002',
+      gst: '07AABCU9603R1ZY',
+      bankAccountNumber: '987654321098',
+      ifscCode: 'ICIC0002345',
+      bankName: 'ICICI Bank',
+      kycStatus: 'verified',
+      status: 'active',
+      totalVehicles: 8,
+      totalBookings: 298,
+      rating: 4.8,
+      registeredDate: '2024-02-10'
+    },
+    {
+      id: 'PROV003',
+      providerName: 'MediTrans Services',
+      contactPerson: 'Amit Desai',
+      phone: '9876543230',
+      alternatePhone: '9876543231',
+      email: 'meditrans@ambulance.com',
+      address: 'Shop 67, MG Road',
+      city: 'Bangalore',
+      state: 'Karnataka',
+      pincode: '560001',
+      companyRegCert: 'CERT-KA-2022-003',
+      gst: '29AABCU9603R1ZZ',
+      bankAccountNumber: '456789123456',
+      ifscCode: 'SBIN0003456',
+      bankName: 'State Bank of India',
+      kycStatus: 'pending',
+      status: 'active',
+      totalVehicles: 5,
+      totalBookings: 87,
+      rating: 4.5,
+      registeredDate: '2024-03-20'
+    }
+  ]);
+
+  // Mock data for ambulance vehicles
+  const [ambulanceVehicles] = useState([
+    {
+      id: 'VEH001',
+      vehicleId: 'AMB-MH-001',
+      providerId: 'PROV001',
+      providerName: 'LifeSaver Ambulance Services',
+      vehicleNumber: 'MH-02-AB-1234',
+      vehicleType: 'Basic Life Support (BLS)',
+      capacity: '2 patients + 2 attendants',
+      hasOxygen: true,
+      hasVentilator: false,
+      hasDefibrillator: true,
+      hasStretcher: true,
+      hasWheelchair: true,
+      hasParamedic: true,
+      hasDoctor: false,
+      baseFare: 500,
+      baseKm: 5,
+      perKmCharge: 15,
+      waitingCharge: 100,
+      hasNightCharges: true,
+      nightChargePercent: 20,
+      hasEmergencySurcharge: true,
+      emergencySurchargePercent: 30,
+      baseLocation: 'Andheri, Mumbai',
+      baseCity: 'Mumbai',
+      hasGPS: true,
+      currentStatus: 'available',
+      rcBook: 'RC-MH-2022-1234.pdf',
+      insurance: 'INS-2024-5678.pdf',
+      driverLicense: 'DL-MH-9012.pdf',
+      validityExpiry: '2025-12-31',
+      approvalStatus: 'approved',
+      status: 'active',
+      totalTrips: 145,
+      rating: 4.8,
+      lastTrip: '2024-11-16'
+    },
+    {
+      id: 'VEH002',
+      vehicleId: 'AMB-DL-002',
+      providerId: 'PROV002',
+      providerName: 'QuickCare Ambulance Fleet',
+      vehicleNumber: 'DL-03-CD-5678',
+      vehicleType: 'Advanced Life Support (ALS)',
+      capacity: '1 patient + 3 attendants',
+      hasOxygen: true,
+      hasVentilator: true,
+      hasDefibrillator: true,
+      hasStretcher: true,
+      hasWheelchair: true,
+      hasParamedic: true,
+      hasDoctor: true,
+      baseFare: 1500,
+      baseKm: 10,
+      perKmCharge: 25,
+      waitingCharge: 150,
+      hasNightCharges: true,
+      nightChargePercent: 25,
+      hasEmergencySurcharge: true,
+      emergencySurchargePercent: 40,
+      baseLocation: 'Connaught Place, Delhi',
+      baseCity: 'Delhi',
+      hasGPS: true,
+      currentStatus: 'on-trip',
+      rcBook: 'RC-DL-2023-5678.pdf',
+      insurance: 'INS-2024-9012.pdf',
+      driverLicense: 'DL-DL-3456.pdf',
+      validityExpiry: '2026-06-30',
+      approvalStatus: 'approved',
+      status: 'active',
+      totalTrips: 298,
+      rating: 4.9,
+      lastTrip: '2024-11-17'
+    },
+    {
+      id: 'VEH003',
+      vehicleId: 'AMB-KA-003',
+      providerId: 'PROV003',
+      providerName: 'MediTrans Services',
+      vehicleNumber: 'KA-05-EF-9012',
+      vehicleType: 'Cardiac Ambulance',
+      capacity: '1 patient + 2 attendants',
+      hasOxygen: true,
+      hasVentilator: true,
+      hasDefibrillator: true,
+      hasStretcher: true,
+      hasWheelchair: false,
+      hasParamedic: true,
+      hasDoctor: true,
+      baseFare: 2000,
+      baseKm: 8,
+      perKmCharge: 30,
+      waitingCharge: 200,
+      hasNightCharges: true,
+      nightChargePercent: 30,
+      hasEmergencySurcharge: true,
+      emergencySurchargePercent: 50,
+      baseLocation: 'Koramangala, Bangalore',
+      baseCity: 'Bangalore',
+      hasGPS: true,
+      currentStatus: 'available',
+      rcBook: 'RC-KA-2023-9012.pdf',
+      insurance: 'INS-2024-3456.pdf',
+      driverLicense: 'DL-KA-7890.pdf',
+      validityExpiry: '2025-09-30',
+      approvalStatus: 'pending',
+      status: 'active',
+      totalTrips: 87,
+      rating: 4.6,
+      lastTrip: '2024-11-15'
+    }
+  ]);
+
+  // Mock data for ambulance bookings
+  const [ambulanceBookings] = useState([
+    {
+      id: 'BOOK001',
+      requestTime: '2024-11-17 09:15 AM',
+      patientName: 'Rahul Verma',
+      callerName: 'Priya Verma',
+      contactNumber: '9876543210',
+      emergencyType: 'Cardiac Emergency',
+      pickupLocation: 'Flat 301, Sunrise Apartments, Andheri West, Mumbai - 400058',
+      dropLocation: 'Kokilaben Hospital, Andheri West, Mumbai - 400053',
+      preferredHospital: 'Kokilaben Hospital',
+      selectedVehicleType: 'Advanced Life Support (ALS)',
+      providerId: 'PROV001',
+      providerName: 'LifeSaver Ambulance Services',
+      assignedVehicle: 'MH-02-AB-1234',
+      assignedDriver: 'Ravi Kumar - 9876543211',
+      startTime: '2024-11-17 09:25 AM',
+      arrivalTime: '2024-11-17 09:40 AM',
+      dropTime: '2024-11-17 10:10 AM',
+      distanceTravelled: 12.5,
+      baseFare: 1500,
+      kmCharge: 187.5,
+      waitingCharge: 0,
+      nightCharge: 0,
+      emergencyCharge: 600,
+      totalFare: 2287.5,
+      paymentMethod: 'UPI',
+      transactionId: 'TXN20241117001',
+      paymentStatus: 'paid',
+      tripStatus: 'completed',
+      statusLogs: [
+        { time: '2024-11-17 09:15 AM', status: 'Requested' },
+        { time: '2024-11-17 09:20 AM', status: 'Assigned' },
+        { time: '2024-11-17 09:25 AM', status: 'En Route to Pickup' },
+        { time: '2024-11-17 09:40 AM', status: 'Patient Picked Up' },
+        { time: '2024-11-17 10:10 AM', status: 'Completed' }
+      ]
+    },
+    {
+      id: 'BOOK002',
+      requestTime: '2024-11-17 02:30 PM',
+      patientName: 'Amit Kumar',
+      callerName: 'Amit Kumar',
+      contactNumber: '9876543220',
+      emergencyType: 'Accident',
+      pickupLocation: 'Sector 15, Noida - 201301',
+      dropLocation: 'Max Hospital, Saket, Delhi - 110017',
+      preferredHospital: 'Max Hospital',
+      selectedVehicleType: 'Basic Life Support (BLS)',
+      providerId: 'PROV002',
+      providerName: 'QuickCare Ambulance Fleet',
+      assignedVehicle: 'DL-03-CD-5678',
+      assignedDriver: 'Suresh Patil - 9876543221',
+      startTime: '2024-11-17 02:35 PM',
+      arrivalTime: '2024-11-17 02:50 PM',
+      dropTime: '2024-11-17 03:35 PM',
+      distanceTravelled: 18.2,
+      baseFare: 500,
+      kmCharge: 273,
+      waitingCharge: 100,
+      nightCharge: 0,
+      emergencyCharge: 150,
+      totalFare: 1023,
+      paymentMethod: 'Cash',
+      transactionId: null,
+      paymentStatus: 'pending',
+      tripStatus: 'completed',
+      statusLogs: [
+        { time: '2024-11-17 02:30 PM', status: 'Requested' },
+        { time: '2024-11-17 02:35 PM', status: 'Assigned' },
+        { time: '2024-11-17 02:35 PM', status: 'En Route to Pickup' },
+        { time: '2024-11-17 02:50 PM', status: 'Patient Picked Up' },
+        { time: '2024-11-17 03:35 PM', status: 'Completed' }
+      ]
+    },
+    {
+      id: 'BOOK003',
+      requestTime: '2024-11-17 11:45 PM',
+      patientName: 'Sneha Patel',
+      callerName: 'Rajesh Patel',
+      contactNumber: '9876543230',
+      emergencyType: 'Pregnancy Emergency',
+      pickupLocation: 'House No. 234, BTM Layout, Bangalore - 560076',
+      dropLocation: 'Apollo Hospital, Bannerghatta Road, Bangalore - 560076',
+      preferredHospital: 'Apollo Hospital',
+      selectedVehicleType: 'Neonatal Ambulance',
+      providerId: 'PROV003',
+      providerName: 'MediTrans Services',
+      assignedVehicle: null,
+      assignedDriver: null,
+      startTime: null,
+      arrivalTime: null,
+      dropTime: null,
+      distanceTravelled: 0,
+      baseFare: 2000,
+      kmCharge: 0,
+      waitingCharge: 0,
+      nightCharge: 600,
+      emergencyCharge: 1000,
+      totalFare: 3600,
+      paymentMethod: null,
+      transactionId: null,
+      paymentStatus: 'pending',
+      tripStatus: 'requested',
+      statusLogs: [
+        { time: '2024-11-17 11:45 PM', status: 'Requested' }
+      ]
+    }
+  ]);
+
+  // Mock data for old ambulances (keeping for backward compatibility)
   const [ambulances] = useState([
     {
       id: 'AMB001',
@@ -2082,7 +2734,8 @@ const AdminDashboard = () => {
       category: 'Reviews',
       description: 'Overall rating trends and review sentiment analysis',
       dateRange: '2024-11-01 to 2024-11-17',
-      totalReviews: 2345,
+
+     totalReviews: 2345,
       averageRating: 4.2,
       positiveReviews: 1890,
       negativeReviews: 123,
@@ -2135,21 +2788,22 @@ const AdminDashboard = () => {
     pendingKYC: 47
   };
 
-  const menuSections = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'hospitals', label: 'Hospital Management', icon: '🏥' },
-    { id: 'doctors', label: 'Doctor Management', icon: '👨‍⚕️' },
-    { id: 'patients', label: 'Patient Management', icon: '👥' },
-    { id: 'appointments', label: 'Appointments', icon: '📅' },
-    { id: 'chemists', label: 'Chemist Management', icon: '💊' },
-    { id: 'ambulances', label: 'Ambulance Management', icon: '🚑' },
-    { id: 'pathlabs', label: 'Pathlab Management', icon: '🔬' },
-    { id: 'payments', label: 'Payments & Payouts', icon: '💳' },
-    { id: 'reviews', label: 'Reviews & Ratings', icon: '⭐' },
-    { id: 'cms', label: 'CMS & Marketing', icon: '📢' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'reports', label: 'Reports & Analytics', icon: '📈' }
-  ];
+const menuSections = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'hospitals', label: 'Hospital Management', icon: '🏥' },
+  { id: 'doctors', label: 'Doctor Management', icon: '👨‍⚕️' },
+  { id: 'patients', label: 'Patient Management', icon: '👥' },
+  { id: 'appointments', label: 'Appointments', icon: '📅' },
+  { id: 'chemists', label: 'Chemist Management', icon: '💊' },
+  { id: 'ambulances', label: 'Ambulance Management', icon: '🚑' },
+  { id: 'pathlabs', label: 'Pathlab Management', icon: '🔬' },
+  { id: 'payments', label: 'Payments & Payouts', icon: '💳' },
+  { id: 'reviews', label: 'Reviews & Ratings', icon: '⭐' },
+  { id: 'cms', label: 'CMS & Marketing', icon: '📢' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'reports', label: 'Reports & Analytics', icon: '📈' }
+];
+
 
   if (!adminUser) {
     return <div className="admin-loading">Loading...</div>;
@@ -3185,46 +3839,716 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {doctors.map(doctor => (
-                      <tr key={doctor.id}>
-                        <td>{doctor.id}</td>
-                        <td>{doctor.name}</td>
-                        <td>{doctor.speciality}</td>
-                        <td>{doctor.linkedHospitals}</td>
-                        <td>{doctor.city}</td>
-                        <td>{doctor.experience} years</td>
-                        <td>₹{doctor.fee}</td>
-                        <td>
-                          <span className={`admin-status-badge ${doctor.kycStatus}`}>
-                            {doctor.kycStatus.charAt(0).toUpperCase() + doctor.kycStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${doctor.status}`}>
-                            {doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Details"
-                            onClick={() => openModal('view', 'doctors', doctor)}
-                          >
-                            👁️
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Edit"
-                            onClick={() => openModal('edit', 'doctors', doctor)}
-                          >
-                            ✏️
-                          </button>
-                          {doctor.status !== 'blocked' ? (
-                            <button className="admin-icon-btn" title="Block">🚫</button>
-                          ) : (
-                            <button className="admin-icon-btn" title="Unblock">✅</button>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={doctor.id}>
+                        <tr style={{background: expandedDoctorId === doctor.id ? '#f0f7ff' : 'transparent'}}>
+                          <td>{doctor.id}</td>
+                          <td>{doctor.name}</td>
+                          <td>{doctor.speciality}</td>
+                          <td>{doctor.linkedHospitals}</td>
+                          <td>{doctor.city}</td>
+                          <td>{doctor.experience} years</td>
+                          <td>₹{doctor.fee}</td>
+                          <td>
+                            <span className={`admin-status-badge ${doctor.kycStatus}`}>
+                              {doctor.kycStatus.charAt(0).toUpperCase() + doctor.kycStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`admin-status-badge ${doctor.status}`}>
+                              {doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="admin-icon-btn" 
+                              title={expandedDoctorId === doctor.id ? "Collapse" : "Expand Management"}
+                              onClick={() => toggleDoctorExpansion(doctor.id)}
+                              style={{fontSize: '16px', fontWeight: 'bold'}}
+                            >
+                              {expandedDoctorId === doctor.id ? '▼' : '▶'}
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="View Details"
+                              onClick={() => openModal('view', 'doctors', doctor)}
+                            >
+                              👁️
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="Edit"
+                              onClick={() => openModal('edit', 'doctors', doctor)}
+                            >
+                              ✏️
+                            </button>
+                            {doctor.status !== 'blocked' ? (
+                              <button className="admin-icon-btn" title="Block">🚫</button>
+                            ) : (
+                              <button className="admin-icon-btn" title="Unblock">✅</button>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expandable Management Section */}
+                        {expandedDoctorId === doctor.id && (
+                          <tr>
+                            <td colSpan="10" style={{padding: '0', background: '#f9fafb'}}>
+                              <div style={{padding: '20px', borderTop: '2px solid #234f83'}}>
+                                {/* Management Tabs */}
+                                <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                  <button
+                                    onClick={() => setDoctorManagementTab('professional')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: doctorManagementTab === 'professional' ? '#234f83' : 'transparent',
+                                      color: doctorManagementTab === 'professional' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: doctorManagementTab === 'professional' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    👨‍⚕️ Professional Info
+                                  </button>
+                                  <button
+                                    onClick={() => setDoctorManagementTab('hospitalLinks')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: doctorManagementTab === 'hospitalLinks' ? '#234f83' : 'transparent',
+                                      color: doctorManagementTab === 'hospitalLinks' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: doctorManagementTab === 'hospitalLinks' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    🏥 Hospital Links
+                                  </button>
+                                  <button
+                                    onClick={() => setDoctorManagementTab('consultationFees')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: doctorManagementTab === 'consultationFees' ? '#234f83' : 'transparent',
+                                      color: doctorManagementTab === 'consultationFees' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: doctorManagementTab === 'consultationFees' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    💰 Consultation Fees
+                                  </button>
+                                  <button
+                                    onClick={() => setDoctorManagementTab('availability')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: doctorManagementTab === 'availability' ? '#234f83' : 'transparent',
+                                      color: doctorManagementTab === 'availability' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: doctorManagementTab === 'availability' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    📅 Availability
+                                  </button>
+                                  <button
+                                    onClick={() => setDoctorManagementTab('kyc')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: doctorManagementTab === 'kyc' ? '#234f83' : 'transparent',
+                                      color: doctorManagementTab === 'kyc' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: doctorManagementTab === 'kyc' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    📄 KYC/Verification
+                                  </button>
+                                </div>
+
+                                {/* Professional Info Tab */}
+                                {doctorManagementTab === 'professional' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>👨‍⚕️ Professional Information</h3>
+                                      {!isEditingProfessional && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingProfessional(true);
+                                            setProfessionalFormData({
+                                              speciality: doctor.speciality || '',
+                                              subSpeciality: doctor.subSpeciality || '',
+                                              qualification: doctor.qualification || '',
+                                              experience: doctor.experience || '',
+                                              registrationNumber: doctor.registrationNumber || '',
+                                              languages: doctor.languages?.join(', ') || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Professional Info
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingProfessional ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleProfessionalSave(doctor.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Speciality *</label>
+                                            <select 
+                                              value={professionalFormData.speciality || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, speciality: e.target.value})}
+                                              required
+                                            >
+                                              <option value="">Select Speciality</option>
+                                              <option value="Cardiologist">Cardiologist</option>
+                                              <option value="Dermatologist">Dermatologist</option>
+                                              <option value="Pediatrician">Pediatrician</option>
+                                              <option value="Neurologist">Neurologist</option>
+                                              <option value="Orthopedic">Orthopedic</option>
+                                              <option value="General Physician">General Physician</option>
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Sub-Speciality</label>
+                                            <input 
+                                              type="text" 
+                                              value={professionalFormData.subSpeciality || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, subSpeciality: e.target.value})}
+                                              placeholder="e.g., Interventional Cardiology"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Qualification *</label>
+                                            <input 
+                                              type="text" 
+                                              value={professionalFormData.qualification || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, qualification: e.target.value})}
+                                              placeholder="e.g., MBBS, MD"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Years of Experience *</label>
+                                            <input 
+                                              type="number" 
+                                              value={professionalFormData.experience || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, experience: e.target.value})}
+                                              placeholder="Years"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Medical Council Reg. No. *</label>
+                                            <input 
+                                              type="text" 
+                                              value={professionalFormData.registrationNumber || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, registrationNumber: e.target.value})}
+                                              placeholder="Registration Number"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Languages (comma-separated)</label>
+                                            <input 
+                                              type="text" 
+                                              value={professionalFormData.languages || ''} 
+                                              onChange={(e) => setProfessionalFormData({...professionalFormData, languages: e.target.value})}
+                                              placeholder="e.g., English, Hindi, Marathi"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingProfessional(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Speciality:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.speciality || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Sub-Speciality:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.subSpeciality || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Qualification:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.qualification || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Experience:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.experience || '0'} years</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Registration Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.registrationNumber || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Languages:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.languages?.join(', ') || 'Not provided'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Hospital Links Tab */}
+                                {doctorManagementTab === 'hospitalLinks' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>🏥 Hospital Links</h3>
+                                      {!isEditingHospitalLinks && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingHospitalLinks(true);
+                                            setHospitalLinksFormData({
+                                              primaryHospital: doctor.primaryHospital || '',
+                                              otherHospitals: doctor.otherHospitals?.join(', ') || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Hospital Links
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingHospitalLinks ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleHospitalLinksSave(doctor.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Primary Hospital *</label>
+                                            <select 
+                                              value={hospitalLinksFormData.primaryHospital || ''} 
+                                              onChange={(e) => setHospitalLinksFormData({...hospitalLinksFormData, primaryHospital: e.target.value})}
+                                              required
+                                            >
+                                              <option value="">Select Primary Hospital</option>
+                                              {hospitals.map(h => (
+                                                <option key={h.id} value={h.id}>{h.name}</option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Other Hospitals/Clinics (comma-separated names or IDs)</label>
+                                            <textarea 
+                                              value={hospitalLinksFormData.otherHospitals || ''} 
+                                              onChange={(e) => setHospitalLinksFormData({...hospitalLinksFormData, otherHospitals: e.target.value})}
+                                              placeholder="e.g., Apollo Clinic, City Hospital"
+                                              rows="3"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingHospitalLinks(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Primary Hospital:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.primaryHospital || 'Not assigned'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Other Hospitals/Clinics:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.otherHospitals?.join(', ') || 'None'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Consultation Fees Tab */}
+                                {doctorManagementTab === 'consultationFees' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>💰 Consultation Fees</h3>
+                                      {!isEditingConsultationFees && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingConsultationFees(true);
+                                            setConsultationFeesFormData({
+                                              inClinicFee: doctor.inClinicFee || '',
+                                              videoFee: doctor.videoFee || '',
+                                              audioFee: doctor.audioFee || '',
+                                              chatFee: doctor.chatFee || '',
+                                              followUpFee: doctor.followUpFee || '',
+                                              currency: doctor.currency || 'INR'
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Consultation Fees
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingConsultationFees ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleConsultationFeesSave(doctor.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>In-Clinic Consultation Fee (₹) *</label>
+                                            <input 
+                                              type="number" 
+                                              value={consultationFeesFormData.inClinicFee || ''} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, inClinicFee: e.target.value})}
+                                              placeholder="Amount"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Video Consultation Fee (₹)</label>
+                                            <input 
+                                              type="number" 
+                                              value={consultationFeesFormData.videoFee || ''} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, videoFee: e.target.value})}
+                                              placeholder="Amount"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Audio Consultation Fee (₹)</label>
+                                            <input 
+                                              type="number" 
+                                              value={consultationFeesFormData.audioFee || ''} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, audioFee: e.target.value})}
+                                              placeholder="Amount"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Chat Consultation Fee (₹)</label>
+                                            <input 
+                                              type="number" 
+                                              value={consultationFeesFormData.chatFee || ''} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, chatFee: e.target.value})}
+                                              placeholder="Amount"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Follow-up Fee (₹)</label>
+                                            <input 
+                                              type="number" 
+                                              value={consultationFeesFormData.followUpFee || ''} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, followUpFee: e.target.value})}
+                                              placeholder="Amount"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Currency</label>
+                                            <select 
+                                              value={consultationFeesFormData.currency || 'INR'} 
+                                              onChange={(e) => setConsultationFeesFormData({...consultationFeesFormData, currency: e.target.value})}
+                                            >
+                                              <option value="INR">INR (₹)</option>
+                                              <option value="USD">USD ($)</option>
+                                              <option value="EUR">EUR (€)</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingConsultationFees(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>In-Clinic Fee:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{doctor.inClinicFee || '0'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Video Consultation:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{doctor.videoFee || '0'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Audio Consultation:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{doctor.audioFee || '0'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Chat Consultation:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{doctor.chatFee || '0'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Follow-up Fee:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{doctor.followUpFee || '0'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Currency:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.currency || 'INR'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Availability Tab */}
+                                {doctorManagementTab === 'availability' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📅 Availability Schedule</h3>
+                                      {!isEditingAvailability && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingAvailability(true);
+                                            setAvailabilityFormData({
+                                              schedule: doctor.schedule || '',
+                                              slotDuration: doctor.slotDuration || '30',
+                                              maxAppointments: doctor.maxAppointments || '1',
+                                              breakTimes: doctor.breakTimes || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Availability
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingAvailability ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleAvailabilitySave(doctor.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Weekly Schedule (JSON format or description)</label>
+                                            <textarea 
+                                              value={availabilityFormData.schedule || ''} 
+                                              onChange={(e) => setAvailabilityFormData({...availabilityFormData, schedule: e.target.value})}
+                                              placeholder='e.g., Mon-Fri: 9:00 AM - 5:00 PM, Sat: 9:00 AM - 1:00 PM'
+                                              rows="4"
+                                            />
+                                          </div>
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div className="admin-form-group">
+                                              <label>Slot Duration (minutes)</label>
+                                              <select 
+                                                value={availabilityFormData.slotDuration || '30'} 
+                                                onChange={(e) => setAvailabilityFormData({...availabilityFormData, slotDuration: e.target.value})}
+                                              >
+                                                <option value="15">15 minutes</option>
+                                                <option value="20">20 minutes</option>
+                                                <option value="30">30 minutes</option>
+                                                <option value="45">45 minutes</option>
+                                                <option value="60">60 minutes</option>
+                                              </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                              <label>Max Appointments per Slot</label>
+                                              <input 
+                                                type="number" 
+                                                value={availabilityFormData.maxAppointments || '1'} 
+                                                onChange={(e) => setAvailabilityFormData({...availabilityFormData, maxAppointments: e.target.value})}
+                                                min="1"
+                                              />
+                                            </div>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Break Times (optional)</label>
+                                            <textarea 
+                                              value={availabilityFormData.breakTimes || ''} 
+                                              onChange={(e) => setAvailabilityFormData({...availabilityFormData, breakTimes: e.target.value})}
+                                              placeholder="e.g., 1:00 PM - 2:00 PM (Lunch Break)"
+                                              rows="2"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingAvailability(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Weekly Schedule:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px', whiteSpace: 'pre-wrap'}}>{doctor.schedule || 'Not set'}</p>
+                                        </div>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Slot Duration:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.slotDuration || '30'} minutes</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Max Appointments/Slot:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.maxAppointments || '1'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Break Times:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.breakTimes || 'None'}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* KYC/Verification Tab */}
+                                {doctorManagementTab === 'kyc' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📄 KYC/Verification</h3>
+                                      {!isEditingDoctorKyc && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingDoctorKyc(true);
+                                            setDoctorKycFormData({
+                                              govtIdNumber: doctor.govtIdNumber || '',
+                                              kycStatus: doctor.kycStatus || 'pending',
+                                              adminRemarks: doctor.adminRemarks || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit KYC Details
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingDoctorKyc ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleDoctorKycSave(doctor.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Govt ID Number (Aadhaar/PAN)</label>
+                                            <input 
+                                              type="text" 
+                                              value={doctorKycFormData.govtIdNumber || ''} 
+                                              onChange={(e) => setDoctorKycFormData({...doctorKycFormData, govtIdNumber: e.target.value})}
+                                              placeholder="Enter ID Number"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>KYC Status</label>
+                                            <select 
+                                              value={doctorKycFormData.kycStatus || 'pending'} 
+                                              onChange={(e) => setDoctorKycFormData({...doctorKycFormData, kycStatus: e.target.value})}
+                                            >
+                                              <option value="pending">Pending</option>
+                                              <option value="approved">Verified</option>
+                                              <option value="rejected">Rejected</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div className="admin-form-group" style={{marginTop: '15px'}}>
+                                          <label>Govt ID Document Upload</label>
+                                          <input type="file" accept=".pdf,.jpg,.png" />
+                                        </div>
+                                        <div className="admin-form-group">
+                                          <label>Degree Certificates Upload</label>
+                                          <input type="file" accept=".pdf,.jpg,.png" multiple />
+                                        </div>
+                                        <div className="admin-form-group">
+                                          <label>License Proof Upload</label>
+                                          <input type="file" accept=".pdf,.jpg,.png" />
+                                        </div>
+                                        <div className="admin-form-group">
+                                          <label>Admin Remarks</label>
+                                          <textarea 
+                                            value={doctorKycFormData.adminRemarks || ''} 
+                                            onChange={(e) => setDoctorKycFormData({...doctorKycFormData, adminRemarks: e.target.value})}
+                                            placeholder="Add any remarks or notes"
+                                            rows="3"
+                                          />
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingDoctorKyc(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Govt ID Number:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.govtIdNumber || 'Not provided'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>KYC Status:</strong>
+                                            <p style={{margin: '5px 0 0 0'}}>
+                                              <span className={`admin-status-badge ${doctor.kycStatus}`}>
+                                                {doctor.kycStatus?.charAt(0).toUpperCase() + doctor.kycStatus?.slice(1) || 'Pending'}
+                                              </span>
+                                            </p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Govt ID Document:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.govtIdDoc ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Degree Certificates:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.degreeCerts ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>License Proof:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.licenseProof ? '✅ Uploaded' : '❌ Not uploaded'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                            <strong style={{color: '#666'}}>Admin Remarks:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{doctor.adminRemarks || 'No remarks'}</p>
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✅ Approve KYC</button>
+                                          <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>❌ Reject KYC</button>
+                                          <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>👁️ View Documents</button>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -4150,124 +5474,986 @@ const AdminDashboard = () => {
                   + Add Chemist
                 </button>
               </div>
-              
-              <div className="admin-filters">
-                <input 
-                  type="text" 
-                  placeholder="Search by name, license, owner..." 
-                  className="admin-search-input" 
-                />
-                <select className="admin-filter-select">
-                  <option value="">All Cities</option>
-                  <option value="mumbai">Mumbai</option>
-                  <option value="delhi">Delhi</option>
-                  <option value="bangalore">Bangalore</option>
-                  <option value="pune">Pune</option>
-                  <option value="hyderabad">Hyderabad</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="blocked">Blocked</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">KYC Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+
+              {/* Sub-section Tabs */}
+              <div style={{display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '3px solid #e5e7eb', background: '#f9fafb'}}>
+                <button
+                  onClick={() => setChemistSectionTab('pharmacies')}
+                  style={{
+                    flex: 1,
+                    padding: '15px 24px',
+                    background: chemistSectionTab === 'pharmacies' ? '#234f83' : 'transparent',
+                    color: chemistSectionTab === 'pharmacies' ? '#fff' : '#666',
+                    border: 'none',
+                    borderBottom: chemistSectionTab === 'pharmacies' ? '4px solid #234f83' : '4px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🏪 Pharmacy List ({chemists.length})
+                </button>
+                <button
+                  onClick={() => setChemistSectionTab('orders')}
+                  style={{
+                    flex: 1,
+                    padding: '15px 24px',
+                    background: chemistSectionTab === 'orders' ? '#234f83' : 'transparent',
+                    color: chemistSectionTab === 'orders' ? '#fff' : '#666',
+                    border: 'none',
+                    borderBottom: chemistSectionTab === 'orders' ? '4px solid #234f83' : '4px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🛒 Medicine Orders ({medicineOrders.length})
+                </button>
               </div>
 
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Chemist ID</th>
-                      <th>Pharmacy Name</th>
-                      <th>Owner Name</th>
-                      <th>City</th>
-                      <th>License Number</th>
-                      <th>License Expiry</th>
-                      <th>Total Products</th>
-                      <th>Total Orders</th>
-                      <th>Commission (%)</th>
-                      <th>KYC Status</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
+              {/* Pharmacy List Tab */}
+              {chemistSectionTab === 'pharmacies' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by name, license, owner..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Cities</option>
+                      <option value="mumbai">Mumbai</option>
+                      <option value="delhi">Delhi</option>
+                      <option value="bangalore">Bangalore</option>
+                      <option value="pune">Pune</option>
+                      <option value="hyderabad">Hyderabad</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="blocked">Blocked</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">KYC Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Chemist ID</th>
+                          <th>Pharmacy Name</th>
+                          <th>Owner Name</th>
+                          <th>City</th>
+                          <th>License Number</th>
+                          <th>License Expiry</th>
+                          <th>Total Products</th>
+                          <th>Total Orders</th>
+                          <th>Commission (%)</th>
+                          <th>KYC Status</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
                   <tbody>
                     {chemists.map(chemist => (
-                      <tr key={chemist.id}>
-                        <td>{chemist.id}</td>
-                        <td>{chemist.name}</td>
-                        <td>{chemist.owner}</td>
-                        <td>{chemist.city}</td>
-                        <td><small>{chemist.license}</small></td>
-                        <td>{new Date(chemist.licenseExpiry).toLocaleDateString('en-IN')}</td>
-                        <td>{chemist.totalProducts}</td>
-                        <td>{chemist.totalOrders}</td>
-                        <td>{chemist.commission}%</td>
-                        <td>
-                          <span className={`admin-status-badge ${chemist.kycStatus}`}>
-                            {chemist.kycStatus.charAt(0).toUpperCase() + chemist.kycStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${chemist.status}`}>
-                            {chemist.status.charAt(0).toUpperCase() + chemist.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Details"
-                            onClick={() => openModal('view', 'chemists', chemist)}
-                          >
-                            👁️
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Products"
-                            onClick={() => alert('View products for ' + chemist.name)}
-                          >
-                            📦
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Edit"
-                            onClick={() => openModal('edit', 'chemists', chemist)}
-                          >
-                            ✏️
-                          </button>
-                          {chemist.status === 'pending' ? (
-                            <>
-                              <button className="admin-icon-btn" title="Approve">✅</button>
-                              <button className="admin-icon-btn" title="Reject">❌</button>
-                            </>
-                          ) : chemist.status !== 'blocked' ? (
-                            <button className="admin-icon-btn" title="Block">🚫</button>
-                          ) : (
-                            <button className="admin-icon-btn" title="Unblock">✅</button>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={chemist.id}>
+                        <tr style={{background: expandedChemistId === chemist.id ? '#f0f7ff' : 'transparent'}}>
+                          <td>{chemist.id}</td>
+                          <td>{chemist.name}</td>
+                          <td>{chemist.owner}</td>
+                          <td>{chemist.city}</td>
+                          <td><small>{chemist.license}</small></td>
+                          <td>{new Date(chemist.licenseExpiry).toLocaleDateString('en-IN')}</td>
+                          <td>{chemist.totalProducts}</td>
+                          <td>{chemist.totalOrders}</td>
+                          <td>{chemist.commission}%</td>
+                          <td>
+                            <span className={`admin-status-badge ${chemist.kycStatus}`}>
+                              {chemist.kycStatus.charAt(0).toUpperCase() + chemist.kycStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`admin-status-badge ${chemist.status}`}>
+                              {chemist.status.charAt(0).toUpperCase() + chemist.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="admin-icon-btn" 
+                              title={expandedChemistId === chemist.id ? "Collapse" : "Expand Management"}
+                              onClick={() => toggleChemistExpansion(chemist.id)}
+                              style={{fontSize: '16px', fontWeight: 'bold'}}
+                            >
+                              {expandedChemistId === chemist.id ? '▼' : '▶'}
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="View Details"
+                              onClick={() => openModal('view', 'chemists', chemist)}
+                            >
+                              👁️
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="View Products"
+                              onClick={() => alert('View products for ' + chemist.name)}
+                            >
+                              📦
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="Edit"
+                              onClick={() => openModal('edit', 'chemists', chemist)}
+                            >
+                              ✏️
+                            </button>
+                            {chemist.status === 'pending' ? (
+                              <>
+                                <button className="admin-icon-btn" title="Approve">✅</button>
+                                <button className="admin-icon-btn" title="Reject">❌</button>
+                              </>
+                            ) : chemist.status !== 'blocked' ? (
+                              <button className="admin-icon-btn" title="Block">🚫</button>
+                            ) : (
+                              <button className="admin-icon-btn" title="Unblock">✅</button>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expandable Management Section */}
+                        {expandedChemistId === chemist.id && (
+                          <tr>
+                            <td colSpan="12" style={{padding: '0', background: '#f9fafb'}}>
+                              <div style={{padding: '20px', borderTop: '2px solid #234f83'}}>
+                                {/* Management Tabs */}
+                                <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                  <button
+                                    onClick={() => setChemistManagementTab('license')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: chemistManagementTab === 'license' ? '#234f83' : 'transparent',
+                                      color: chemistManagementTab === 'license' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: chemistManagementTab === 'license' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    📄 License & KYC
+                                  </button>
+                                  <button
+                                    onClick={() => setChemistManagementTab('service')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: chemistManagementTab === 'service' ? '#234f83' : 'transparent',
+                                      color: chemistManagementTab === 'service' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: chemistManagementTab === 'service' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    ⚙️ Service Settings
+                                  </button>
+                                  <button
+                                    onClick={() => setChemistManagementTab('financials')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: chemistManagementTab === 'financials' ? '#234f83' : 'transparent',
+                                      color: chemistManagementTab === 'financials' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: chemistManagementTab === 'financials' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    💰 Financials
+                                  </button>
+                                  <button
+                                    onClick={() => setChemistManagementTab('products')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: chemistManagementTab === 'products' ? '#234f83' : 'transparent',
+                                      color: chemistManagementTab === 'products' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: chemistManagementTab === 'products' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    📦 Products
+                                  </button>
+                                </div>
+
+                                {/* License & KYC Tab */}
+                                {chemistManagementTab === 'license' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📄 License & KYC Information</h3>
+                                      {!isEditingLicense && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingLicense(true);
+                                            setLicenseFormData({
+                                              drugLicense: chemist.license || '',
+                                              licenseExpiry: chemist.licenseExpiry || '',
+                                              gstNumber: chemist.gstNumber || '',
+                                              shopCertificate: chemist.shopCertificate || '',
+                                              ownerIdentity: chemist.ownerIdentity || '',
+                                              pharmacistRegNumber: chemist.pharmacistRegNumber || '',
+                                              kycStatus: chemist.kycStatus || 'pending'
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit License & KYC
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingLicense ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleLicenseSave(chemist.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Drug License Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={licenseFormData.drugLicense || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, drugLicense: e.target.value})}
+                                              placeholder="DL-XX-YYYY-NNNNN"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>License Expiry Date *</label>
+                                            <input 
+                                              type="date" 
+                                              value={licenseFormData.licenseExpiry || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, licenseExpiry: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>GST Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={licenseFormData.gstNumber || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, gstNumber: e.target.value})}
+                                              placeholder="22AAAAA0000A1Z5"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Shop Establishment Certificate</label>
+                                            <input 
+                                              type="text" 
+                                              value={licenseFormData.shopCertificate || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, shopCertificate: e.target.value})}
+                                              placeholder="Certificate Number"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Owner Identity Proof</label>
+                                            <input 
+                                              type="file" 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, ownerIdentity: e.target.files[0]?.name})}
+                                            />
+                                            {licenseFormData.ownerIdentity && <small>Current: {licenseFormData.ownerIdentity}</small>}
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Pharmacist Registration Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={licenseFormData.pharmacistRegNumber || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, pharmacistRegNumber: e.target.value})}
+                                              placeholder="PRN-XXXXX"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Drug License Copy</label>
+                                            <input 
+                                              type="file" 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, licenseCopy: e.target.files[0]?.name})}
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>KYC Status *</label>
+                                            <select 
+                                              value={licenseFormData.kycStatus || ''} 
+                                              onChange={(e) => setLicenseFormData({...licenseFormData, kycStatus: e.target.value})}
+                                              required
+                                            >
+                                              <option value="pending">Pending</option>
+                                              <option value="approved">Approved</option>
+                                              <option value="rejected">Rejected</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingLicense(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Drug License Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.license || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>License Expiry:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.licenseExpiry ? new Date(chemist.licenseExpiry).toLocaleDateString('en-IN') : 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>GST Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.gstNumber || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Shop Establishment Certificate:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.shopCertificate || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Owner Identity Proof:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.ownerIdentity || 'Not uploaded'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Pharmacist Registration Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.pharmacistRegNumber || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>KYC Status:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            <span className={`admin-status-badge ${chemist.kycStatus}`}>
+                                              {chemist.kycStatus.charAt(0).toUpperCase() + chemist.kycStatus.slice(1)}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Service Settings Tab */}
+                                {chemistManagementTab === 'service' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>⚙️ Service Settings</h3>
+                                      {!isEditingService && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingService(true);
+                                            setServiceFormData({
+                                              openingTime: chemist.openingTime || '09:00',
+                                              closingTime: chemist.closingTime || '21:00',
+                                              is24x7: chemist.is24x7 || false,
+                                              deliveryAvailable: chemist.deliveryAvailable || false,
+                                              deliveryRadius: chemist.deliveryRadius || 5,
+                                              minOrderAmount: chemist.minOrderAmount || 0,
+                                              serviceablePincodes: chemist.serviceablePincodes?.join(', ') || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Service Settings
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingService ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleServiceSave(chemist.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Opening Time</label>
+                                            <input 
+                                              type="time" 
+                                              value={serviceFormData.openingTime || ''} 
+                                              onChange={(e) => setServiceFormData({...serviceFormData, openingTime: e.target.value})}
+                                              disabled={serviceFormData.is24x7}
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Closing Time</label>
+                                            <input 
+                                              type="time" 
+                                              value={serviceFormData.closingTime || ''} 
+                                              onChange={(e) => setServiceFormData({...serviceFormData, closingTime: e.target.value})}
+                                              disabled={serviceFormData.is24x7}
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                              <input 
+                                                type="checkbox" 
+                                                checked={serviceFormData.is24x7 || false} 
+                                                onChange={(e) => setServiceFormData({...serviceFormData, is24x7: e.target.checked})}
+                                              />
+                                              24x7 Service Available
+                                            </label>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                              <input 
+                                                type="checkbox" 
+                                                checked={serviceFormData.deliveryAvailable || false} 
+                                                onChange={(e) => setServiceFormData({...serviceFormData, deliveryAvailable: e.target.checked})}
+                                              />
+                                              Delivery Available
+                                            </label>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Delivery Radius (km)</label>
+                                            <input 
+                                              type="number" 
+                                              value={serviceFormData.deliveryRadius || ''} 
+                                              onChange={(e) => setServiceFormData({...serviceFormData, deliveryRadius: e.target.value})}
+                                              placeholder="5"
+                                              disabled={!serviceFormData.deliveryAvailable}
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Minimum Order Amount (₹)</label>
+                                            <input 
+                                              type="number" 
+                                              value={serviceFormData.minOrderAmount || ''} 
+                                              onChange={(e) => setServiceFormData({...serviceFormData, minOrderAmount: e.target.value})}
+                                              placeholder="0"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group" style={{gridColumn: 'span 2'}}>
+                                            <label>Serviceable Pincodes (comma-separated)</label>
+                                            <textarea 
+                                              value={serviceFormData.serviceablePincodes || ''} 
+                                              onChange={(e) => setServiceFormData({...serviceFormData, serviceablePincodes: e.target.value})}
+                                              placeholder="400001, 400002, 400003"
+                                              rows="3"
+                                              style={{width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingService(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Store Timings:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            {chemist.is24x7 ? '24x7 Open' : `${chemist.openingTime || '09:00'} - ${chemist.closingTime || '21:00'}`}
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>24x7 Service:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.is24x7 ? '✅ Yes' : '❌ No'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Delivery Available:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.deliveryAvailable ? '✅ Yes' : '❌ No'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Delivery Radius:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.deliveryRadius || 'N/A'} km</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Min Order Amount:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{chemist.minOrderAmount || 0}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Serviceable Pincodes:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.serviceablePincodes?.join(', ') || 'Not configured'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Financials Tab */}
+                                {chemistManagementTab === 'financials' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>💰 Financial Details</h3>
+                                      {!isEditingFinancials && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingFinancials(true);
+                                            setFinancialsFormData({
+                                              commission: chemist.commission || 0,
+                                              settlementCycle: chemist.settlementCycle || 'weekly',
+                                              accountNumber: chemist.accountNumber || '',
+                                              ifscCode: chemist.ifscCode || '',
+                                              bankName: chemist.bankName || '',
+                                              accountHolderName: chemist.accountHolderName || chemist.owner
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Financials
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingFinancials ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleFinancialsSave(chemist.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Commission Percentage (%) *</label>
+                                            <input 
+                                              type="number" 
+                                              value={financialsFormData.commission || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, commission: e.target.value})}
+                                              placeholder="10"
+                                              step="0.1"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Settlement Cycle *</label>
+                                            <select 
+                                              value={financialsFormData.settlementCycle || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, settlementCycle: e.target.value})}
+                                              required
+                                            >
+                                              <option value="daily">Daily</option>
+                                              <option value="weekly">Weekly</option>
+                                              <option value="biweekly">Bi-weekly</option>
+                                              <option value="monthly">Monthly</option>
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Account Holder Name *</label>
+                                            <input 
+                                              type="text" 
+                                              value={financialsFormData.accountHolderName || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, accountHolderName: e.target.value})}
+                                              placeholder="Account Holder Name"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Bank Name *</label>
+                                            <input 
+                                              type="text" 
+                                              value={financialsFormData.bankName || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, bankName: e.target.value})}
+                                              placeholder="Bank Name"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Account Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={financialsFormData.accountNumber || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, accountNumber: e.target.value})}
+                                              placeholder="Account Number"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>IFSC Code *</label>
+                                            <input 
+                                              type="text" 
+                                              value={financialsFormData.ifscCode || ''} 
+                                              onChange={(e) => setFinancialsFormData({...financialsFormData, ifscCode: e.target.value})}
+                                              placeholder="IFSC Code"
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingFinancials(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Commission Percentage:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.commission || 0}%</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Settlement Cycle:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            {chemist.settlementCycle ? chemist.settlementCycle.charAt(0).toUpperCase() + chemist.settlementCycle.slice(1) : 'Not configured'}
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Account Holder Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.accountHolderName || chemist.owner || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Bank Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.bankName || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Account Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.accountNumber ? '•••• •••• •••• ' + chemist.accountNumber.slice(-4) : 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>IFSC Code:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{chemist.ifscCode || 'Not provided'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Products Tab */}
+                                {chemistManagementTab === 'products' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📦 Products Inventory</h3>
+                                      <div style={{display: 'flex', gap: '10px'}}>
+                                        <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📥 Export</button>
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>+ Add Product</button>
+                                      </div>
+                                    </div>
+
+                                    <div style={{marginBottom: '15px', display: 'flex', gap: '10px'}}>
+                                      <input 
+                                        type="text" 
+                                        placeholder="Search products..." 
+                                        style={{flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                                      />
+                                      <select style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}>
+                                        <option value="">All Categories</option>
+                                        <option value="tablets">Tablets</option>
+                                        <option value="capsules">Capsules</option>
+                                        <option value="syrup">Syrup</option>
+                                        <option value="injection">Injection</option>
+                                      </select>
+                                      <select style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}>
+                                        <option value="">All Status</option>
+                                        <option value="instock">In Stock</option>
+                                        <option value="lowstock">Low Stock</option>
+                                        <option value="outofstock">Out of Stock</option>
+                                      </select>
+                                    </div>
+
+                                    <div style={{maxHeight: '400px', overflowY: 'auto'}}>
+                                      <table className="admin-table" style={{width: '100%', marginTop: '0'}}>
+                                        <thead style={{position: 'sticky', top: 0, background: '#f9fafb', zIndex: 1}}>
+                                          <tr>
+                                            <th>Product Code</th>
+                                            <th>Product Name</th>
+                                            <th>Category</th>
+                                            <th>Brand</th>
+                                            <th>Price (₹)</th>
+                                            <th>Stock</th>
+                                            <th>Expiry</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          <tr>
+                                            <td>MED001</td>
+                                            <td>Paracetamol 500mg</td>
+                                            <td>Tablet</td>
+                                            <td>Generic</td>
+                                            <td>₹12.50</td>
+                                            <td>250</td>
+                                            <td>Dec 2025</td>
+                                            <td><span className="admin-status-badge active">In Stock</span></td>
+                                            <td>
+                                              <button className="admin-icon-btn" title="View">👁️</button>
+                                              <button className="admin-icon-btn" title="Edit">✏️</button>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>MED002</td>
+                                            <td>Amoxicillin 250mg</td>
+                                            <td>Capsule</td>
+                                            <td>Brand A</td>
+                                            <td>₹85.00</td>
+                                            <td>120</td>
+                                            <td>Mar 2026</td>
+                                            <td><span className="admin-status-badge active">In Stock</span></td>
+                                            <td>
+                                              <button className="admin-icon-btn" title="View">👁️</button>
+                                              <button className="admin-icon-btn" title="Edit">✏️</button>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>MED003</td>
+                                            <td>Cough Syrup</td>
+                                            <td>Syrup</td>
+                                            <td>Brand B</td>
+                                            <td>₹145.00</td>
+                                            <td>45</td>
+                                            <td>Jun 2026</td>
+                                            <td><span className="admin-status-badge pending">Low Stock</span></td>
+                                            <td>
+                                              <button className="admin-icon-btn" title="View">👁️</button>
+                                              <button className="admin-icon-btn" title="Edit">✏️</button>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>MED004</td>
+                                            <td>Insulin Injection</td>
+                                            <td>Injection</td>
+                                            <td>Brand C</td>
+                                            <td>₹850.00</td>
+                                            <td>0</td>
+                                            <td>Sep 2025</td>
+                                            <td><span className="admin-status-badge rejected">Out of Stock</span></td>
+                                            <td>
+                                              <button className="admin-icon-btn" title="View">👁️</button>
+                                              <button className="admin-icon-btn" title="Edit">✏️</button>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>MED005</td>
+                                            <td>Vitamin D3 Tablets</td>
+                                            <td>Tablet</td>
+                                            <td>Brand D</td>
+                                            <td>₹320.00</td>
+                                            <td>180</td>
+                                            <td>Aug 2026</td>
+                                            <td><span className="admin-status-badge active">In Stock</span></td>
+                                            <td>
+                                              <button className="admin-icon-btn" title="View">👁️</button>
+                                              <button className="admin-icon-btn" title="Edit">✏️</button>
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+
+                                    <div style={{marginTop: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                      <p style={{margin: 0, color: '#666'}}>Showing 5 of {chemist.totalProducts} products</p>
+                                      <div style={{display: 'flex', gap: '5px'}}>
+                                        <button className="admin-page-btn">Previous</button>
+                                        <button className="admin-page-btn admin-active-page">1</button>
+                                        <button className="admin-page-btn">2</button>
+                                        <button className="admin-page-btn">3</button>
+                                        <button className="admin-page-btn">Next</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              <div className="admin-section-footer">
-                <p>Showing {chemists.length} chemists</p>
-                <div className="admin-pagination">
-                  <button className="admin-page-btn">Previous</button>
-                  <button className="admin-page-btn admin-active-page">1</button>
-                  <button className="admin-page-btn">2</button>
-                  <button className="admin-page-btn">Next</button>
+                  <div className="admin-section-footer">
+                    <p>Showing {chemists.length} chemists</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">2</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Medicine Orders Tab */}
+              {chemistSectionTab === 'orders' && (
+                <div>
+                  <div className="admin-filters">
+                    <input type="text" placeholder="Search by order ID, user, pharmacy..." className="admin-search-input" />
+                    <select className="admin-filter-select">
+                      <option value="">All Status</option>
+                      <option value="placed">Placed</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="out_for_delivery">Out for Delivery</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="payment_failed">Payment Failed</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Payment Status</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Order Type</option>
+                      <option value="with_prescription">With Prescription</option>
+                      <option value="without_prescription">Without Prescription</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Date & Time</th>
+                          <th>User</th>
+                          <th>Pharmacy</th>
+                          <th>Type</th>
+                          <th>Total (₹)</th>
+                          <th>Payment</th>
+                          <th>Order Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {medicineOrders.map(order => (
+                          <React.Fragment key={order.id}>
+                            <tr style={{background: expandedOrderId === order.id ? '#f7fff7' : 'transparent'}}>
+                              <td>{order.id}</td>
+                              <td>{order.date} {order.time}</td>
+                              <td>{order.userName} <br/><small>{order.userId}</small></td>
+                              <td>{order.pharmacyName}</td>
+                              <td>{order.type}</td>
+                              <td>₹{order.totalAmount}</td>
+                              <td>
+                                <span className={`admin-status-badge ${order.paymentStatus}`}>{order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}</span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${order.orderStatus.replace(/ /g, '_')}`}>{order.orderStatus.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                              </td>
+                              <td>
+                                <button
+                                  className="admin-icon-btn"
+                                  title={expandedOrderId === order.id ? 'Collapse' : 'Expand Details'}
+                                  onClick={() => toggleOrderExpansion(order.id)}
+                                  style={{fontSize: '16px', fontWeight: 'bold'}}
+                                >
+                                  {expandedOrderId === order.id ? '▼' : '▶'}
+                                </button>
+                                <button className="admin-icon-btn" title="Invoice" onClick={() => alert('Download invoice for ' + order.id)}>🧾</button>
+                                <button className="admin-icon-btn" title="Contact User" onClick={() => alert('Contact ' + order.userName)}>📞</button>
+                              </td>
+                            </tr>
+
+                            {expandedOrderId === order.id && (
+                              <tr>
+                                <td colSpan="9" style={{padding: 0, background: '#fbfffb'}}>
+                                  <div style={{padding: '20px', borderTop: '2px solid #10b981'}}>
+                                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                                      <div style={{background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #d1fae5'}}>
+                                        <strong style={{color: '#234f83', fontSize: '15px'}}>📋 Order Details</strong>
+                                        <p style={{margin: '10px 0 0', fontSize: '14px'}}><strong>Order ID:</strong> {order.id}</p>
+                                        <p style={{margin: '6px 0 0', fontSize: '14px'}}><strong>Placed On:</strong> {order.date} {order.time}</p>
+                                        <p style={{margin: '6px 0 0', fontSize: '14px'}}><strong>Type:</strong> {order.type}</p>
+                                        {order.prescriptionFile && <p style={{margin: '6px 0 0', fontSize: '14px'}}><strong>Prescription:</strong> <a href={`/${order.prescriptionFile}`} target="_blank" rel="noreferrer" style={{color: '#10b981'}}>📄 View File</a></p>}
+                                      </div>
+                                      <div style={{background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #d1fae5'}}>
+                                        <strong style={{color: '#234f83', fontSize: '15px'}}>👤 User & Delivery</strong>
+                                        <p style={{margin: '10px 0 0', fontSize: '14px'}}><strong>User:</strong> {order.userName} ({order.userId})</p>
+                                        <p style={{margin: '6px 0 0', fontSize: '14px'}}><strong>Delivery:</strong> {order.deliveryMode}</p>
+                                        <p style={{margin: '6px 0 0', fontSize: '14px'}}><strong>Address:</strong> {order.deliveryAddress}</p>
+                                      </div>
+                                    </div>                                    <div style={{background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #d1fae5', marginBottom: '16px'}}>
+                                      <strong style={{color: '#234f83', fontSize: '15px'}}>💊 Order Items</strong>
+                                      <table className="admin-table" style={{marginTop: '10px'}}>
+                                        <thead>
+                                          <tr>
+                                            <th>Medicine</th>
+                                            <th>Qty</th>
+                                            <th>MRP (₹)</th>
+                                            <th>Discount</th>
+                                            <th>Final (₹)</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {order.items.map(it => (
+                                            <tr key={it.id}>
+                                              <td>{it.name}</td>
+                                              <td>{it.qty}</td>
+                                              <td>₹{it.mrp}</td>
+                                              <td>{it.discount ? it.discount + '%' : '-'}</td>
+                                              <td><strong>₹{it.finalPrice}</strong></td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                      <div style={{textAlign: 'right', marginTop: '12px', paddingTop: '12px', borderTop: '2px solid #e5e7eb'}}>
+                                        <strong style={{fontSize: '16px', color: '#234f83'}}>Total Amount: ₹{order.totalAmount}</strong>
+                                      </div>
+                                    </div>
+
+                                    <div style={{display: 'flex', gap: '15px', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #d1fae5', marginBottom: '16px'}}>
+                                      <div>
+                                        <strong style={{color: '#234f83'}}>💳 Payment Method:</strong> {order.paymentMethod} &nbsp; 
+                                        <span className={`admin-status-badge ${order.paymentStatus}`}>{order.paymentStatus}</span>
+                                      </div>
+                                      <div style={{display: 'flex', gap: '8px'}}>
+                                        {order.orderStatus !== 'delivered' && <button className="admin-btn-primary" style={{padding: '8px 16px'}} onClick={() => alert('Marking ' + order.id + ' as Delivered')}>✅ Mark Delivered</button>}
+                                        {order.paymentStatus !== 'paid' && <button className="admin-btn-secondary" style={{padding: '8px 16px'}} onClick={() => alert('Retry payment for ' + order.id)}>🔄 Retry Payment</button>}
+                                        <button className="admin-btn-secondary" style={{padding: '8px 16px'}} onClick={() => alert('Download invoice for ' + order.id)}>📥 Invoice</button>
+                                      </div>
+                                    </div>
+
+                                    <div style={{background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #d1fae5'}}>
+                                      <strong style={{color: '#234f83', fontSize: '15px'}}>📊 Status Timeline</strong>
+                                      <ul style={{marginTop: '10px', paddingLeft: '20px'}}>
+                                        {order.statusLogs.map((log, idx) => (
+                                          <li key={idx} style={{marginBottom: '8px', fontSize: '14px'}}>
+                                            <span style={{color: '#666'}}>{log.time}</span> — <strong style={{color: '#10b981'}}>{log.status}</strong>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {medicineOrders.length} orders</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">2</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -4276,150 +6462,1395 @@ const AdminDashboard = () => {
             <div className="admin-section">
               <div className="admin-section-header">
                 <h2>🚑 Ambulance Management</h2>
-                <button className="admin-add-btn" onClick={() => openModal('add', 'ambulances')}>
-                  + Add Ambulance
-                </button>
-              </div>
-              
-              <div className="admin-filters">
-                <input 
-                  type="text" 
-                  placeholder="Search by driver, vehicle number..." 
-                  className="admin-search-input" 
-                />
-                <select className="admin-filter-select">
-                  <option value="">All Cities</option>
-                  <option value="mumbai">Mumbai</option>
-                  <option value="delhi">Delhi</option>
-                  <option value="bangalore">Bangalore</option>
-                  <option value="pune">Pune</option>
-                  <option value="hyderabad">Hyderabad</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">All Vehicle Types</option>
-                  <option value="basic">Basic Life Support</option>
-                  <option value="advanced">Advanced Life Support</option>
-                  <option value="transport">Patient Transport</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">All Availability</option>
-                  <option value="available">Available</option>
-                  <option value="on-trip">On Trip</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="offline">Offline</option>
-                </select>
-                <select className="admin-filter-select">
-                  <option value="">KYC Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Ambulance ID</th>
-                      <th>Driver Name</th>
-                      <th>Vehicle Number</th>
-                      <th>Vehicle Type</th>
-                      <th>City</th>
-                      <th>Total Trips</th>
-                      <th>Rating</th>
-                      <th>Availability</th>
-                      <th>Last Trip</th>
-                      <th>KYC Status</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ambulances.map(ambulance => (
-                      <tr key={ambulance.id}>
-                        <td>{ambulance.id}</td>
-                        <td>{ambulance.driverName}</td>
-                        <td>{ambulance.vehicleNumber}</td>
-                        <td>
-                          <span className={`admin-vehicle-badge ${ambulance.vehicleType.toLowerCase().replace(/ /g, '-')}`}>
-                            {ambulance.vehicleType}
-                          </span>
-                        </td>
-                        <td>{ambulance.city}</td>
-                        <td>{ambulance.totalTrips}</td>
-                        <td>
-                          {ambulance.rating > 0 ? (
-                            <span style={{color: '#f59e0b'}}>⭐ {ambulance.rating}</span>
-                          ) : (
-                            <span style={{color: '#9ca3af'}}>No rating</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className={`admin-availability-badge ${ambulance.availability}`}>
-                            {ambulance.availability.charAt(0).toUpperCase() + ambulance.availability.slice(1).replace('-', ' ')}
-                          </span>
-                        </td>
-                        <td>
-                          {ambulance.lastTrip ? new Date(ambulance.lastTrip).toLocaleDateString('en-IN') : 'N/A'}
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${ambulance.kycStatus}`}>
-                            {ambulance.kycStatus.charAt(0).toUpperCase() + ambulance.kycStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${ambulance.status}`}>
-                            {ambulance.status.charAt(0).toUpperCase() + ambulance.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Details"
-                            onClick={() => openModal('view', 'ambulances', ambulance)}
-                          >
-                            👁️
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Trip History"
-                            onClick={() => alert('View trip history for ' + ambulance.vehicleNumber)}
-                          >
-                            📋
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Edit"
-                            onClick={() => openModal('edit', 'ambulances', ambulance)}
-                          >
-                            ✏️
-                          </button>
-                          {ambulance.status === 'pending' ? (
-                            <>
-                              <button className="admin-icon-btn" title="Approve">✅</button>
-                              <button className="admin-icon-btn" title="Reject">❌</button>
-                            </>
-                          ) : ambulance.status !== 'blocked' ? (
-                            <button className="admin-icon-btn" title="Block">🚫</button>
-                          ) : (
-                            <button className="admin-icon-btn" title="Unblock">✅</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="admin-section-footer">
-                <p>Showing {ambulances.length} ambulances</p>
-                <div className="admin-pagination">
-                  <button className="admin-page-btn">Previous</button>
-                  <button className="admin-page-btn admin-active-page">1</button>
-                  <button className="admin-page-btn">2</button>
-                  <button className="admin-page-btn">Next</button>
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button className="admin-add-btn">+ Add Provider</button>
+                  <button className="admin-add-btn">+ Add Vehicle</button>
                 </div>
               </div>
+
+              {/* Three Main Tabs */}
+              <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                <button 
+                  onClick={() => setAmbulanceSectionTab('providers')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: ambulanceSectionTab === 'providers' ? '#234f83' : 'transparent',
+                    color: ambulanceSectionTab === 'providers' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: ambulanceSectionTab === 'providers' ? 'bold' : 'normal',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  🏢 Providers/Fleet Owners
+                </button>
+                <button 
+                  onClick={() => setAmbulanceSectionTab('vehicles')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: ambulanceSectionTab === 'vehicles' ? '#234f83' : 'transparent',
+                    color: ambulanceSectionTab === 'vehicles' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: ambulanceSectionTab === 'vehicles' ? 'bold' : 'normal',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  🚑 Vehicle Master
+                </button>
+                <button 
+                  onClick={() => setAmbulanceSectionTab('bookings')}
+                  style={{
+                    padding: '12px 24px',
+                    border: 'none',
+                    background: ambulanceSectionTab === 'bookings' ? '#234f83' : 'transparent',
+                    color: ambulanceSectionTab === 'bookings' ? 'white' : '#666',
+                    borderRadius: '8px 8px 0 0',
+                    cursor: 'pointer',
+                    fontWeight: ambulanceSectionTab === 'bookings' ? 'bold' : 'normal',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  📋 Booking Management
+                </button>
+              </div>
+
+              {/* PROVIDERS TAB */}
+              {ambulanceSectionTab === 'providers' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by provider name, contact person..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Cities</option>
+                      <option value="mumbai">Mumbai</option>
+                      <option value="delhi">Delhi</option>
+                      <option value="bangalore">Bangalore</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">KYC Status</option>
+                      <option value="verified">Verified</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Provider ID</th>
+                          <th>Provider Name</th>
+                          <th>Contact Person</th>
+                          <th>Phone</th>
+                          <th>City</th>
+                          <th>Total Vehicles</th>
+                          <th>Total Bookings</th>
+                          <th>Rating</th>
+                          <th>KYC Status</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ambulanceProviders.map(provider => (
+                          <React.Fragment key={provider.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => toggleProviderExpansion(provider.id)}>
+                              <td>{provider.id}</td>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{provider.providerName}</td>
+                              <td>{provider.contactPerson}</td>
+                              <td>{provider.phone}</td>
+                              <td>{provider.city}</td>
+                              <td>{provider.totalVehicles}</td>
+                              <td>{provider.totalBookings}</td>
+                              <td>
+                                <span style={{color: '#f59e0b'}}>⭐ {provider.rating}</span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${provider.kycStatus === 'verified' ? 'active' : provider.kycStatus}`}>
+                                  {provider.kycStatus.charAt(0).toUpperCase() + provider.kycStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${provider.status}`}>
+                                  {provider.status.charAt(0).toUpperCase() + provider.status.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedProviderId === provider.id ? '🔼' : '🔽'}
+                                </button>
+                                <button className="admin-icon-btn" title="View Vehicles">🚑</button>
+                                <button className="admin-icon-btn" title="Block/Unblock">🚫</button>
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Provider KYC Details */}
+                            {expandedProviderId === provider.id && (
+                              <tr>
+                                <td colSpan="11" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>📄 Provider KYC Details</h3>
+                                      {!isEditingProviderKyc ? (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          onClick={() => {
+                                            setIsEditingProviderKyc(true);
+                                            setProviderKycFormData({
+                                              email: provider.email,
+                                              alternatePhone: provider.alternatePhone,
+                                              address: provider.address,
+                                              city: provider.city,
+                                              state: provider.state,
+                                              pincode: provider.pincode,
+                                              companyRegCert: provider.companyRegCert,
+                                              gst: provider.gst,
+                                              bankAccountNumber: provider.bankAccountNumber,
+                                              ifscCode: provider.ifscCode,
+                                              bankName: provider.bankName
+                                            });
+                                          }}
+                                          style={{padding: '8px 16px'}}
+                                        >
+                                          ✏️ Edit Details
+                                        </button>
+                                      ) : null}
+                                    </div>
+
+                                    {isEditingProviderKyc ? (
+                                      <form onSubmit={(e) => handleProviderKycSave(e, provider.id)}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Email *</label>
+                                            <input 
+                                              type="email" 
+                                              value={providerKycFormData.email || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, email: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Alternate Phone</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.alternatePhone || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, alternatePhone: e.target.value})}
+                                            />
+                                          </div>
+                                          <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                            <label>Address *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.address || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, address: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>City *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.city || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, city: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>State *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.state || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, state: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Pincode *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.pincode || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, pincode: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Company Reg Certificate *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.companyRegCert || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, companyRegCert: e.target.value})}
+                                              placeholder="Certificate Number"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>GST Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.gst || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, gst: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Bank Account Number *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.bankAccountNumber || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, bankAccountNumber: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>IFSC Code *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.ifscCode || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, ifscCode: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Bank Name *</label>
+                                            <input 
+                                              type="text" 
+                                              value={providerKycFormData.bankName || ''} 
+                                              onChange={(e) => setProviderKycFormData({...providerKycFormData, bankName: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingProviderKyc(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Email:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.email}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Alternate Phone:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.alternatePhone}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Complete Address:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.address}, {provider.city}, {provider.state} - {provider.pincode}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Company Reg Cert:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.companyRegCert}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>GST Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.gst}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Bank Account:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>•••• •••• •••• {provider.bankAccountNumber.slice(-4)}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>IFSC Code:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.ifscCode}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Bank Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{provider.bankName}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Registered Date:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{new Date(provider.registeredDate).toLocaleDateString('en-IN')}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {ambulanceProviders.length} providers</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VEHICLES TAB */}
+              {ambulanceSectionTab === 'vehicles' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by vehicle ID, number, provider..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Providers</option>
+                      {ambulanceProviders.map(p => (
+                        <option key={p.id} value={p.id}>{p.providerName}</option>
+                      ))}
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">All Vehicle Types</option>
+                      <option value="bls">Basic Life Support</option>
+                      <option value="als">Advanced Life Support</option>
+                      <option value="cardiac">Cardiac Ambulance</option>
+                      <option value="neonatal">Neonatal Ambulance</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">All Status</option>
+                      <option value="available">Available</option>
+                      <option value="on-trip">On Trip</option>
+                      <option value="maintenance">Maintenance</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Approval Status</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Vehicle ID</th>
+                          <th>Provider</th>
+                          <th>Vehicle Number</th>
+                          <th>Type</th>
+                          <th>Capacity</th>
+                          <th>Base Location</th>
+                          <th>Total Trips</th>
+                          <th>Rating</th>
+                          <th>GPS</th>
+                          <th>Status</th>
+                          <th>Approval</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ambulanceVehicles.map(vehicle => (
+                          <React.Fragment key={vehicle.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => toggleVehicleExpansion(vehicle.id)}>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{vehicle.vehicleId}</td>
+                              <td>{vehicle.providerName}</td>
+                              <td>{vehicle.vehicleNumber}</td>
+                              <td>
+                                <span className="admin-status-badge active" style={{fontSize: '12px'}}>
+                                  {vehicle.vehicleType}
+                                </span>
+                              </td>
+                              <td>{vehicle.capacity}</td>
+                              <td>{vehicle.baseLocation}</td>
+                              <td>{vehicle.totalTrips}</td>
+                              <td>
+                                <span style={{color: '#f59e0b'}}>⭐ {vehicle.rating}</span>
+                              </td>
+                              <td>
+                                <span style={{fontSize: '18px'}}>{vehicle.hasGPS ? '✅' : '❌'}</span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${vehicle.currentStatus === 'available' ? 'active' : vehicle.currentStatus === 'on-trip' ? 'pending' : 'rejected'}`}>
+                                  {vehicle.currentStatus.charAt(0).toUpperCase() + vehicle.currentStatus.slice(1).replace('-', ' ')}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${vehicle.approvalStatus === 'approved' ? 'active' : vehicle.approvalStatus}`}>
+                                  {vehicle.approvalStatus.charAt(0).toUpperCase() + vehicle.approvalStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedVehicleId === vehicle.id ? '🔼' : '🔽'}
+                                </button>
+                                <button className="admin-icon-btn" title="Track Vehicle">📍</button>
+                                {vehicle.approvalStatus === 'pending' && (
+                                  <button className="admin-icon-btn" title="Approve">✅</button>
+                                )}
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Vehicle Details with 4 Sub-tabs */}
+                            {expandedVehicleId === vehicle.id && (
+                              <tr>
+                                <td colSpan="12" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    
+                                    {/* Vehicle Sub-tabs */}
+                                    <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                      <button 
+                                        onClick={() => setVehicleManagementTab('basic')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: vehicleManagementTab === 'basic' ? '#234f83' : 'transparent',
+                                          color: vehicleManagementTab === 'basic' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: vehicleManagementTab === 'basic' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        📋 Basic Details
+                                      </button>
+                                      <button 
+                                        onClick={() => setVehicleManagementTab('equipment')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: vehicleManagementTab === 'equipment' ? '#234f83' : 'transparent',
+                                          color: vehicleManagementTab === 'equipment' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: vehicleManagementTab === 'equipment' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        🏥 Equipment
+                                      </button>
+                                      <button 
+                                        onClick={() => setVehicleManagementTab('pricing')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: vehicleManagementTab === 'pricing' ? '#234f83' : 'transparent',
+                                          color: vehicleManagementTab === 'pricing' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: vehicleManagementTab === 'pricing' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        💰 Pricing
+                                      </button>
+                                      <button 
+                                        onClick={() => setVehicleManagementTab('documents')}
+                                        style={{
+                                          padding: '10px 20px',
+                                          border: 'none',
+                                          background: vehicleManagementTab === 'documents' ? '#234f83' : 'transparent',
+                                          color: vehicleManagementTab === 'documents' ? 'white' : '#666',
+                                          borderRadius: '8px 8px 0 0',
+                                          cursor: 'pointer',
+                                          fontWeight: vehicleManagementTab === 'documents' ? 'bold' : 'normal',
+                                          fontSize: '14px'
+                                        }}
+                                      >
+                                        📄 Documents
+                                      </button>
+                                    </div>
+
+                                    {/* Basic Details Sub-tab */}
+                                    {vehicleManagementTab === 'basic' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>📋 Basic Details</h3>
+                                          {!isEditingVehicleBasic ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingVehicleBasic(true);
+                                                setVehicleBasicFormData({
+                                                  vehicleId: vehicle.vehicleId,
+                                                  vehicleNumber: vehicle.vehicleNumber,
+                                                  vehicleType: vehicle.vehicleType,
+                                                  capacity: vehicle.capacity,
+                                                  baseLocation: vehicle.baseLocation,
+                                                  baseCity: vehicle.baseCity
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Details
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingVehicleBasic ? (
+                                          <form onSubmit={(e) => handleVehicleBasicSave(e, vehicle.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>Vehicle ID *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={vehicleBasicFormData.vehicleId || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, vehicleId: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Vehicle Number *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={vehicleBasicFormData.vehicleNumber || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, vehicleNumber: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Vehicle Type *</label>
+                                                <select 
+                                                  value={vehicleBasicFormData.vehicleType || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, vehicleType: e.target.value})}
+                                                  required
+                                                  style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%'}}
+                                                >
+                                                  <option value="">Select Type</option>
+                                                  <option value="Basic Life Support (BLS)">Basic Life Support (BLS)</option>
+                                                  <option value="Advanced Life Support (ALS)">Advanced Life Support (ALS)</option>
+                                                  <option value="Cardiac Ambulance">Cardiac Ambulance</option>
+                                                  <option value="Neonatal Ambulance">Neonatal Ambulance</option>
+                                                </select>
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Capacity *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={vehicleBasicFormData.capacity || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, capacity: e.target.value})}
+                                                  placeholder="e.g., 2 patients + 2 attendants"
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Base Location *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={vehicleBasicFormData.baseLocation || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, baseLocation: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Base City *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={vehicleBasicFormData.baseCity || ''} 
+                                                  onChange={(e) => setVehicleBasicFormData({...vehicleBasicFormData, baseCity: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingVehicleBasic(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Vehicle ID:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.vehicleId}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Provider:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.providerName}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Vehicle Number:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.vehicleNumber}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Type:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.vehicleType}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Capacity:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.capacity}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Base Location:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.baseLocation}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Base City:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.baseCity}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Total Trips:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.totalTrips}</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Last Trip:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{new Date(vehicle.lastTrip).toLocaleDateString('en-IN')}</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Equipment Sub-tab */}
+                                    {vehicleManagementTab === 'equipment' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>🏥 Equipment Configuration</h3>
+                                          {!isEditingEquipment ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingEquipment(true);
+                                                setEquipmentFormData({
+                                                  hasOxygen: vehicle.hasOxygen,
+                                                  hasVentilator: vehicle.hasVentilator,
+                                                  hasDefibrillator: vehicle.hasDefibrillator,
+                                                  hasStretcher: vehicle.hasStretcher,
+                                                  hasWheelchair: vehicle.hasWheelchair,
+                                                  hasParamedic: vehicle.hasParamedic,
+                                                  hasDoctor: vehicle.hasDoctor
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Equipment
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingEquipment ? (
+                                          <form onSubmit={(e) => handleEquipmentSave(e, vehicle.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="oxygen"
+                                                  checked={equipmentFormData.hasOxygen || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasOxygen: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="oxygen" style={{cursor: 'pointer', fontWeight: '500'}}>Oxygen Cylinder</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="ventilator"
+                                                  checked={equipmentFormData.hasVentilator || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasVentilator: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="ventilator" style={{cursor: 'pointer', fontWeight: '500'}}>Ventilator</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="defibrillator"
+                                                  checked={equipmentFormData.hasDefibrillator || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasDefibrillator: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="defibrillator" style={{cursor: 'pointer', fontWeight: '500'}}>Defibrillator</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="stretcher"
+                                                  checked={equipmentFormData.hasStretcher || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasStretcher: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="stretcher" style={{cursor: 'pointer', fontWeight: '500'}}>Stretcher</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="wheelchair"
+                                                  checked={equipmentFormData.hasWheelchair || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasWheelchair: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="wheelchair" style={{cursor: 'pointer', fontWeight: '500'}}>Wheelchair</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="paramedic"
+                                                  checked={equipmentFormData.hasParamedic || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasParamedic: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="paramedic" style={{cursor: 'pointer', fontWeight: '500'}}>Paramedic Staff</label>
+                                              </div>
+                                              <div style={{display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: '#f9fafb', borderRadius: '8px'}}>
+                                                <input 
+                                                  type="checkbox" 
+                                                  id="doctor"
+                                                  checked={equipmentFormData.hasDoctor || false} 
+                                                  onChange={(e) => setEquipmentFormData({...equipmentFormData, hasDoctor: e.target.checked})}
+                                                  style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                />
+                                                <label htmlFor="doctor" style={{cursor: 'pointer', fontWeight: '500'}}>Doctor on Board</label>
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingEquipment(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: vehicle.hasOxygen ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasOxygen ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Oxygen</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasVentilator ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasVentilator ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Ventilator</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasDefibrillator ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasDefibrillator ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Defibrillator</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasStretcher ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasStretcher ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Stretcher</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasWheelchair ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasWheelchair ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Wheelchair</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasParamedic ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasParamedic ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Paramedic</strong>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasDoctor ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center'}}>
+                                              <p style={{margin: 0, fontSize: '24px'}}>{vehicle.hasDoctor ? '✅' : '❌'}</p>
+                                              <strong style={{color: '#666', fontSize: '14px'}}>Doctor</strong>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Pricing Sub-tab */}
+                                    {vehicleManagementTab === 'pricing' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>💰 Pricing Structure</h3>
+                                          {!isEditingPricing ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingPricing(true);
+                                                setPricingFormData({
+                                                  baseFare: vehicle.baseFare,
+                                                  baseKm: vehicle.baseKm,
+                                                  perKmCharge: vehicle.perKmCharge,
+                                                  waitingCharge: vehicle.waitingCharge,
+                                                  hasNightCharges: vehicle.hasNightCharges,
+                                                  nightChargePercent: vehicle.nightChargePercent,
+                                                  hasEmergencySurcharge: vehicle.hasEmergencySurcharge,
+                                                  emergencySurchargePercent: vehicle.emergencySurchargePercent
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Edit Pricing
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingPricing ? (
+                                          <form onSubmit={(e) => handlePricingSave(e, vehicle.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>Base Fare (₹) *</label>
+                                                <input 
+                                                  type="number" 
+                                                  value={pricingFormData.baseFare || ''} 
+                                                  onChange={(e) => setPricingFormData({...pricingFormData, baseFare: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Base Km Included *</label>
+                                                <input 
+                                                  type="number" 
+                                                  value={pricingFormData.baseKm || ''} 
+                                                  onChange={(e) => setPricingFormData({...pricingFormData, baseKm: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Per Km Charge (₹) *</label>
+                                                <input 
+                                                  type="number" 
+                                                  value={pricingFormData.perKmCharge || ''} 
+                                                  onChange={(e) => setPricingFormData({...pricingFormData, perKmCharge: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Waiting Charge (₹/hour) *</label>
+                                                <input 
+                                                  type="number" 
+                                                  value={pricingFormData.waitingCharge || ''} 
+                                                  onChange={(e) => setPricingFormData({...pricingFormData, waitingCharge: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                              <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                                                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                                  <input 
+                                                    type="checkbox" 
+                                                    id="nightCharges"
+                                                    checked={pricingFormData.hasNightCharges || false} 
+                                                    onChange={(e) => setPricingFormData({...pricingFormData, hasNightCharges: e.target.checked})}
+                                                    style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                  />
+                                                  <label htmlFor="nightCharges" style={{cursor: 'pointer'}}>Night Charges (10 PM - 6 AM)</label>
+                                                </div>
+                                                {pricingFormData.hasNightCharges && (
+                                                  <input 
+                                                    type="number" 
+                                                    value={pricingFormData.nightChargePercent || ''} 
+                                                    onChange={(e) => setPricingFormData({...pricingFormData, nightChargePercent: e.target.value})}
+                                                    placeholder="% Additional"
+                                                    style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                                                  />
+                                                )}
+                                              </div>
+                                              <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                                                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                                  <input 
+                                                    type="checkbox" 
+                                                    id="emergencySurcharge"
+                                                    checked={pricingFormData.hasEmergencySurcharge || false} 
+                                                    onChange={(e) => setPricingFormData({...pricingFormData, hasEmergencySurcharge: e.target.checked})}
+                                                    style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                                                  />
+                                                  <label htmlFor="emergencySurcharge" style={{cursor: 'pointer'}}>Emergency Surcharge</label>
+                                                </div>
+                                                {pricingFormData.hasEmergencySurcharge && (
+                                                  <input 
+                                                    type="number" 
+                                                    value={pricingFormData.emergencySurchargePercent || ''} 
+                                                    onChange={(e) => setPricingFormData({...pricingFormData, emergencySurchargePercent: e.target.value})}
+                                                    placeholder="% Additional"
+                                                    style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                                                  />
+                                                )}
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingPricing(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Base Fare:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{vehicle.baseFare}</p>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '13px', color: '#999'}}>(Includes {vehicle.baseKm} km)</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Per Km Charge:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{vehicle.perKmCharge}/km</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Waiting Charge:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>₹{vehicle.waitingCharge}/hour</p>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasNightCharges ? '#d1fae5' : '#fee2e2', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Night Charges:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                                {vehicle.hasNightCharges ? `+${vehicle.nightChargePercent}% (10 PM - 6 AM)` : 'Not Applicable'}
+                                              </p>
+                                            </div>
+                                            <div style={{padding: '15px', background: vehicle.hasEmergencySurcharge ? '#fff3cd' : '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                              <strong style={{color: '#666'}}>Emergency Surcharge:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                                {vehicle.hasEmergencySurcharge ? `+${vehicle.emergencySurchargePercent}% on total fare` : 'Not Applicable'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Documents Sub-tab */}
+                                    {vehicleManagementTab === 'documents' && (
+                                      <div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                          <h3 style={{margin: 0, color: '#234f83'}}>📄 Vehicle Documents</h3>
+                                          {!isEditingDocuments ? (
+                                            <button 
+                                              className="admin-btn-primary" 
+                                              onClick={() => {
+                                                setIsEditingDocuments(true);
+                                                setDocumentsFormData({
+                                                  rcBook: vehicle.rcBook,
+                                                  insurance: vehicle.insurance,
+                                                  driverLicense: vehicle.driverLicense,
+                                                  validityExpiry: vehicle.validityExpiry
+                                                });
+                                              }}
+                                              style={{padding: '8px 16px'}}
+                                            >
+                                              ✏️ Update Documents
+                                            </button>
+                                          ) : null}
+                                        </div>
+
+                                        {isEditingDocuments ? (
+                                          <form onSubmit={(e) => handleDocumentsSave(e, vehicle.id)}>
+                                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                              <div className="admin-form-group">
+                                                <label>RC Book *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={documentsFormData.rcBook || ''} 
+                                                  onChange={(e) => setDocumentsFormData({...documentsFormData, rcBook: e.target.value})}
+                                                  placeholder="RC Book filename or number"
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Insurance Certificate *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={documentsFormData.insurance || ''} 
+                                                  onChange={(e) => setDocumentsFormData({...documentsFormData, insurance: e.target.value})}
+                                                  placeholder="Insurance certificate filename"
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Driver License *</label>
+                                                <input 
+                                                  type="text" 
+                                                  value={documentsFormData.driverLicense || ''} 
+                                                  onChange={(e) => setDocumentsFormData({...documentsFormData, driverLicense: e.target.value})}
+                                                  placeholder="Driver license filename or number"
+                                                  required
+                                                />
+                                              </div>
+                                              <div className="admin-form-group">
+                                                <label>Validity Expiry Date *</label>
+                                                <input 
+                                                  type="date" 
+                                                  value={documentsFormData.validityExpiry || ''} 
+                                                  onChange={(e) => setDocumentsFormData({...documentsFormData, validityExpiry: e.target.value})}
+                                                  required
+                                                />
+                                              </div>
+                                            </div>
+                                            <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                              <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                              <button 
+                                                type="button" 
+                                                className="admin-btn-secondary" 
+                                                style={{padding: '8px 16px'}}
+                                                onClick={() => setIsEditingDocuments(false)}
+                                              >
+                                                ✖️ Cancel
+                                              </button>
+                                            </div>
+                                          </form>
+                                        ) : (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>RC Book:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.rcBook}</p>
+                                              <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Insurance Certificate:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.insurance}</p>
+                                              <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Driver License:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{vehicle.driverLicense}</p>
+                                              <button className="admin-btn-secondary" style={{marginTop: '10px', padding: '6px 12px', fontSize: '13px'}}>📥 Download</button>
+                                            </div>
+                                            <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                              <strong style={{color: '#666'}}>Validity Expiry:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                                {new Date(vehicle.validityExpiry).toLocaleDateString('en-IN')}
+                                                {new Date(vehicle.validityExpiry) < new Date() && (
+                                                  <span style={{marginLeft: '10px', color: '#dc2626', fontWeight: 'bold'}}>⚠️ Expired</span>
+                                                )}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {ambulanceVehicles.length} vehicles</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* BOOKINGS TAB */}
+              {ambulanceSectionTab === 'bookings' && (
+                <div>
+                  <div className="admin-filters">
+                    <input 
+                      type="text" 
+                      placeholder="Search by booking ID, patient name, caller..." 
+                      className="admin-search-input" 
+                    />
+                    <select className="admin-filter-select">
+                      <option value="">All Emergency Types</option>
+                      <option value="cardiac">Cardiac Emergency</option>
+                      <option value="accident">Accident</option>
+                      <option value="pregnancy">Pregnancy Emergency</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">All Trip Status</option>
+                      <option value="requested">Requested</option>
+                      <option value="assigned">Assigned</option>
+                      <option value="en-route">En Route</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select className="admin-filter-select">
+                      <option value="">Payment Status</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                    <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📅 Date Filter</button>
+                  </div>
+
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Booking ID</th>
+                          <th>Request Time</th>
+                          <th>Patient Name</th>
+                          <th>Contact</th>
+                          <th>Emergency Type</th>
+                          <th>Provider</th>
+                          <th>Vehicle</th>
+                          <th>Distance (km)</th>
+                          <th>Total Fare (₹)</th>
+                          <th>Payment</th>
+                          <th>Trip Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ambulanceBookings.map(booking => (
+                          <React.Fragment key={booking.id}>
+                            <tr style={{cursor: 'pointer'}} onClick={() => toggleBookingExpansion(booking.id)}>
+                              <td style={{fontWeight: 'bold', color: '#234f83'}}>{booking.id}</td>
+                              <td>{booking.requestTime}</td>
+                              <td>{booking.patientName}</td>
+                              <td>{booking.contactNumber}</td>
+                              <td>
+                                <span className="admin-status-badge pending" style={{fontSize: '12px'}}>
+                                  {booking.emergencyType}
+                                </span>
+                              </td>
+                              <td>{booking.providerName || 'Not Assigned'}</td>
+                              <td>{booking.assignedVehicle || 'Not Assigned'}</td>
+                              <td>{booking.distanceTravelled || 0}</td>
+                              <td style={{fontWeight: 'bold'}}>₹{booking.totalFare}</td>
+                              <td>
+                                <span className={`admin-status-badge ${booking.paymentStatus === 'paid' ? 'active' : booking.paymentStatus === 'pending' ? 'pending' : 'rejected'}`}>
+                                  {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`admin-status-badge ${booking.tripStatus === 'completed' ? 'active' : booking.tripStatus === 'requested' ? 'pending' : 'pending'}`}>
+                                  {booking.tripStatus.charAt(0).toUpperCase() + booking.tripStatus.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button className="admin-icon-btn" title="Toggle Details">
+                                  {expandedBookingId === booking.id ? '🔼' : '🔽'}
+                                </button>
+                                {booking.tripStatus === 'requested' && (
+                                  <button className="admin-icon-btn" title="Assign Vehicle">🚑</button>
+                                )}
+                              </td>
+                            </tr>
+
+                            {/* Expanded Row - Booking Details */}
+                            {expandedBookingId === booking.id && (
+                              <tr>
+                                <td colSpan="12" style={{padding: '0', background: '#f9fafb'}}>
+                                  <div style={{padding: '20px', background: 'white', margin: '10px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                                    
+                                    <h3 style={{margin: '0 0 20px 0', color: '#234f83'}}>📋 Booking Details - {booking.id}</h3>
+
+                                    {/* Patient & Caller Information */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>👤 Patient & Caller Information</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Patient Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.patientName}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Caller Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.callerName}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Contact Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.contactNumber}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Emergency Type:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.emergencyType}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '2 / -1'}}>
+                                          <strong style={{color: '#666'}}>Selected Vehicle Type:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.selectedVehicleType}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Location Information */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>📍 Location Details</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Pickup Location:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.pickupLocation}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Drop Location:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.dropLocation}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                          <strong style={{color: '#666'}}>Preferred Hospital:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.preferredHospital}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Vehicle Assignment */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>🚑 Vehicle Assignment</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Provider:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.providerName || 'Not Assigned Yet'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Vehicle Number:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.assignedVehicle || 'Not Assigned Yet'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Driver:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.assignedDriver || 'Not Assigned Yet'}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Trip Timeline */}
+                                    {booking.startTime && (
+                                      <div style={{marginBottom: '25px'}}>
+                                        <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>⏱️ Trip Timeline</h4>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px'}}>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Start Time:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.startTime}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Arrival Time:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.arrivalTime || 'Pending'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Drop Time:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.dropTime || 'Pending'}</p>
+                                          </div>
+                                          <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                            <strong style={{color: '#666'}}>Distance:</strong>
+                                            <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.distanceTravelled} km</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Fare Breakdown */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>💰 Fare Breakdown</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Base Fare:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{booking.baseFare}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Km Charge:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{booking.kmCharge}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Waiting Charge:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{booking.waitingCharge}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Night Charge:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{booking.nightCharge}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Emergency Charge:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>₹{booking.emergencyCharge}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#d1fae5', borderRadius: '8px', border: '2px solid #10b981'}}>
+                                          <strong style={{color: '#666'}}>Total Fare:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '20px', fontWeight: 'bold', color: '#234f83'}}>₹{booking.totalFare}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Payment Information */}
+                                    <div style={{marginBottom: '25px'}}>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>💳 Payment Information</h4>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Payment Method:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.paymentMethod || 'Not Selected'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Transaction ID:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{booking.transactionId || 'N/A'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Payment Status:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            <span className={`admin-status-badge ${booking.paymentStatus === 'paid' ? 'active' : booking.paymentStatus}`}>
+                                              {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Trip Status Logs */}
+                                    <div>
+                                      <h4 style={{margin: '0 0 15px 0', color: '#666', borderBottom: '2px solid #e5e7eb', paddingBottom: '8px'}}>📝 Trip Status Logs</h4>
+                                      <div style={{padding: '20px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                        {booking.statusLogs.map((log, index) => (
+                                          <div 
+                                            key={index} 
+                                            style={{
+                                              display: 'flex', 
+                                              alignItems: 'center', 
+                                              marginBottom: index < booking.statusLogs.length - 1 ? '15px' : '0',
+                                              paddingBottom: index < booking.statusLogs.length - 1 ? '15px' : '0',
+                                              borderBottom: index < booking.statusLogs.length - 1 ? '1px solid #e5e7eb' : 'none'
+                                            }}
+                                          >
+                                            <div style={{
+                                              width: '12px', 
+                                              height: '12px', 
+                                              borderRadius: '50%', 
+                                              background: index === booking.statusLogs.length - 1 ? '#10b981' : '#9ca3af',
+                                              marginRight: '15px'
+                                            }}></div>
+                                            <div style={{flex: 1}}>
+                                              <p style={{margin: 0, fontWeight: 'bold', color: '#234f83'}}>{log.status}</p>
+                                              <p style={{margin: '3px 0 0 0', fontSize: '13px', color: '#666'}}>{log.time}</p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div style={{marginTop: '25px', display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                                      {booking.tripStatus === 'requested' && (
+                                        <button className="admin-btn-primary" style={{padding: '8px 16px'}}>🚑 Assign Vehicle</button>
+                                      )}
+                                      {booking.tripStatus !== 'completed' && booking.tripStatus !== 'cancelled' && (
+                                        <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>❌ Cancel Booking</button>
+                                      )}
+                                      <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📥 Download Invoice</button>
+                                      <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📞 Call Patient</button>
+                                    </div>
+
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="admin-section-footer">
+                    <p>Showing {ambulanceBookings.length} bookings</p>
+                    <div className="admin-pagination">
+                      <button className="admin-page-btn">Previous</button>
+                      <button className="admin-page-btn admin-active-page">1</button>
+                      <button className="admin-page-btn">Next</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -4622,61 +8053,592 @@ const AdminDashboard = () => {
                       <th>Name</th>
                       <th>Mobile</th>
                       <th>Email</th>
-                      <th>City</th>
                       <th>Registered Date</th>
                       <th>Total Appointments</th>
                       <th>Last Appointment</th>
-                      <th>Family Members</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {patients.map(patient => (
-                      <tr key={patient.id}>
-                        <td>{patient.id}</td>
-                        <td>{patient.name}</td>
-                        <td>{patient.mobile}</td>
-                        <td>{patient.email}</td>
-                        <td>{patient.city}</td>
-                        <td>{new Date(patient.registeredDate).toLocaleDateString('en-IN')}</td>
-                        <td>{patient.totalAppointments}</td>
-                        <td>{new Date(patient.lastAppointment).toLocaleDateString('en-IN')}</td>
-                        <td>{patient.familyMembers}</td>
-                        <td>
-                          <span className={`admin-status-badge ${patient.status}`}>
-                            {patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View Details"
-                            onClick={() => openModal('view', 'patients', patient)}
-                          >
-                            👁️
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="View History"
-                            onClick={() => alert('View appointment history for ' + patient.name)}
-                          >
-                            📋
-                          </button>
-                          <button 
-                            className="admin-icon-btn" 
-                            title="Edit"
-                            onClick={() => openModal('edit', 'patients', patient)}
-                          >
-                            ✏️
-                          </button>
-                          {patient.status !== 'blocked' ? (
-                            <button className="admin-icon-btn" title="Block User">🚫</button>
-                          ) : (
-                            <button className="admin-icon-btn" title="Unblock User">✅</button>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={patient.id}>
+                        <tr style={{background: expandedPatientId === patient.id ? '#f0f7ff' : 'transparent'}}>
+                          <td>{patient.id}</td>
+                          <td>{patient.name}</td>
+                          <td>{patient.mobile}</td>
+                          <td>{patient.email}</td>
+                          <td>{new Date(patient.registeredDate).toLocaleDateString('en-IN')}</td>
+                          <td>{patient.totalAppointments}</td>
+                          <td>{patient.lastAppointment ? new Date(patient.lastAppointment).toLocaleDateString('en-IN') : 'N/A'}</td>
+                          <td>
+                            <span className={`admin-status-badge ${patient.status}`}>
+                              {patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="admin-icon-btn" 
+                              title={expandedPatientId === patient.id ? "Collapse" : "Expand Details"}
+                              onClick={() => togglePatientExpansion(patient.id)}
+                              style={{fontSize: '16px', fontWeight: 'bold'}}
+                            >
+                              {expandedPatientId === patient.id ? '▼' : '▶'}
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="View Details"
+                              onClick={() => openModal('view', 'patients', patient)}
+                            >
+                              👁️
+                            </button>
+                            <button 
+                              className="admin-icon-btn" 
+                              title="Edit"
+                              onClick={() => openModal('edit', 'patients', patient)}
+                            >
+                              ✏️
+                            </button>
+                            {patient.status !== 'blocked' ? (
+                              <button className="admin-icon-btn" title="Block User">🚫</button>
+                            ) : (
+                              <button className="admin-icon-btn" title="Unblock User">✅</button>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expandable Patient Details Section */}
+                        {expandedPatientId === patient.id && (
+                          <tr>
+                            <td colSpan="9" style={{padding: '0', background: '#f9fafb'}}>
+                              <div style={{padding: '20px', borderTop: '2px solid #234f83'}}>
+                                {/* Management Tabs */}
+                                <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb'}}>
+                                  <button
+                                    onClick={() => setPatientManagementTab('basicInfo')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: patientManagementTab === 'basicInfo' ? '#234f83' : 'transparent',
+                                      color: patientManagementTab === 'basicInfo' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: patientManagementTab === 'basicInfo' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    👤 Basic Info
+                                  </button>
+                                  <button
+                                    onClick={() => setPatientManagementTab('familyMembers')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: patientManagementTab === 'familyMembers' ? '#234f83' : 'transparent',
+                                      color: patientManagementTab === 'familyMembers' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: patientManagementTab === 'familyMembers' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    👨‍👩‍👧‍👦 Family Members
+                                  </button>
+                                  <button
+                                    onClick={() => setPatientManagementTab('appointmentHistory')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: patientManagementTab === 'appointmentHistory' ? '#234f83' : 'transparent',
+                                      color: patientManagementTab === 'appointmentHistory' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: patientManagementTab === 'appointmentHistory' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    📋 Appointment History
+                                  </button>
+                                  <button
+                                    onClick={() => setPatientManagementTab('emergencyContact')}
+                                    style={{
+                                      padding: '12px 20px',
+                                      background: patientManagementTab === 'emergencyContact' ? '#234f83' : 'transparent',
+                                      color: patientManagementTab === 'emergencyContact' ? '#fff' : '#666',
+                                      border: 'none',
+                                      borderBottom: patientManagementTab === 'emergencyContact' ? '3px solid #234f83' : '3px solid transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '14px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    🚨 Emergency Contact
+                                  </button>
+                                </div>
+
+                                {/* Basic Info Tab */}
+                                {patientManagementTab === 'basicInfo' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>👤 Basic Information</h3>
+                                      {!isEditingBasicInfo && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingBasicInfo(true);
+                                            setBasicInfoFormData({
+                                              name: patient.name || '',
+                                              gender: patient.gender || '',
+                                              dob: patient.dob || '',
+                                              email: patient.email || '',
+                                              mobile: patient.mobile || '',
+                                              city: patient.city || '',
+                                              address: patient.address || '',
+                                              bloodGroup: patient.bloodGroup || '',
+                                              noShowCount: patient.noShowCount || 0,
+                                              abuseFlag: patient.abuseFlag || false
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Basic Info
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingBasicInfo ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleBasicInfoSave(patient.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Full Name *</label>
+                                            <input 
+                                              type="text" 
+                                              value={basicInfoFormData.name || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, name: e.target.value})}
+                                              placeholder="Enter full name"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Gender *</label>
+                                            <select 
+                                              value={basicInfoFormData.gender || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, gender: e.target.value})}
+                                              required
+                                            >
+                                              <option value="">Select Gender</option>
+                                              <option value="Male">Male</option>
+                                              <option value="Female">Female</option>
+                                              <option value="Other">Other</option>
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Date of Birth *</label>
+                                            <input 
+                                              type="date" 
+                                              value={basicInfoFormData.dob || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, dob: e.target.value})}
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Blood Group</label>
+                                            <select 
+                                              value={basicInfoFormData.bloodGroup || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, bloodGroup: e.target.value})}
+                                            >
+                                              <option value="">Select Blood Group</option>
+                                              <option value="A+">A+</option>
+                                              <option value="A-">A-</option>
+                                              <option value="B+">B+</option>
+                                              <option value="B-">B-</option>
+                                              <option value="O+">O+</option>
+                                              <option value="O-">O-</option>
+                                              <option value="AB+">AB+</option>
+                                              <option value="AB-">AB-</option>
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Email *</label>
+                                            <input 
+                                              type="email" 
+                                              value={basicInfoFormData.email || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, email: e.target.value})}
+                                              placeholder="Email address"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Mobile *</label>
+                                            <input 
+                                              type="tel" 
+                                              value={basicInfoFormData.mobile || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, mobile: e.target.value})}
+                                              placeholder="Mobile number"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>City</label>
+                                            <input 
+                                              type="text" 
+                                              value={basicInfoFormData.city || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, city: e.target.value})}
+                                              placeholder="City"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>No-Show Count</label>
+                                            <input 
+                                              type="number" 
+                                              value={basicInfoFormData.noShowCount || 0} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, noShowCount: e.target.value})}
+                                              min="0"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                            <label>Address</label>
+                                            <textarea 
+                                              value={basicInfoFormData.address || ''} 
+                                              onChange={(e) => setBasicInfoFormData({...basicInfoFormData, address: e.target.value})}
+                                              placeholder="Full address"
+                                              rows="2"
+                                            />
+                                          </div>
+                                          <div className="admin-form-group" style={{gridColumn: '1 / -1'}}>
+                                            <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                              <input 
+                                                type="checkbox" 
+                                                checked={basicInfoFormData.abuseFlag || false}
+                                                onChange={(e) => setBasicInfoFormData({...basicInfoFormData, abuseFlag: e.target.checked})}
+                                                style={{width: 'auto'}}
+                                              />
+                                              <span>Flag for Abuse/Inappropriate Behavior</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingBasicInfo(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Name:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.name}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Gender:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.gender || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Date of Birth:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN') : 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Blood Group:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.bloodGroup || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Email:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.email}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Mobile:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.mobile}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>City:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.city || 'Not provided'}</p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>No-Show Count:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px', color: patient.noShowCount > 2 ? 'red' : 'inherit'}}>
+                                            {patient.noShowCount || 0} {patient.noShowCount > 2 && '⚠️'}
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                          <strong style={{color: '#666'}}>Abuse Flag:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>
+                                            {patient.abuseFlag ? '🚩 Flagged' : '✅ Clean'}
+                                          </p>
+                                        </div>
+                                        <div style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', gridColumn: '1 / -1'}}>
+                                          <strong style={{color: '#666'}}>Address:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.address || 'Not provided'}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Continue with other tabs... */}
+
+                                {/* Family Members Tab */}
+                                {patientManagementTab === 'familyMembers' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>👨‍👩‍👧‍👦 Family Members</h3>
+                                      {!isEditingFamilyMembers && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingFamilyMembers(true);
+                                            setFamilyMembersFormData({
+                                              familyMembers: patient.linkedFamilyMembers || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Family Members
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingFamilyMembers ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleFamilyMembersSave(patient.id); }}>
+                                        <div className="admin-form-group">
+                                          <label>Linked Family Members (comma-separated names or IDs)</label>
+                                          <textarea 
+                                            value={familyMembersFormData.familyMembers || ''} 
+                                            onChange={(e) => setFamilyMembersFormData({...familyMembersFormData, familyMembers: e.target.value})}
+                                            placeholder="e.g., John Doe (Son), Jane Doe (Daughter), Robert Doe (Spouse)"
+                                            rows="4"
+                                          />
+                                          <small style={{color: '#666'}}>Add family members who are linked to this account</small>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingFamilyMembers(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div>
+                                        {patient.linkedFamilyMembers && patient.linkedFamilyMembers.length > 0 ? (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            {patient.linkedFamilyMembers.split(',').map((member, index) => (
+                                              <div key={index} style={{padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                                <strong style={{color: '#666'}}>Family Member {index + 1}:</strong>
+                                                <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{member.trim()}</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div style={{padding: '30px', textAlign: 'center', background: '#fff', borderRadius: '8px', border: '1px dashed #e5e7eb'}}>
+                                            <p style={{color: '#666', fontSize: '15px'}}>No family members linked to this account</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Appointment History Tab */}
+                                {patientManagementTab === 'appointmentHistory' && (
+                                  <div>
+                                    <h3 style={{marginTop: 0, color: '#234f83', marginBottom: '20px'}}>📋 Appointment History</h3>
+                                    
+                                    <div style={{marginBottom: '15px', padding: '15px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px'}}>
+                                        <div>
+                                          <strong style={{color: '#666'}}>Total Appointments:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>{patient.totalAppointments || 0}</p>
+                                        </div>
+                                        <div>
+                                          <strong style={{color: '#666'}}>Completed:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#28a745'}}>{patient.completedAppointments || 0}</p>
+                                        </div>
+                                        <div>
+                                          <strong style={{color: '#666'}}>Cancelled:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#dc3545'}}>{patient.cancelledAppointments || 0}</p>
+                                        </div>
+                                        <div>
+                                          <strong style={{color: '#666'}}>Last Appointment:</strong>
+                                          <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.lastAppointment ? new Date(patient.lastAppointment).toLocaleDateString('en-IN') : 'N/A'}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="admin-table-container" style={{marginTop: '20px'}}>
+                                      <table className="admin-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Appointment ID</th>
+                                            <th>Date</th>
+                                            <th>Doctor</th>
+                                            <th>Hospital</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Fee</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {patient.appointmentHistory && patient.appointmentHistory.length > 0 ? (
+                                            patient.appointmentHistory.map((apt, index) => (
+                                              <tr key={index}>
+                                                <td>{apt.id || `APT-${index + 1}`}</td>
+                                                <td>{apt.date ? new Date(apt.date).toLocaleDateString('en-IN') : 'N/A'}</td>
+                                                <td>{apt.doctor || 'N/A'}</td>
+                                                <td>{apt.hospital || 'N/A'}</td>
+                                                <td>{apt.type || 'In-Clinic'}</td>
+                                                <td>
+                                                  <span className={`admin-status-badge ${apt.status}`}>
+                                                    {apt.status || 'Completed'}
+                                                  </span>
+                                                </td>
+                                                <td>₹{apt.fee || '0'}</td>
+                                              </tr>
+                                            ))
+                                          ) : (
+                                            <tr>
+                                              <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#666'}}>
+                                                No appointment history available
+                                              </td>
+                                            </tr>
+                                          )}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Emergency Contact Tab */}
+                                {patientManagementTab === 'emergencyContact' && (
+                                  <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                      <h3 style={{margin: 0, color: '#234f83'}}>🚨 Emergency Contact</h3>
+                                      {!isEditingEmergencyContact && (
+                                        <button 
+                                          className="admin-btn-primary" 
+                                          style={{padding: '8px 16px'}}
+                                          onClick={() => {
+                                            setIsEditingEmergencyContact(true);
+                                            setEmergencyContactFormData({
+                                              emergencyName: patient.emergencyName || '',
+                                              emergencyRelation: patient.emergencyRelation || '',
+                                              emergencyPhone: patient.emergencyPhone || '',
+                                              emergencyEmail: patient.emergencyEmail || ''
+                                            });
+                                          }}
+                                        >
+                                          ✏️ Edit Emergency Contact
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {isEditingEmergencyContact ? (
+                                      <form onSubmit={(e) => { e.preventDefault(); handleEmergencyContactSave(patient.id); }}>
+                                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                          <div className="admin-form-group">
+                                            <label>Emergency Contact Name *</label>
+                                            <input 
+                                              type="text" 
+                                              value={emergencyContactFormData.emergencyName || ''} 
+                                              onChange={(e) => setEmergencyContactFormData({...emergencyContactFormData, emergencyName: e.target.value})}
+                                              placeholder="Full name"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Relationship *</label>
+                                            <select 
+                                              value={emergencyContactFormData.emergencyRelation || ''} 
+                                              onChange={(e) => setEmergencyContactFormData({...emergencyContactFormData, emergencyRelation: e.target.value})}
+                                              required
+                                            >
+                                              <option value="">Select Relationship</option>
+                                              <option value="Spouse">Spouse</option>
+                                              <option value="Parent">Parent</option>
+                                              <option value="Sibling">Sibling</option>
+                                              <option value="Child">Child</option>
+                                              <option value="Friend">Friend</option>
+                                              <option value="Other">Other</option>
+                                            </select>
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Emergency Phone *</label>
+                                            <input 
+                                              type="tel" 
+                                              value={emergencyContactFormData.emergencyPhone || ''} 
+                                              onChange={(e) => setEmergencyContactFormData({...emergencyContactFormData, emergencyPhone: e.target.value})}
+                                              placeholder="Phone number"
+                                              required
+                                            />
+                                          </div>
+                                          <div className="admin-form-group">
+                                            <label>Emergency Email</label>
+                                            <input 
+                                              type="email" 
+                                              value={emergencyContactFormData.emergencyEmail || ''} 
+                                              onChange={(e) => setEmergencyContactFormData({...emergencyContactFormData, emergencyEmail: e.target.value})}
+                                              placeholder="Email address"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                          <button type="submit" className="admin-btn-primary" style={{padding: '8px 16px'}}>💾 Save Changes</button>
+                                          <button 
+                                            type="button" 
+                                            className="admin-btn-secondary" 
+                                            style={{padding: '8px 16px'}}
+                                            onClick={() => setIsEditingEmergencyContact(false)}
+                                          >
+                                            ✖️ Cancel
+                                          </button>
+                                        </div>
+                                      </form>
+                                    ) : (
+                                      <div>
+                                        {patient.emergencyPhone ? (
+                                          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px'}}>
+                                            <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '2px solid #234f83'}}>
+                                              <strong style={{color: '#666'}}>Contact Name:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>{patient.emergencyName || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '2px solid #234f83'}}>
+                                              <strong style={{color: '#666'}}>Relationship:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>{patient.emergencyRelation || 'Not provided'}</p>
+                                            </div>
+                                            <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '2px solid #234f83'}}>
+                                              <strong style={{color: '#666'}}>Emergency Phone:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>{patient.emergencyPhone}</p>
+                                            </div>
+                                            <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '2px solid #234f83'}}>
+                                              <strong style={{color: '#666'}}>Emergency Email:</strong>
+                                              <p style={{margin: '5px 0 0 0', fontSize: '15px'}}>{patient.emergencyEmail || 'Not provided'}</p>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div style={{padding: '30px', textAlign: 'center', background: '#fff', borderRadius: '8px', border: '1px dashed #e5e7eb'}}>
+                                            <p style={{color: '#dc3545', fontSize: '16px', fontWeight: 'bold'}}>⚠️ No emergency contact information available</p>
+                                            <p style={{color: '#666', fontSize: '14px'}}>Please add emergency contact details for this patient</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -4767,57 +8729,183 @@ const AdminDashboard = () => {
                       <th>Doctor Name</th>
                       <th>Hospital</th>
                       <th>Mode</th>
-                      <th>Type</th>
                       <th>Fee (₹)</th>
                       <th>Payment Status</th>
-                      <th>Appointment Status</th>
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {appointments.map(apt => (
-                      <tr key={apt.id}>
-                        <td>{apt.id}</td>
-                        <td>
-                          <div style={{whiteSpace: 'nowrap'}}>
-                            {new Date(apt.date).toLocaleDateString('en-IN')}<br/>
-                            <small style={{color: '#666'}}>{apt.time}</small>
-                          </div>
-                        </td>
-                        <td>{apt.patient}</td>
-                        <td>{apt.doctor}</td>
-                        <td>{apt.hospital}</td>
-                        <td>
-                          <span className={`admin-mode-badge ${apt.mode === 'Online Consult' ? 'online' : 'opd'}`}>
-                            {apt.mode}
-                          </span>
-                        </td>
-                        <td>{apt.type}</td>
-                        <td>₹{apt.fee}</td>
-                        <td>
-                          <span className={`admin-status-badge ${apt.paymentStatus}`}>
-                            {apt.paymentStatus.charAt(0).toUpperCase() + apt.paymentStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`admin-status-badge ${apt.appointmentStatus}`}>
-                            {apt.appointmentStatus.charAt(0).toUpperCase() + apt.appointmentStatus.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="admin-icon-btn" title="View Details">👁️</button>
-                          <button className="admin-icon-btn" title="View Receipt">🧾</button>
-                          {apt.appointmentStatus === 'pending' && (
-                            <>
-                              <button className="admin-icon-btn" title="Confirm">✅</button>
-                              <button className="admin-icon-btn" title="Cancel">❌</button>
-                            </>
-                          )}
-                          {apt.paymentStatus === 'failed' && (
-                            <button className="admin-icon-btn" title="Retry Payment">💳</button>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={apt.id}>
+                        <tr style={{background: expandedAppointmentId === apt.id ? '#f0f7ff' : 'transparent'}}>
+                          <td>{apt.id}</td>
+                          <td>
+                            <div style={{whiteSpace: 'nowrap'}}>
+                              {new Date(apt.date).toLocaleDateString('en-IN')}<br/>
+                              <small style={{color: '#666'}}>{apt.time}</small>
+                            </div>
+                          </td>
+                          <td>{apt.patient}</td>
+                          <td>{apt.doctor}</td>
+                          <td>{apt.hospital}</td>
+                          <td>
+                            <span className={`admin-mode-badge ${apt.mode === 'Online Consult' ? 'online' : 'opd'}`}>
+                              {apt.mode}
+                            </span>
+                          </td>
+                          <td>₹{apt.fee}</td>
+                          <td>
+                            <span className={`admin-status-badge ${apt.paymentStatus}`}>
+                              {apt.paymentStatus.charAt(0).toUpperCase() + apt.paymentStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`admin-status-badge ${apt.appointmentStatus}`}>
+                              {apt.appointmentStatus.charAt(0).toUpperCase() + apt.appointmentStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="admin-icon-btn" 
+                              title={expandedAppointmentId === apt.id ? "Collapse" : "View Details"}
+                              onClick={() => toggleAppointmentExpansion(apt.id)}
+                              style={{fontSize: '16px', fontWeight: 'bold'}}
+                            >
+                              {expandedAppointmentId === apt.id ? '▼' : '▶'}
+                            </button>
+                            <button className="admin-icon-btn" title="View Receipt">🧾</button>
+                            {apt.appointmentStatus === 'pending' && (
+                              <>
+                                <button className="admin-icon-btn" title="Confirm">✅</button>
+                                <button className="admin-icon-btn" title="Cancel">❌</button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Expandable Appointment Details */}
+                        {expandedAppointmentId === apt.id && (
+                          <tr>
+                            <td colSpan="10" style={{padding: '20px', background: '#f9fafb', borderTop: '2px solid #234f83'}}>
+                              <h3 style={{marginTop: 0, color: '#234f83', marginBottom: '20px'}}>📋 Appointment Details</h3>
+                              
+                              <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px'}}>
+                                {/* Patient Details */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>👤 Patient Details</h4>
+                                  <div style={{display: 'grid', gap: '10px'}}>
+                                    <div><strong>Name:</strong> {apt.patient}</div>
+                                    <div><strong>Patient ID:</strong> {apt.patientId || 'N/A'}</div>
+                                    <div><strong>Mobile:</strong> {apt.patientMobile || 'N/A'}</div>
+                                    <div><strong>Email:</strong> {apt.patientEmail || 'N/A'}</div>
+                                  </div>
+                                </div>
+
+                                {/* Doctor Details */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>👨‍⚕️ Doctor Details</h4>
+                                  <div style={{display: 'grid', gap: '10px'}}>
+                                    <div><strong>Name:</strong> {apt.doctor}</div>
+                                    <div><strong>Speciality:</strong> {apt.doctorSpeciality || 'N/A'}</div>
+                                    <div><strong>Doctor ID:</strong> {apt.doctorId || 'N/A'}</div>
+                                  </div>
+                                </div>
+
+                                {/* Hospital Details */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>🏥 Hospital Details</h4>
+                                  <div style={{display: 'grid', gap: '10px'}}>
+                                    <div><strong>Hospital:</strong> {apt.hospital}</div>
+                                    <div><strong>Location:</strong> {apt.hospitalLocation || 'N/A'}</div>
+                                    <div><strong>Hospital ID:</strong> {apt.hospitalId || 'N/A'}</div>
+                                  </div>
+                                </div>
+
+                                {/* Consultation Details */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>💬 Consultation Details</h4>
+                                  <div style={{display: 'grid', gap: '10px'}}>
+                                    <div><strong>Mode:</strong> {apt.mode}</div>
+                                    <div><strong>Type:</strong> {apt.type || 'Regular'}</div>
+                                    <div><strong>Booking Date:</strong> {new Date(apt.bookingDate || apt.date).toLocaleString('en-IN')}</div>
+                                  </div>
+                                </div>
+
+                                {/* Payment Details */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '2px solid #234f83'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>💰 Payment Details</h4>
+                                  <div style={{display: 'grid', gap: '10px'}}>
+                                    <div><strong>Fee:</strong> ₹{apt.fee}</div>
+                                    <div><strong>Taxes:</strong> ₹{apt.taxes || 0}</div>
+                                    <div><strong>Discount:</strong> ₹{apt.discount || 0}</div>
+                                    <div style={{fontSize: '18px', fontWeight: 'bold', color: '#234f83'}}>
+                                      <strong>Final Amount:</strong> ₹{apt.finalAmount || apt.fee}
+                                    </div>
+                                    <div><strong>Payment Method:</strong> {apt.paymentMethod || 'N/A'}</div>
+                                    <div><strong>Transaction ID:</strong> {apt.transactionId || 'N/A'}</div>
+                                    <div>
+                                      <strong>Payment Status:</strong>{' '}
+                                      <span className={`admin-status-badge ${apt.paymentStatus}`}>
+                                        {apt.paymentStatus.charAt(0).toUpperCase() + apt.paymentStatus.slice(1)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Status Logs */}
+                                <div style={{padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
+                                  <h4 style={{marginTop: 0, color: '#234f83', borderBottom: '2px solid #234f83', paddingBottom: '10px'}}>📊 Status Logs</h4>
+                                  <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                                    {apt.statusLogs && apt.statusLogs.length > 0 ? (
+                                      apt.statusLogs.map((log, index) => (
+                                        <div key={index} style={{padding: '8px', background: '#f9fafb', borderLeft: '3px solid #234f83', paddingLeft: '12px'}}>
+                                          <strong>{log.status}</strong>
+                                          <br/>
+                                          <small style={{color: '#666'}}>{new Date(log.timestamp).toLocaleString('en-IN')}</small>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <>
+                                        <div style={{padding: '8px', background: '#f9fafb', borderLeft: '3px solid #234f83', paddingLeft: '12px'}}>
+                                          <strong>Booked</strong>
+                                          <br/>
+                                          <small style={{color: '#666'}}>{new Date(apt.date).toLocaleString('en-IN')}</small>
+                                        </div>
+                                        {apt.appointmentStatus !== 'pending' && (
+                                          <div style={{padding: '8px', background: '#f9fafb', borderLeft: '3px solid #28a745', paddingLeft: '12px'}}>
+                                            <strong>{apt.appointmentStatus.charAt(0).toUpperCase() + apt.appointmentStatus.slice(1)}</strong>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{marginTop: '20px', display: 'flex', gap: '10px'}}>
+                                {apt.appointmentStatus === 'pending' && (
+                                  <>
+                                    <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✅ Confirm Appointment</button>
+                                    <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>❌ Cancel Appointment</button>
+                                  </>
+                                )}
+                                {apt.appointmentStatus === 'confirmed' && (
+                                  <button className="admin-btn-primary" style={{padding: '8px 16px'}}>✔️ Mark as Completed</button>
+                                )}
+                                {apt.paymentStatus === 'failed' && (
+                                  <button className="admin-btn-primary" style={{padding: '8px 16px'}}>💳 Retry Payment</button>
+                                )}
+                                {apt.paymentStatus === 'paid' && apt.appointmentStatus === 'cancelled' && (
+                                  <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>💸 Process Refund</button>
+                                )}
+                                <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>🧾 Download Receipt</button>
+                                <button className="admin-btn-secondary" style={{padding: '8px 16px'}}>📧 Send Notification</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -5874,7 +9962,7 @@ const AdminDashboard = () => {
                     <div className="admin-form-row">
                       <div className="admin-form-group">
                         <label>OT Charges (₹)</label>
-                        <input type="number" name="ot_charges" defaultValue={selectedExpenseItem?.ot_charges} placeholder="Operation theatre charges" />
+                    ;   <input type="number" name="ot_charges" defaultValue={selectedExpenseItem?.ot_charges} placeholder="Operation theatre charges" />
                       </div>
                       <div className="admin-form-group">
                         <label>Anesthesia Charge (₹)</label>

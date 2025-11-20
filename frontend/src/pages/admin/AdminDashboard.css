@@ -863,6 +863,19 @@ body {
   color: #991b1b;
 }
 
+/* Emergency Type Badge */
+.admin-emergency-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
 /* Enhanced table for Phase 3 sections */
 .admin-table small {
   font-size: 11px;
