@@ -11,27 +11,77 @@ const DoctorDashboard = () => {
   const [enquiryFilter, setEnquiryFilter] = useState('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Edit mode states for all sections
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingCredentials, setIsEditingCredentials] = useState(false);
+  const [isEditingIdentity, setIsEditingIdentity] = useState(false);
+  const [isEditingClinic, setIsEditingClinic] = useState(false);
+  const [isEditingOnline, setIsEditingOnline] = useState(false);
+  const [isEditingFees, setIsEditingFees] = useState(false);
+  
   // Doctor profile data state
   const [doctorData, setDoctorData] = useState({
+    // Profile Summary fields
+    profilePhoto: '',
     profileTitle: '',
     bio: '',
     languages: [],
-    awards: '',
-    specializations: [],
+    otherLanguages: '',
     experience: '',
+    primarySpecialization: '',
+    secondarySpecialization: '',
+    servicesOffered: [],
+    otherServices: '',
+    
+    // Medical Credentials fields
     registrationNumber: '',
     registrationCouncil: '',
-    registrationYear: '',
-    medicalDegree: '',
+    registrationCertificate: '',
+    degrees: [],
+    degreeCertificates: [],
+    
+    // Identity Proof fields
+    idType: '',
+    idNumber: '',
+    idDocument: '',
+    signaturePhoto: '',
+    
+    // Clinic Details fields
     clinicName: '',
-    clinicAddress: '',
-    clinicPhone: '',
-    clinicEmail: '',
-    workingDays: [],
-    consultationFee: '',
-    followUpFee: '',
+    clinicStreet: '',
+    clinicLandmark: '',
+    clinicCity: '',
+    clinicState: '',
+    clinicPincode: '',
+    clinicLocation: { lat: '', lng: '' },
+    clinicLandline: '',
+    clinicMobile: '',
+    clinicTimings: [],
+    consultationTypes: [],
+    facilities: [],
+    clinicPhotos: [],
+    ownershipProof: '',
+    
+    // Online Consultation fields
     onlineConsultation: false,
-    onlineConsultationFee: ''
+    onlineConsultationFee: '',
+    consultationModes: [],
+    slotDuration: '',
+    bufferTime: '',
+    availableSchedule: [],
+    cancellationPolicy: '',
+    cancellationPolicyDetails: '',
+    
+    // Fees & Payment fields
+    consultationFee: '',
+    accountHolderName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+    branchName: '',
+    accountType: '',
+    upiId: '',
+    bankDocument: ''
   });
   
   // Mock data for enquiries
@@ -108,11 +158,60 @@ const DoctorDashboard = () => {
       [field]: value
     }));
   };
+  
+  // Handler for array inputs (comma-separated)
+  const handleArrayInput = (field, value) => {
+    const array = value.split(',').map(item => item.trim()).filter(item => item);
+    setDoctorData(prev => ({ ...prev, [field]: array }));
+  };
+  
+  // Handler for checkbox arrays
+  const handleCheckboxChange = (field, value, checked) => {
+    setDoctorData(prev => {
+      const currentArray = prev[field] || [];
+      if (checked) {
+        return { ...prev, [field]: [...currentArray, value] };
+      } else {
+        return { ...prev, [field]: currentArray.filter(item => item !== value) };
+      }
+    });
+  };
 
-  // Handler to save doctor data to localStorage
-  const handleSaveDoctorData = (section) => {
+  // Save handlers for each section
+  const handleSaveProfile = () => {
     localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    alert(`${section} saved successfully!`);
+    setIsEditingProfile(false);
+    alert('Profile saved successfully!');
+  };
+  
+  const handleSaveCredentials = () => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    setIsEditingCredentials(false);
+    alert('Medical Credentials saved successfully!');
+  };
+  
+  const handleSaveIdentity = () => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    setIsEditingIdentity(false);
+    alert('Identity Details saved successfully!');
+  };
+  
+  const handleSaveClinic = () => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    setIsEditingClinic(false);
+    alert('Clinic Details saved successfully!');
+  };
+  
+  const handleSaveOnline = () => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    setIsEditingOnline(false);
+    alert('Online Consultation settings saved successfully!');
+  };
+  
+  const handleSaveFees = () => {
+    localStorage.setItem('doctorData', JSON.stringify(doctorData));
+    setIsEditingFees(false);
+    alert('Payment Details saved successfully!');
   };
 
   const handleSubmitReview = (e) => {
@@ -281,11 +380,67 @@ const DoctorDashboard = () => {
           {activeSection === 'profile' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>👤 Profile Summary (Public-Facing)</h2>
-                <p>This information will be visible to patients</p>
+                <div>
+                  <h2>👤 Profile Summary (Public-Facing)</h2>
+                  <p>This information will be visible to patients</p>
+                </div>
+                {!isEditingProfile ? (
+                  <button className="btn-primary" onClick={() => setIsEditingProfile(true)}>
+                    ✏️ Edit Profile
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingProfile(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveProfile}>
+                      💾 Save Profile
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingProfile ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card full-width">
+                    <label>Profile Photo</label>
+                    <p>{doctorData.profilePhoto || 'Not uploaded'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Profile Title / Designation</label>
+                    <p>{doctorData.profileTitle || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Short Bio / About</label>
+                    <p>{doctorData.bio || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Languages Spoken</label>
+                    <p>{doctorData.languages && doctorData.languages.length > 0 ? doctorData.languages.join(', ') : 'Not selected'}</p>
+                    {doctorData.otherLanguages && <p className="mt-1"><em>Other: {doctorData.otherLanguages}</em></p>}
+                  </div>
+                  <div className="info-card">
+                    <label>Experience (Years)</label>
+                    <p>{doctorData.experience || 'Not provided'} years</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Primary Specialization</label>
+                    <p>{doctorData.primarySpecialization || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Secondary Specialization</label>
+                    <p>{doctorData.secondarySpecialization || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Services / Treatments Offered</label>
+                    <p>{doctorData.servicesOffered && doctorData.servicesOffered.length > 0 ? doctorData.servicesOffered.join(', ') : 'Not selected'}</p>
+                    {doctorData.otherServices && <p className="mt-1"><em>Other: {doctorData.otherServices}</em></p>}
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group full-width">
                   <label>Profile Photo</label>
                   <div className="photo-upload">
@@ -320,29 +475,27 @@ const DoctorDashboard = () => {
                   <small>Keep it concise and patient-friendly</small>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group full-width">
                   <label>Languages Spoken</label>
                   <div className="multi-select">
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Hindi
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> English
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Marathi
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Bengali
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Tamil
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Telugu
-                    </label>
+                    {['Hindi', 'English', 'Marathi', 'Bengali', 'Tamil', 'Telugu'].map(lang => (
+                      <label key={lang} className="checkbox-label">
+                        <input 
+                          type="checkbox" 
+                          checked={doctorData.languages?.includes(lang)}
+                          onChange={(e) => handleCheckboxChange('languages', lang, e.target.checked)}
+                        />
+                        {lang}
+                      </label>
+                    ))}
                   </div>
-                  <input type="text" placeholder="Other languages..." className="mt-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Other languages..." 
+                    className="mt-2"
+                    value={doctorData.otherLanguages || ''}
+                    onChange={(e) => handleDoctorDataChange('otherLanguages', e.target.value)}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -376,37 +529,33 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Services / Treatments Offered</label>
                   <div className="multi-select">
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> General OPD
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Teleconsultation
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Vaccination
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Health Checkup
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Emergency Consultation
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Home Visit
-                    </label>
+                    {['General OPD', 'Teleconsultation', 'Vaccination', 'Health Checkup', 'Emergency Consultation', 'Home Visit'].map(service => (
+                      <label key={service} className="checkbox-label">
+                        <input 
+                          type="checkbox"
+                          checked={doctorData.servicesOffered?.includes(service)}
+                          onChange={(e) => handleCheckboxChange('servicesOffered', service, e.target.checked)}
+                        />
+                        {service}
+                      </label>
+                    ))}
                   </div>
                   <textarea 
                     rows="2" 
                     placeholder="Other services..." 
                     className="mt-2"
+                    value={doctorData.otherServices || ''}
+                    onChange={(e) => handleDoctorDataChange('otherServices', e.target.value)}
                   ></textarea>
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Profile')}>Save Profile</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingProfile(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveProfile}>Save Profile</button>
                   <button className="btn-secondary">Preview Public Profile</button>
                 </div>
               </div>
+            )}
             </section>
           )}
 
@@ -414,20 +563,72 @@ const DoctorDashboard = () => {
           {activeSection === 'credentials' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>🎓 Medical Credentials & Education</h2>
-                <p>Verification critical - Required for practice authorization</p>
+                <div>
+                  <h2>🎓 Medical Credentials & Education</h2>
+                  <p>Verification critical - Required for practice authorization</p>
+                </div>
+                {!isEditingCredentials ? (
+                  <button className="btn-primary" onClick={() => setIsEditingCredentials(true)}>
+                    ✏️ Edit Credentials
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingCredentials(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveCredentials}>
+                      💾 Save Credentials
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingCredentials ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card">
+                    <label>Medical Registration Number</label>
+                    <p>{doctorData.registrationNumber || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Registration Council / Issuing State</label>
+                    <p>{doctorData.registrationCouncil || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Registration Certificate</label>
+                    <p>{doctorData.registrationCertificate || 'Not uploaded'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Degrees / Qualifications</label>
+                    <p>{doctorData.degrees && doctorData.degrees.length > 0 ? doctorData.degrees.map(d => `${d.name} (${d.year})`).join(', ') : 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Degree Certificates</label>
+                    <p>{doctorData.degreeCertificates && doctorData.degreeCertificates.length > 0 ? `${doctorData.degreeCertificates.length} file(s) uploaded` : 'Not uploaded'}</p>
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group">
                   <label>Medical Registration / Licence Number *</label>
-                  <input type="text" placeholder="Enter NMC/State Medical Council registration number" required />
+                  <input 
+                    type="text" 
+                    placeholder="Enter NMC/State Medical Council registration number"
+                    value={doctorData.registrationNumber || ''}
+                    onChange={(e) => handleDoctorDataChange('registrationNumber', e.target.value)}
+                    required 
+                  />
                   <small>State Medical Council / NMC (MCI) number</small>
                 </div>
 
                 <div className="form-group">
                   <label>Registration Council Name / Issuing State *</label>
-                  <select required>
+                  <select 
+                    value={doctorData.registrationCouncil || ''}
+                    onChange={(e) => handleDoctorDataChange('registrationCouncil', e.target.value)}
+                    required
+                  >
                     <option value="">Select council</option>
                     <option>Delhi Medical Council</option>
                     <option>Maharashtra Medical Council</option>
@@ -470,10 +671,12 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Credentials</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingCredentials(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveCredentials}>Save Credentials</button>
                   <button className="btn-secondary">Submit for Verification</button>
                 </div>
               </div>
+            )}
             </section>
           )}
 
@@ -481,14 +684,56 @@ const DoctorDashboard = () => {
           {activeSection === 'identity' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>🆔 Identity Proof (KYC)</h2>
-                <p>Government-issued ID verification required</p>
+                <div>
+                  <h2>🆔 Identity Proof (KYC)</h2>
+                  <p>Government-issued ID verification required</p>
+                </div>
+                {!isEditingIdentity ? (
+                  <button className="btn-primary" onClick={() => setIsEditingIdentity(true)}>
+                    ✏️ Edit Identity
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingIdentity(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveIdentity}>
+                      💾 Save Identity
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingIdentity ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card">
+                    <label>Government Photo ID Type</label>
+                    <p>{doctorData.idType || 'Not selected'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>ID Number</label>
+                    <p>{doctorData.idNumber || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Government ID Document</label>
+                    <p>{doctorData.idDocument || 'Not uploaded'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Photo of Signature / Prescription Pad</label>
+                    <p>{doctorData.signaturePhoto || 'Not uploaded'}</p>
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group">
                   <label>Government Photo ID Type *</label>
-                  <select required>
+                  <select 
+                    value={doctorData.idType || ''}
+                    onChange={(e) => handleDoctorDataChange('idType', e.target.value)}
+                    required
+                  >
                     <option value="">Select ID type</option>
                     <option>Aadhaar Card</option>
                     <option>Passport</option>
@@ -500,7 +745,12 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>ID Number</label>
-                  <input type="text" placeholder="Enter ID number (optional)" />
+                  <input 
+                    type="text" 
+                    placeholder="Enter ID number (optional)"
+                    value={doctorData.idNumber || ''}
+                    onChange={(e) => handleDoctorDataChange('idNumber', e.target.value)}
+                  />
                   <small>Privacy protected - encrypted storage</small>
                 </div>
 
@@ -523,10 +773,12 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Identity Details')}>Save Identity Details</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingIdentity(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveIdentity}>Save Identity Details</button>
                   <button className="btn-secondary">Verify KYC</button>
                 </div>
               </div>
+            )}
             </section>
           )}
 
@@ -534,11 +786,81 @@ const DoctorDashboard = () => {
           {activeSection === 'clinic' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>🏥 Clinic Details</h2>
-                <p>Information about your practice location and facilities</p>
+                <div>
+                  <h2>🏥 Clinic Details</h2>
+                  <p>Information about your practice location and facilities</p>
+                </div>
+                {!isEditingClinic ? (
+                  <button className="btn-primary" onClick={() => setIsEditingClinic(true)}>
+                    ✏️ Edit Clinic
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingClinic(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveClinic}>
+                      💾 Save Clinic
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingClinic ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card full-width">
+                    <label>Practice / Clinic Name</label>
+                    <p>{doctorData.clinicName || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Building / Street</label>
+                    <p>{doctorData.clinicStreet || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Landmark</label>
+                    <p>{doctorData.clinicLandmark || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>City</label>
+                    <p>{doctorData.clinicCity || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>State</label>
+                    <p>{doctorData.clinicState || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Pincode</label>
+                    <p>{doctorData.clinicPincode || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Clinic Phone (Landline)</label>
+                    <p>{doctorData.clinicLandline || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Clinic Phone (Mobile)</label>
+                    <p>{doctorData.clinicMobile || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Consultation Types Available</label>
+                    <p>{doctorData.consultationTypes && doctorData.consultationTypes.length > 0 ? doctorData.consultationTypes.join(', ') : 'Not selected'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Facilities / Amenities</label>
+                    <p>{doctorData.facilities && doctorData.facilities.length > 0 ? doctorData.facilities.join(', ') : 'Not selected'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Clinic Photos</label>
+                    <p>{doctorData.clinicPhotos && doctorData.clinicPhotos.length > 0 ? `${doctorData.clinicPhotos.length} photo(s) uploaded` : 'Not uploaded'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Ownership Proof</label>
+                    <p>{doctorData.ownershipProof || 'Not uploaded'}</p>
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group full-width">
                   <label>Practice / Clinic Name *</label>
                   <input 
@@ -553,12 +875,39 @@ const DoctorDashboard = () => {
 
                 <div className="form-group full-width">
                   <label>Practice Address *</label>
-                  <input type="text" placeholder="Building / Street" required />
-                  <input type="text" placeholder="Landmark" className="mt-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Building / Street"
+                    value={doctorData.clinicStreet || ''}
+                    onChange={(e) => handleDoctorDataChange('clinicStreet', e.target.value)}
+                    required 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Landmark" 
+                    className="mt-2"
+                    value={doctorData.clinicLandmark || ''}
+                    onChange={(e) => handleDoctorDataChange('clinicLandmark', e.target.value)}
+                  />
                   <div className="address-row mt-2">
-                    <input type="text" placeholder="City" />
-                    <input type="text" placeholder="State" />
-                    <input type="text" placeholder="Pincode" />
+                    <input 
+                      type="text" 
+                      placeholder="City"
+                      value={doctorData.clinicCity || ''}
+                      onChange={(e) => handleDoctorDataChange('clinicCity', e.target.value)}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="State"
+                      value={doctorData.clinicState || ''}
+                      onChange={(e) => handleDoctorDataChange('clinicState', e.target.value)}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Pincode"
+                      value={doctorData.clinicPincode || ''}
+                      onChange={(e) => handleDoctorDataChange('clinicPincode', e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -572,8 +921,19 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>Clinic Phone Number(s) *</label>
-                  <input type="tel" placeholder="Landline" />
-                  <input type="tel" placeholder="Mobile" className="mt-2" />
+                  <input 
+                    type="tel" 
+                    placeholder="Landline"
+                    value={doctorData.clinicLandline || ''}
+                    onChange={(e) => handleDoctorDataChange('clinicLandline', e.target.value)}
+                  />
+                  <input 
+                    type="tel" 
+                    placeholder="Mobile" 
+                    className="mt-2"
+                    value={doctorData.clinicMobile || ''}
+                    onChange={(e) => handleDoctorDataChange('clinicMobile', e.target.value)}
+                  />
                 </div>
 
                 <div className="form-group">
@@ -596,39 +956,32 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Consultation Types Available</label>
                   <div className="multi-select">
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> In-person
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Home Visit
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Teleconsultation
-                    </label>
+                    {['In-person', 'Home Visit', 'Teleconsultation'].map(type => (
+                      <label key={type} className="checkbox-label">
+                        <input 
+                          type="checkbox"
+                          checked={doctorData.consultationTypes?.includes(type)}
+                          onChange={(e) => handleCheckboxChange('consultationTypes', type, e.target.checked)}
+                        />
+                        {type}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
                 <div className="form-group full-width">
                   <label>Facilities / Amenities</label>
                   <div className="multi-select">
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Parking Available
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Wheelchair Access
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Lab Facilities
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Pharmacy
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Air Conditioned
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Credit/Debit Cards
-                    </label>
+                    {['Parking Available', 'Wheelchair Access', 'Lab Facilities', 'Pharmacy', 'Air Conditioned', 'Credit/Debit Cards'].map(facility => (
+                      <label key={facility} className="checkbox-label">
+                        <input 
+                          type="checkbox"
+                          checked={doctorData.facilities?.includes(facility)}
+                          onChange={(e) => handleCheckboxChange('facilities', facility, e.target.checked)}
+                        />
+                        {facility}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -651,10 +1004,12 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Clinic Details')}>Save Clinic Details</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingClinic(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveClinic}>Save Clinic Details</button>
                   <button className="btn-secondary">Preview Listing</button>
                 </div>
               </div>
+            )}
             </section>
           )}
 
@@ -662,16 +1017,67 @@ const DoctorDashboard = () => {
           {activeSection === 'online' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>💻 Online Consultation Settings</h2>
-                <p>Configure your virtual clinic and teleconsultation preferences</p>
+                <div>
+                  <h2>💻 Online Consultation Settings</h2>
+                  <p>Configure your virtual clinic and teleconsultation preferences</p>
+                </div>
+                {!isEditingOnline ? (
+                  <button className="btn-primary" onClick={() => setIsEditingOnline(true)}>
+                    ✏️ Edit Settings
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingOnline(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveOnline}>
+                      💾 Save Settings
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingOnline ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card">
+                    <label>Online Consultations</label>
+                    <p>{doctorData.onlineConsultation ? 'Enabled' : 'Disabled'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Consultation Fee (Online)</label>
+                    <p>₹{doctorData.onlineConsultationFee || 'Not set'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Consultation Modes</label>
+                    <p>{doctorData.consultationModes && doctorData.consultationModes.length > 0 ? doctorData.consultationModes.join(', ') : 'Not selected'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Slot Duration</label>
+                    <p>{doctorData.slotDuration || 'Not set'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Buffer Time</label>
+                    <p>{doctorData.bufferTime || 'Not set'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Cancellation Policy</label>
+                    <p>{doctorData.cancellationPolicy || 'Not set'}</p>
+                    {doctorData.cancellationPolicyDetails && <p className="mt-1"><em>{doctorData.cancellationPolicyDetails}</em></p>}
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group full-width">
                   <label>Enable Online Consultations</label>
                   <div className="toggle-switch">
                     <label className="switch">
-                      <input type="checkbox" />
+                      <input 
+                        type="checkbox"
+                        checked={doctorData.onlineConsultation || false}
+                        onChange={(e) => handleDoctorDataChange('onlineConsultation', e.target.checked)}
+                      />
                       <span className="slider"></span>
                     </label>
                     <span>Enable teleconsultation services</span>
@@ -682,28 +1088,38 @@ const DoctorDashboard = () => {
                   <label>Consultation Fee (Online) *</label>
                   <div className="input-with-icon">
                     <span className="icon">₹</span>
-                    <input type="number" placeholder="Per session amount" />
+                    <input 
+                      type="number" 
+                      placeholder="Per session amount"
+                      value={doctorData.onlineConsultationFee || ''}
+                      onChange={(e) => handleDoctorDataChange('onlineConsultationFee', e.target.value)}
+                    />
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>Consultation Mode</label>
                   <div className="multi-select">
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Video Call
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Audio Call
-                    </label>
-                    <label className="checkbox-label">
-                      <input type="checkbox" /> Chat
-                    </label>
+                    {['Video Call', 'Audio Call', 'Chat'].map(mode => (
+                      <label key={mode} className="checkbox-label">
+                        <input 
+                          type="checkbox"
+                          checked={doctorData.consultationModes?.includes(mode)}
+                          onChange={(e) => handleCheckboxChange('consultationModes', mode, e.target.checked)}
+                        />
+                        {mode}
+                      </label>
+                    ))}
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>Slot Duration</label>
-                  <select>
+                  <select
+                    value={doctorData.slotDuration || ''}
+                    onChange={(e) => handleDoctorDataChange('slotDuration', e.target.value)}
+                  >
+                    <option value="">Select duration</option>
                     <option>15 minutes</option>
                     <option>20 minutes</option>
                     <option>30 minutes</option>
@@ -714,7 +1130,11 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>Buffer Time Between Slots</label>
-                  <select>
+                  <select
+                    value={doctorData.bufferTime || ''}
+                    onChange={(e) => handleDoctorDataChange('bufferTime', e.target.value)}
+                  >
+                    <option value="">Select buffer</option>
                     <option>No buffer</option>
                     <option>5 minutes</option>
                     <option>10 minutes</option>
@@ -761,7 +1181,11 @@ const DoctorDashboard = () => {
 
                 <div className="form-group full-width">
                   <label>Cancellation / Reschedule Policy</label>
-                  <select>
+                  <select
+                    value={doctorData.cancellationPolicy || ''}
+                    onChange={(e) => handleDoctorDataChange('cancellationPolicy', e.target.value)}
+                  >
+                    <option value="">Select policy</option>
                     <option>Allow up to 1 hour before appointment</option>
                     <option>Allow up to 2 hours before appointment</option>
                     <option>Allow up to 4 hours before appointment</option>
@@ -772,14 +1196,18 @@ const DoctorDashboard = () => {
                     rows="2" 
                     placeholder="Additional policy details (optional)" 
                     className="mt-2"
+                    value={doctorData.cancellationPolicyDetails || ''}
+                    onChange={(e) => handleDoctorDataChange('cancellationPolicyDetails', e.target.value)}
                   ></textarea>
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary">Save Consultation Settings</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingOnline(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveOnline}>Save Consultation Settings</button>
                   <button className="btn-secondary">Test Virtual Room</button>
                 </div>
               </div>
+            )}
             </section>
           )}
 
@@ -1047,11 +1475,79 @@ const DoctorDashboard = () => {
           {activeSection === 'fees' && (
             <section className="dashboard-section">
               <div className="section-header">
-                <h2>💰 Fees & Payment Details</h2>
-                <p>Configure consultation fees and payment methods</p>
+                <div>
+                  <h2>💰 Fees & Payment Details</h2>
+                  <p>Configure consultation fees and payment methods</p>
+                </div>
+                {!isEditingFees ? (
+                  <button className="btn-primary" onClick={() => setIsEditingFees(true)}>
+                    ✏️ Edit Fees
+                  </button>
+                ) : (
+                  <div style={{display: 'flex', gap: '10px'}}>
+                    <button className="btn-secondary" onClick={() => setIsEditingFees(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" onClick={handleSaveFees}>
+                      💾 Save Fees
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="form-grid">
+              {!isEditingFees ? (
+                // VIEW MODE
+                <div className="profile-info-grid">
+                  <div className="info-card">
+                    <label>Consultation Fee (In-Person)</label>
+                    <p>₹{doctorData.consultationFee || 'Not set'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Consultation Fee (Online)</label>
+                    <p>₹{doctorData.onlineConsultationFee || 'Not set'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <h4 style={{marginTop: '20px', marginBottom: '10px'}}>Bank Account Details</h4>
+                  </div>
+                  <div className="info-card">
+                    <label>Account Holder Name</label>
+                    <p>{doctorData.accountHolderName || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Bank Account Number</label>
+                    <p>{doctorData.accountNumber || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>IFSC Code</label>
+                    <p>{doctorData.ifscCode || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Bank Name</label>
+                    <p>{doctorData.bankName || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Branch Name</label>
+                    <p>{doctorData.branchName || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card">
+                    <label>Account Type</label>
+                    <p>{doctorData.accountType || 'Not selected'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <h4 style={{marginTop: '20px', marginBottom: '10px'}}>UPI Details</h4>
+                  </div>
+                  <div className="info-card">
+                    <label>UPI ID</label>
+                    <p>{doctorData.upiId || 'Not provided'}</p>
+                  </div>
+                  <div className="info-card full-width">
+                    <label>Bank Document</label>
+                    <p>{doctorData.bankDocument || 'Not uploaded'}</p>
+                  </div>
+                </div>
+              ) : (
+                // EDIT MODE
+                <div className="form-grid">
                 <div className="form-group">
                   <label>Consultation Fee (In-Person) *</label>
                   <div className="input-with-icon">
@@ -1089,32 +1585,64 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>Account Holder Name *</label>
-                  <input type="text" placeholder="As per bank records" required />
+                  <input 
+                    type="text" 
+                    placeholder="As per bank records"
+                    value={doctorData.accountHolderName || ''}
+                    onChange={(e) => handleDoctorDataChange('accountHolderName', e.target.value)}
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Bank Account Number *</label>
-                  <input type="text" placeholder="Enter account number" required />
+                  <input 
+                    type="text" 
+                    placeholder="Enter account number"
+                    value={doctorData.accountNumber || ''}
+                    onChange={(e) => handleDoctorDataChange('accountNumber', e.target.value)}
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>IFSC Code *</label>
-                  <input type="text" placeholder="e.g., SBIN0001234" required />
+                  <input 
+                    type="text" 
+                    placeholder="e.g., SBIN0001234"
+                    value={doctorData.ifscCode || ''}
+                    onChange={(e) => handleDoctorDataChange('ifscCode', e.target.value)}
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Bank Name</label>
-                  <input type="text" placeholder="Name of your bank" />
+                  <input 
+                    type="text" 
+                    placeholder="Name of your bank"
+                    value={doctorData.bankName || ''}
+                    onChange={(e) => handleDoctorDataChange('bankName', e.target.value)}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Branch Name</label>
-                  <input type="text" placeholder="Branch location" />
+                  <input 
+                    type="text" 
+                    placeholder="Branch location"
+                    value={doctorData.branchName || ''}
+                    onChange={(e) => handleDoctorDataChange('branchName', e.target.value)}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Account Type</label>
-                  <select>
+                  <select
+                    value={doctorData.accountType || ''}
+                    onChange={(e) => handleDoctorDataChange('accountType', e.target.value)}
+                  >
+                    <option value="">Select type</option>
                     <option>Savings Account</option>
                     <option>Current Account</option>
                   </select>
@@ -1127,7 +1655,12 @@ const DoctorDashboard = () => {
 
                 <div className="form-group">
                   <label>UPI ID</label>
-                  <input type="text" placeholder="yourname@upi" />
+                  <input 
+                    type="text" 
+                    placeholder="yourname@upi"
+                    value={doctorData.upiId || ''}
+                    onChange={(e) => handleDoctorDataChange('upiId', e.target.value)}
+                  />
                   <small>Format: username@bankname</small>
                 </div>
 
@@ -1141,10 +1674,12 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-actions full-width">
-                  <button className="btn-primary" onClick={() => handleSaveDoctorData('Payment Details')}>Save Payment Details</button>
+                  <button className="btn-secondary" onClick={() => setIsEditingFees(false)}>Cancel</button>
+                  <button className="btn-primary" onClick={handleSaveFees}>Save Payment Details</button>
                   <button className="btn-secondary">Verify Bank Account</button>
                 </div>
               </div>
+            )}
             </section>
           )}
         </div>

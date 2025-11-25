@@ -79,16 +79,33 @@ const VerifyOTP = () => {
     // Simulate OTP verification (in real app, call API)
     // For demo, accept "123456" as valid OTP
     if (otpValue === '123456') {
-      // Store user data (in real app, this comes from backend)
+      // Store user data
       const userData = {
-        ...registrationData,
+        name: registrationData.name,
+        phone: registrationData.phone,
+        role: registrationData.role,
         isRegistered: true
       };
-      localStorage.setItem(`user_${registrationData.phone}`, JSON.stringify(userData));
+      
+      localStorage.setItem('currentUser', JSON.stringify(userData));
       localStorage.removeItem('pendingRegistration');
       
-      alert('Registration successful! Please login with your credentials.');
-      navigate('/login');
+      // Redirect based on role
+      if (registrationData.role === 'doctor') {
+        // First time registration - always go to registration page
+        navigate('/doctor-registration');
+      } else if (registrationData.role === 'ambulance') {
+        navigate('/ambulance-registration');
+      } else if (registrationData.role === 'chemist') {
+        navigate('/chemist-registration');
+      } else if (registrationData.role === 'hospital') {
+        navigate('/hospital-registration');
+      } else if (registrationData.role === 'pathlab') {
+        navigate('/pathlab-registration');
+      } else {
+        alert('Registration successful! Please login with your credentials.');
+        navigate('/login');
+      }
     } else {
       setError('Invalid OTP. Please try again. (Use 123456 for demo)');
     }

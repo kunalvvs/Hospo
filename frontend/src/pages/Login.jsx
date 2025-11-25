@@ -52,7 +52,6 @@ const Login = () => {
     // Navigate to appropriate dashboard based on role
     if (userRole === 'doctor') {
       alert(`Welcome to Doctor Dashboard! (Temporary Login)`);
-      // Use window.location for hard redirect to ensure clean navigation
       window.location.href = '/doctor-dashboard';
     } else if (userRole === 'ambulance') {
       alert(`Welcome Ambulance Service! Complete your registration.`);

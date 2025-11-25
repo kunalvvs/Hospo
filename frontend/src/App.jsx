@@ -4,6 +4,7 @@ import RoleSelection from './pages/RoleSelection';
 import Register from './pages/Register';
 import VerifyOTP from './pages/VerifyOTP';
 import Login from './pages/Login';
+import DoctorRegistration from './pages/DoctorRegistration';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AmbulanceRegistration from './pages/AmbulanceRegistration';
 import AmbulanceDashboard from './pages/AmbulanceDashboard';
@@ -27,6 +28,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/doctor-registration" element={<DoctorRegistration />} />
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
           <Route path="/ambulance-registration" element={<AmbulanceRegistration />} />
           <Route path="/ambulance-dashboard" element={<AmbulanceDashboard />} />
