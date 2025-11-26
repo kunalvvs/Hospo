@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 import './Register.css';
 
 const Register = () => {
@@ -7,11 +8,13 @@ const Register = () => {
   const [userRole, setUserRole] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     password: '',
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
@@ -54,6 +57,12 @@ const Register = () => {
       newErrors.name = 'Name is required';
     }
 
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
     if (!formData.phone) {
       newErrors.phone = 'Phone number is required';
     } else if (formData.phone.length !== 10) {
@@ -76,21 +85,60 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      // Store registration data temporarily
-      const registrationData = {
-        role: userRole,
-        name: formData.name,
-        phone: formData.phone,
-        password: formData.password
-      };
-      localStorage.setItem('pendingRegistration', JSON.stringify(registrationData));
-      
-      // Navigate to OTP verification
-      navigate('/verify-otp');
+      setLoading(true);
+      try {
+        // Call backend API
+        const response = await authAPI.register({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: userRole
+        });
+
+        console.log('Registration successful:', response);
+
+        // Store pending registration data for OTP verification
+        localStorage.setItem('pendingRegistration', JSON.stringify({
+          ...response.doctor,
+          role: userRole
+        }));
+        
+        // Send OTP
+        try {
+          const otpResponse = await authAPI.sendOTP({
+            email: formData.email,
+            phone: formData.phone,
+            type: 'email' // Can be 'email' or 'phone'
+          });
+          
+          console.log('OTP sent:', otpResponse);
+          
+          // Navigate to OTP verification
+          alert(`Registration successful! OTP sent to ${formData.email}`);
+          navigate('/verify-otp');
+        } catch (otpError) {
+          console.error('OTP send error:', otpError);
+          // If OTP fails, still proceed to dashboard for doctors
+          if (userRole === 'doctor') {
+            localStorage.setItem('currentUser', JSON.stringify(response.doctor));
+            navigate('/doctor-registration');
+          } else {
+            navigate('/verify-otp');
+          }
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+        setErrors({ submit: errorMessage });
+        alert(errorMessage);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -160,8 +208,26 @@ const Register = () => {
                 onChange={handleChange}
                 maxLength="10"
                 className={errors.phone ? 'error' : ''}
+                disabled={loading}
               />
               {errors.phone && <span className="error-text">{errors.phone}</span>}
+            </div>
+
+            {/* Email Input */}
+            <div className="input-group">
+              <div className="input-icon">
+                <span>📧</span>
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                className={errors.email ? 'error' : ''}
+                disabled={loading}
+              />
+              {errors.email && <span className="error-text">{errors.email}</span>}
             </div>
 
             {/* Password Input */}
@@ -176,6 +242,7 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className={errors.password ? 'error' : ''}
+                disabled={loading}
               />
               {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
@@ -192,12 +259,15 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className={errors.confirmPassword ? 'error' : ''}
+                disabled={loading}
               />
               {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
             </div>
 
-            <button type="submit" className="register-btn">
-              Register & Send OTP
+            {errors.submit && <div className="error-message" style={{marginTop: '10px', padding: '10px', background: '#fee', color: '#c33', borderRadius: '5px', textAlign: 'center'}}>{errors.submit}</div>}
+
+            <button type="submit" className="register-btn" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Register'}
             </button>
           </form>
 

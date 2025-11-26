@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 import './VerifyOTP.css';
 
 const VerifyOTP = () => {
@@ -67,7 +68,7 @@ const VerifyOTP = () => {
     }
   };
 
-  const handleVerifyOTP = (e) => {
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
     
     const otpValue = otp.join('');
@@ -76,47 +77,64 @@ const VerifyOTP = () => {
       return;
     }
 
-    // Simulate OTP verification (in real app, call API)
-    // For demo, accept "123456" as valid OTP
-    if (otpValue === '123456') {
-      // Store user data
-      const userData = {
-        name: registrationData.name,
+    try {
+      // Verify OTP with backend
+      const response = await authAPI.verifyOTP({
+        email: registrationData.email,
         phone: registrationData.phone,
-        role: registrationData.role,
-        isRegistered: true
-      };
-      
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      localStorage.removeItem('pendingRegistration');
-      
-      // Redirect based on role
-      if (registrationData.role === 'doctor') {
-        // First time registration - always go to registration page
-        navigate('/doctor-registration');
-      } else if (registrationData.role === 'ambulance') {
-        navigate('/ambulance-registration');
-      } else if (registrationData.role === 'chemist') {
-        navigate('/chemist-registration');
-      } else if (registrationData.role === 'hospital') {
-        navigate('/hospital-registration');
-      } else if (registrationData.role === 'pathlab') {
-        navigate('/pathlab-registration');
-      } else {
-        alert('Registration successful! Please login with your credentials.');
-        navigate('/login');
+        otp: otpValue
+      });
+
+      if (response.success) {
+        // Store user data
+        const userData = {
+          ...registrationData,
+          isVerified: true
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        localStorage.removeItem('pendingRegistration');
+        
+        // Redirect based on role
+        if (registrationData.role === 'doctor') {
+          navigate('/doctor-registration');
+        } else if (registrationData.role === 'ambulance') {
+          navigate('/ambulance-registration');
+        } else if (registrationData.role === 'chemist') {
+          navigate('/chemist-registration');
+        } else if (registrationData.role === 'hospital') {
+          navigate('/hospital-registration');
+        } else if (registrationData.role === 'pathlab') {
+          navigate('/pathlab-registration');
+        } else {
+          alert('OTP verified successfully! Please login with your credentials.');
+          navigate('/login');
+        }
       }
-    } else {
-      setError('Invalid OTP. Please try again. (Use 123456 for demo)');
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      setError(error.response?.data?.message || 'Invalid OTP. Please try again.');
     }
   };
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     if (!canResend) return;
     
-    // Simulate resending OTP
-    console.log('Resending OTP to:', registrationData?.phone);
-    alert('OTP sent successfully!');
+    try {
+      const response = await authAPI.resendOTP({
+        email: registrationData?.email,
+        phone: registrationData?.phone,
+        type: 'email'
+      });
+      
+      if (response.success) {
+        alert('OTP sent successfully!');
+        console.log('Development OTP:', response.otp); // Only in dev mode
+      }
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      alert(error.response?.data?.message || 'Failed to resend OTP');
+    }
     
     setCanResend(false);
     setResendTimer(30);
@@ -162,7 +180,12 @@ const VerifyOTP = () => {
             <div className="verify-icon">📱</div>
             <h2>Verify OTP</h2>
             <p>We've sent a 6-digit code to</p>
-            <p className="phone-number">+91 {registrationData.phone}</p>
+            <p className="phone-number">{registrationData.email || registrationData.phone}</p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="demo-hint" style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
+                💡 Check browser console for OTP in development mode
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleVerifyOTP}>
@@ -199,10 +222,6 @@ const VerifyOTP = () => {
                 Resend OTP in <span>{resendTimer}s</span>
               </p>
             )}
-          </div>
-
-          <div className="demo-hint">
-            <p>💡 Demo: Use OTP <strong>123456</strong></p>
           </div>
         </div>
 

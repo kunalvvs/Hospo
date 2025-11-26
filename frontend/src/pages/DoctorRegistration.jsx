@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doctorAPI } from '../services/api';
 import './DoctorRegistration.css';
 
 const DoctorRegistration = () => {
@@ -180,19 +181,50 @@ const DoctorRegistration = () => {
     navigate('/doctor-dashboard');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateSection('clinic')) {
-      // Save doctor data to localStorage
-      localStorage.setItem('doctorData', JSON.stringify(doctorData));
-      
-      setShowSuccessMessage(true);
-      
-      // Redirect to dashboard after 2 seconds
-      setTimeout(() => {
-        navigate('/doctor-dashboard');
-      }, 2000);
+      try {
+        // Map form fields to backend schema
+        const profileData = {
+          // Profile fields (map from form to backend schema)
+          bio: doctorData.bio,
+          languages: doctorData.languages,
+          experience: parseInt(doctorData.experience) || 0,
+          
+          // Credentials
+          registrationNumber: doctorData.registrationNumber,
+          registrationCouncil: doctorData.registrationCouncil,
+          degrees: doctorData.qualifications.map(q => ({ name: q })),
+          
+          // Clinic Details
+          clinicName: doctorData.clinicName,
+          clinicStreet: doctorData.clinicAddress,
+          clinicCity: doctorData.city,
+          clinicState: doctorData.state,
+          clinicPincode: doctorData.pincode,
+          clinicMobile: doctorData.clinicPhone,
+          consultationFee: parseFloat(doctorData.consultationFee) || 0,
+          
+          // Online Consultation
+          onlineConsultation: doctorData.onlineConsultation,
+          onlineConsultationFee: parseFloat(doctorData.onlineConsultationFee) || 0
+        };
+        
+        // Save complete doctor data to backend
+        await doctorAPI.updateProfile(profileData);
+        
+        setShowSuccessMessage(true);
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate('/doctor-dashboard');
+        }, 2000);
+      } catch (error) {
+        console.error('Error saving doctor data:', error);
+        alert(error.response?.data?.message || 'Failed to save registration data. Please try again.');
+      }
     }
   };
 

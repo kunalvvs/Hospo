@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doctorAPI } from '../services/api';
 import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
@@ -111,7 +112,6 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
-    const doctorDataString = localStorage.getItem('doctorData');
     
     if (!userString) {
       console.log('No user found, redirecting to login');
@@ -131,19 +131,120 @@ const DoctorDashboard = () => {
         return;
       }
       
-      // Load doctor data from localStorage if available
-      if (doctorDataString) {
-        setDoctorData(JSON.parse(doctorDataString));
-      }
-      
       setCurrentUser(userData);
-      setLoading(false);
+      
+      // Load doctor profile from backend
+      const loadProfile = async () => {
+        try {
+          const response = await doctorAPI.getProfile();
+          if (response.success && response.doctor) {
+            setDoctorData(prevData => ({
+              ...prevData,
+              ...response.doctor,
+              // Ensure arrays are properly initialized
+              languages: response.doctor.languages || [],
+              servicesOffered: response.doctor.servicesOffered || [],
+              facilities: response.doctor.facilities || [],
+              consultationModes: response.doctor.consultationModes || [],
+              degrees: response.doctor.degrees || [],
+              clinicTimings: response.doctor.clinicTimings || [],
+              consultationTypes: response.doctor.consultationTypes || [],
+              clinicPhotos: response.doctor.clinicPhotos || [],
+              degreeCertificates: response.doctor.degreeCertificates || [],
+              availableSchedule: response.doctor.availableSchedule || []
+            }));
+          }
+          
+          // Load profile completion percentage
+          const completionResponse = await doctorAPI.getProfileCompletion();
+          if (completionResponse.success) {
+            setProfileCompletion(completionResponse.completionPercentage);
+          }
+        } catch (error) {
+          console.error('Failed to load profile:', error);
+          // Continue with empty profile if error
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadProfile();
     } catch (error) {
       console.error('Error parsing user data:', error);
       setLoading(false);
       navigate('/login');
     }
   }, [navigate]);
+
+  // Calculate profile completion in real-time
+  useEffect(() => {
+    const calculateCompletion = () => {
+      let totalFields = 0;
+      let filledFields = 0;
+
+      // Profile Summary (8 fields)
+      const profileFields = ['profilePhoto', 'profileTitle', 'bio', 'experience', 
+                            'primarySpecialization', 'secondarySpecialization'];
+      profileFields.forEach(field => {
+        totalFields++;
+        if (doctorData[field]) filledFields++;
+      });
+      totalFields++;
+      if (doctorData.languages && doctorData.languages.length > 0) filledFields++;
+      totalFields++;
+      if (doctorData.servicesOffered && doctorData.servicesOffered.length > 0) filledFields++;
+
+      // Medical Credentials (4 fields)
+      const credentialFields = ['registrationNumber', 'registrationCouncil', 'registrationCertificate'];
+      credentialFields.forEach(field => {
+        totalFields++;
+        if (doctorData[field]) filledFields++;
+      });
+      totalFields++;
+      if (doctorData.degrees && doctorData.degrees.length > 0) filledFields++;
+
+      // Identity Proof (3 fields)
+      const identityFields = ['idType', 'idNumber', 'idDocument'];
+      identityFields.forEach(field => {
+        totalFields++;
+        if (doctorData[field]) filledFields++;
+      });
+
+      // Clinic Details (9 fields)
+      const clinicFields = ['clinicName', 'clinicStreet', 'clinicCity', 'clinicState', 
+                           'clinicPincode', 'clinicMobile'];
+      clinicFields.forEach(field => {
+        totalFields++;
+        if (doctorData[field]) filledFields++;
+      });
+      totalFields++;
+      if (doctorData.clinicTimings && doctorData.clinicTimings.length > 0) filledFields++;
+      totalFields++;
+      if (doctorData.facilities && doctorData.facilities.length > 0) filledFields++;
+      totalFields++;
+      if (doctorData.consultationTypes && doctorData.consultationTypes.length > 0) filledFields++;
+
+      // Online Consultation (3 fields)
+      totalFields++;
+      if (doctorData.onlineConsultation) filledFields++;
+      totalFields++;
+      if (doctorData.onlineConsultationFee) filledFields++;
+      totalFields++;
+      if (doctorData.consultationModes && doctorData.consultationModes.length > 0) filledFields++;
+
+      // Fees & Payment (4 fields)
+      const feeFields = ['consultationFee', 'accountNumber', 'ifscCode', 'upiId'];
+      feeFields.forEach(field => {
+        totalFields++;
+        if (doctorData[field]) filledFields++;
+      });
+
+      const percentage = Math.round((filledFields / totalFields) * 100);
+      setProfileCompletion(percentage);
+    };
+
+    calculateCompletion();
+  }, [doctorData]);
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -177,41 +278,235 @@ const DoctorDashboard = () => {
     });
   };
 
+  // File upload handler
+  const handleFileUpload = async (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      const response = await doctorAPI.uploadFile(file);
+      if (response.success) {
+        // Update the field with the file URL
+        const fileUrl = `http://localhost:5000${response.fileUrl}`;
+        setDoctorData(prev => ({
+          ...prev,
+          [field]: fileUrl
+        }));
+        alert('File uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert(error.response?.data?.message || 'Failed to upload file');
+    }
+  };
+
+  // Multiple files upload handler (for arrays like clinicPhotos, degreeCertificates)
+  const handleMultipleFilesUpload = async (e, field) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    try {
+      const uploadPromises = files.map(file => doctorAPI.uploadFile(file));
+      const responses = await Promise.all(uploadPromises);
+      
+      const fileUrls = responses
+        .filter(res => res.success)
+        .map(res => `http://localhost:5000${res.fileUrl}`);
+      
+      setDoctorData(prev => ({
+        ...prev,
+        [field]: [...(prev[field] || []), ...fileUrls]
+      }));
+      
+      alert(`${fileUrls.length} file(s) uploaded successfully!`);
+    } catch (error) {
+      console.error('Multiple files upload error:', error);
+      alert('Failed to upload some files');
+    }
+  };
+
   // Save handlers for each section
-  const handleSaveProfile = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingProfile(false);
-    alert('Profile saved successfully!');
+  const handleSaveProfile = async () => {
+    try {
+      const response = await doctorAPI.updateSection('profile-summary', {
+        profilePhoto: doctorData.profilePhoto,
+        profileTitle: doctorData.profileTitle,
+        bio: doctorData.bio,
+        languages: doctorData.languages,
+        otherLanguages: doctorData.otherLanguages,
+        experience: doctorData.experience,
+        primarySpecialization: doctorData.primarySpecialization,
+        secondarySpecialization: doctorData.secondarySpecialization,
+        servicesOffered: doctorData.servicesOffered,
+        otherServices: doctorData.otherServices
+      });
+      
+      if (response.success) {
+        setIsEditingProfile(false);
+        alert('Profile saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save profile error:', error);
+      alert(error.response?.data?.message || 'Failed to save profile');
+    }
   };
   
-  const handleSaveCredentials = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingCredentials(false);
-    alert('Medical Credentials saved successfully!');
+  const handleSaveCredentials = async () => {
+    try {
+      const response = await doctorAPI.updateSection('credentials', {
+        registrationNumber: doctorData.registrationNumber,
+        registrationCouncil: doctorData.registrationCouncil,
+        registrationCertificate: doctorData.registrationCertificate,
+        degrees: doctorData.degrees,
+        degreeCertificates: doctorData.degreeCertificates
+      });
+      
+      if (response.success) {
+        setIsEditingCredentials(false);
+        alert('Medical Credentials saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save credentials error:', error);
+      alert(error.response?.data?.message || 'Failed to save credentials');
+    }
   };
   
-  const handleSaveIdentity = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingIdentity(false);
-    alert('Identity Details saved successfully!');
+  const handleSaveIdentity = async () => {
+    try {
+      const response = await doctorAPI.updateSection('identity', {
+        idType: doctorData.idType,
+        idNumber: doctorData.idNumber,
+        idDocument: doctorData.idDocument,
+        signaturePhoto: doctorData.signaturePhoto
+      });
+      
+      if (response.success) {
+        setIsEditingIdentity(false);
+        alert('Identity Details saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save identity error:', error);
+      alert(error.response?.data?.message || 'Failed to save identity details');
+    }
   };
   
-  const handleSaveClinic = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingClinic(false);
-    alert('Clinic Details saved successfully!');
+  const handleSaveClinic = async () => {
+    try {
+      const response = await doctorAPI.updateSection('clinic', {
+        clinicName: doctorData.clinicName,
+        clinicStreet: doctorData.clinicStreet,
+        clinicLandmark: doctorData.clinicLandmark,
+        clinicCity: doctorData.clinicCity,
+        clinicState: doctorData.clinicState,
+        clinicPincode: doctorData.clinicPincode,
+        clinicLocation: doctorData.clinicLocation,
+        clinicLandline: doctorData.clinicLandline,
+        clinicMobile: doctorData.clinicMobile,
+        clinicTimings: doctorData.clinicTimings,
+        consultationTypes: doctorData.consultationTypes,
+        facilities: doctorData.facilities,
+        clinicPhotos: doctorData.clinicPhotos,
+        ownershipProof: doctorData.ownershipProof
+      });
+      
+      if (response.success) {
+        setIsEditingClinic(false);
+        alert('Clinic Details saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save clinic error:', error);
+      alert(error.response?.data?.message || 'Failed to save clinic details');
+    }
   };
   
-  const handleSaveOnline = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingOnline(false);
-    alert('Online Consultation settings saved successfully!');
+  const handleSaveOnline = async () => {
+    try {
+      const response = await doctorAPI.updateSection('online', {
+        onlineConsultation: doctorData.onlineConsultation,
+        onlineConsultationFee: doctorData.onlineConsultationFee,
+        consultationModes: doctorData.consultationModes,
+        slotDuration: doctorData.slotDuration,
+        bufferTime: doctorData.bufferTime,
+        availableSchedule: doctorData.availableSchedule,
+        cancellationPolicy: doctorData.cancellationPolicy,
+        cancellationPolicyDetails: doctorData.cancellationPolicyDetails
+      });
+      
+      if (response.success) {
+        setIsEditingOnline(false);
+        alert('Online Consultation settings saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save online error:', error);
+      alert(error.response?.data?.message || 'Failed to save online settings');
+    }
   };
   
-  const handleSaveFees = () => {
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    setIsEditingFees(false);
-    alert('Payment Details saved successfully!');
+  const handleSaveFees = async () => {
+    try {
+      const response = await doctorAPI.updateSection('fees', {
+        consultationFee: doctorData.consultationFee,
+        onlineConsultationFee: doctorData.onlineConsultationFee,
+        accountHolderName: doctorData.accountHolderName,
+        accountNumber: doctorData.accountNumber,
+        ifscCode: doctorData.ifscCode,
+        bankName: doctorData.bankName,
+        branchName: doctorData.branchName,
+        accountType: doctorData.accountType,
+        upiId: doctorData.upiId,
+        bankDocument: doctorData.bankDocument
+      });
+      
+      if (response.success) {
+        setIsEditingFees(false);
+        alert('Payment Details saved successfully!');
+        
+        // Refresh profile completion
+        const completionResponse = await doctorAPI.getProfileCompletion();
+        if (completionResponse.success) {
+          setProfileCompletion(completionResponse.completionPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Save fees error:', error);
+      alert(error.response?.data?.message || 'Failed to save payment details');
+    }
   };
 
   const handleSubmitReview = (e) => {
@@ -405,7 +700,23 @@ const DoctorDashboard = () => {
                 <div className="profile-info-grid">
                   <div className="info-card full-width">
                     <label>Profile Photo</label>
-                    <p>{doctorData.profilePhoto || 'Not uploaded'}</p>
+                    {doctorData.profilePhoto ? (
+                      <div style={{marginTop: '10px'}}>
+                        <img 
+                          src={doctorData.profilePhoto} 
+                          alt="Profile" 
+                          style={{
+                            width: '150px', 
+                            height: '150px', 
+                            objectFit: 'cover', 
+                            borderRadius: '10px',
+                            border: '2px solid #e0e0e0'
+                          }} 
+                        />
+                      </div>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                   <div className="info-card full-width">
                     <label>Profile Title / Designation</label>
@@ -441,39 +752,60 @@ const DoctorDashboard = () => {
               ) : (
                 // EDIT MODE
                 <div className="form-grid">
-                <div className="form-group full-width">
-                  <label>Profile Photo</label>
-                  <div className="photo-upload">
-                    <div className="photo-preview">
-                      <span className="placeholder-icon">📷</span>
-                      <p>Upload Professional Headshot</p>
-                      <small>Recommended: JPG/PNG, 500x500px</small>
+                  <div className="form-group full-width">
+                    <label>Profile Photo</label>
+                    <div className="photo-upload">
+                      <div className="photo-preview">
+                        {doctorData.profilePhoto ? (
+                          <img 
+                            src={doctorData.profilePhoto} 
+                            alt="Profile" 
+                            style={{
+                              width: '150px', 
+                              height: '150px', 
+                              objectFit: 'cover', 
+                              borderRadius: '10px',
+                              marginBottom: '10px'
+                            }} 
+                          />
+                        ) : (
+                          <>
+                            <span className="placeholder-icon">📷</span>
+                            <p>Upload Professional Headshot</p>
+                          </>
+                        )}
+                        <small>Recommended: JPG/PNG, 500x500px, max 5MB</small>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, 'profilePhoto')}
+                        style={{marginTop: '10px'}}
+                      />
                     </div>
-                    <button className="btn-secondary">Upload Photo</button>
                   </div>
-                </div>
 
-                <div className="form-group full-width">
-                  <label>Profile Title / Designation</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g., Dr. Anil Kumar, MBBS, MD (Pediatrics)"
-                    value={doctorData.profileTitle || ''}
-                    onChange={(e) => handleDoctorDataChange('profileTitle', e.target.value)}
-                  />
-                  <small>Include your name, degree, and specialization</small>
-                </div>
+                  <div className="form-group full-width">
+                    <label>Profile Title / Designation</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., Dr. Anil Kumar, MBBS, MD (Pediatrics)"
+                      value={doctorData.profileTitle || ''}
+                      onChange={(e) => handleDoctorDataChange('profileTitle', e.target.value)}
+                    />
+                    <small>Include your name, degree, and specialization</small>
+                  </div>
 
-                <div className="form-group full-width">
-                  <label>Short Bio / About</label>
-                  <textarea 
-                    rows="4"
-                    placeholder="Write a brief summary about your experience, approach, and expertise (1-3 lines)"
-                    value={doctorData.bio || ''}
-                    onChange={(e) => handleDoctorDataChange('bio', e.target.value)}
-                  ></textarea>
-                  <small>Keep it concise and patient-friendly</small>
-                </div>
+                  <div className="form-group full-width">
+                    <label>Short Bio / About</label>
+                    <textarea 
+                      rows="4"
+                      placeholder="Write a brief summary about your experience, approach, and expertise (1-3 lines)"
+                      value={doctorData.bio || ''}
+                      onChange={(e) => handleDoctorDataChange('bio', e.target.value)}
+                    ></textarea>
+                    <small>Keep it concise and patient-friendly</small>
+                  </div>
 
                 <div className="form-group full-width">
                   <label>Languages Spoken</label>

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [userRole, setUserRole] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Get the selected role from localStorage
@@ -20,54 +22,48 @@ const Login = () => {
     }
   }, [navigate]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
-    // TEMPORARY LOGIN SYSTEM - Accept any credentials
-    if (phone.length < 10) {
-      setError('Please enter at least 10 digits for phone number');
-      return;
-    }
+    try {
+      // Call backend API
+      const response = await authAPI.login({
+        email: email,
+        password: password
+      });
 
-    if (!password) {
-      setError('Please enter any password');
-      return;
-    }
+      console.log('Login successful:', response);
 
-    // Create temporary user data for demo
-    const tempUser = {
-      role: userRole,
-      name: phone, // Using phone as name for demo
-      phone: phone,
-      password: password,
-      isTemporary: true
-    };
-
-    // Store temporary user
-    localStorage.setItem('currentUser', JSON.stringify(tempUser));
-    console.log('User logged in:', tempUser);
-    console.log('Navigating to dashboard for role:', userRole);
-    
-    // Navigate to appropriate dashboard based on role
-    if (userRole === 'doctor') {
-      alert(`Welcome to Doctor Dashboard! (Temporary Login)`);
-      window.location.href = '/doctor-dashboard';
-    } else if (userRole === 'ambulance') {
-      alert(`Welcome Ambulance Service! Complete your registration.`);
-      window.location.href = '/ambulance-registration';
-    } else if (userRole === 'chemist') {
-      alert(`Welcome Chemist/Pharmacy! Complete your registration.`);
-      window.location.href = '/chemist-registration';
-    } else if (userRole === 'hospital') {
-      alert(`Welcome Hospital! Complete your registration.`);
-      window.location.href = '/hospital-registration';
-    } else if (userRole === 'pathlab') {
-      alert(`Welcome Pathlab! Complete your registration.`);
-      window.location.href = '/pathlab-registration';
-    } else {
-      alert(`Welcome Patient! Dashboard coming soon.`);
-      navigate('/');
+      // Store user data
+      localStorage.setItem('currentUser', JSON.stringify(response.doctor));
+      
+      // Navigate based on role
+      if (response.doctor.role === 'doctor') {
+        alert(`Welcome Dr. ${response.doctor.name}!`);
+        navigate('/doctor-dashboard');
+      } else if (response.doctor.role === 'ambulance') {
+        alert(`Welcome Ambulance Service!`);
+        navigate('/ambulance-dashboard');
+      } else if (response.doctor.role === 'chemist') {
+        alert(`Welcome Chemist!`);
+        navigate('/chemist-dashboard');
+      } else if (response.doctor.role === 'hospital') {
+        alert(`Welcome Hospital!`);
+        navigate('/hospital-dashboard');
+      } else if (response.doctor.role === 'pathlab') {
+        alert(`Welcome Pathlab!`);
+        navigate('/pathlab-dashboard');
+      } else {
+        alert(`Welcome Patient!`);
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,7 +108,7 @@ const Login = () => {
         <div className="login-card">
           <div className="login-header">
             <h2>Login with your credentials</h2>
-            <p className="demo-badge">🎭 Demo Mode - Type anything to login</p>
+            <p className="demo-badge">🔐 Secure Login - Backend API</p>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -120,18 +116,18 @@ const Login = () => {
             
             <div className="input-group">
               <div className="input-icon">
-                <span>📱</span>
+                <span>📧</span>
               </div>
               <input
-                type="tel"
-                placeholder="Enter mobile number"
-                value={phone}
+                type="email"
+                placeholder="Enter your email"
+                value={email}
                 onChange={(e) => {
-                  setPhone(e.target.value.replace(/\D/g, '').slice(0, 10));
+                  setEmail(e.target.value);
                   setError('');
                 }}
-                maxLength="10"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -148,11 +144,12 @@ const Login = () => {
                   setError('');
                 }}
                 required
+                disabled={loading}
               />
             </div>
 
-            <button type="submit" className="continue-btn">
-              Login
+            <button type="submit" className="continue-btn" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
