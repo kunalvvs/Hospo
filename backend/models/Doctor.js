@@ -59,7 +59,7 @@ const DoctorSchema = new mongoose.Schema({
   // Identity Proof fields
   idType: String,
   idNumber: String,
-  idDocument: String,
+  governmentId: String,
   signaturePhoto: String,
   
   // Clinic Details fields
@@ -111,7 +111,7 @@ const DoctorSchema = new mongoose.Schema({
   branchName: String,
   accountType: String,
   upiId: String,
-  bankDocument: String,
+  bankProof: String,
   
   // Verification status
   isVerified: {

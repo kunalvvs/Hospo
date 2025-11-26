@@ -44,7 +44,7 @@ const DoctorDashboard = () => {
     // Identity Proof fields
     idType: '',
     idNumber: '',
-    idDocument: '',
+    governmentId: '',
     signaturePhoto: '',
     
     // Clinic Details fields
@@ -82,7 +82,7 @@ const DoctorDashboard = () => {
     branchName: '',
     accountType: '',
     upiId: '',
-    bankDocument: ''
+    bankProof: ''
   });
   
   // Mock data for enquiries
@@ -278,6 +278,31 @@ const DoctorDashboard = () => {
     });
   };
 
+  // Handle file view/download
+  const handleViewFile = (url) => {
+    if (!url) {
+      alert('No file URL available');
+      return;
+    }
+    
+    console.log('Opening file URL:', url);
+    
+    // Check if it's a valid Cloudinary URL
+    if (!url.includes('cloudinary.com')) {
+      alert('Invalid file URL format');
+      console.error('Invalid URL:', url);
+      return;
+    }
+    
+    // For all files, just open in new tab
+    // Cloudinary should handle the file type automatically
+    const newWindow = window.open(url, '_blank');
+    
+    if (!newWindow) {
+      alert('Please allow popups to view files');
+    }
+  };
+
   // File upload handler
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
@@ -291,9 +316,11 @@ const DoctorDashboard = () => {
 
     try {
       const response = await doctorAPI.uploadFile(file);
+      console.log('Upload response:', response); // Debug log
       if (response.success) {
-        // Update the field with the file URL
-        const fileUrl = `http://localhost:5000${response.fileUrl}`;
+        // Use Cloudinary URL directly (no localhost prefix needed)
+        const fileUrl = response.fileUrl;
+        console.log('Setting file URL:', fileUrl, 'for field:', field); // Debug log
         setDoctorData(prev => ({
           ...prev,
           [field]: fileUrl
@@ -315,9 +342,10 @@ const DoctorDashboard = () => {
       const uploadPromises = files.map(file => doctorAPI.uploadFile(file));
       const responses = await Promise.all(uploadPromises);
       
+      // Use Cloudinary URLs directly
       const fileUrls = responses
         .filter(res => res.success)
-        .map(res => `http://localhost:5000${res.fileUrl}`);
+        .map(res => res.fileUrl);
       
       setDoctorData(prev => ({
         ...prev,
@@ -394,7 +422,7 @@ const DoctorDashboard = () => {
       const response = await doctorAPI.updateSection('identity', {
         idType: doctorData.idType,
         idNumber: doctorData.idNumber,
-        idDocument: doctorData.idDocument,
+        governmentId: doctorData.governmentId,
         signaturePhoto: doctorData.signaturePhoto
       });
       
@@ -490,7 +518,7 @@ const DoctorDashboard = () => {
         branchName: doctorData.branchName,
         accountType: doctorData.accountType,
         upiId: doctorData.upiId,
-        bankDocument: doctorData.bankDocument
+        bankProof: doctorData.bankProof
       });
       
       if (response.success) {
@@ -928,7 +956,17 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="info-card full-width">
                     <label>Registration Certificate</label>
-                    <p>{doctorData.registrationCertificate || 'Not uploaded'}</p>
+                    {doctorData.registrationCertificate ? (
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => handleViewFile(doctorData.registrationCertificate)}
+                        style={{marginTop: '10px'}}
+                      >
+                        📄 View Certificate
+                      </button>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                   <div className="info-card full-width">
                     <label>Degrees / Qualifications</label>
@@ -936,7 +974,22 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="info-card full-width">
                     <label>Degree Certificates</label>
-                    <p>{doctorData.degreeCertificates && doctorData.degreeCertificates.length > 0 ? `${doctorData.degreeCertificates.length} file(s) uploaded` : 'Not uploaded'}</p>
+                    {doctorData.degreeCertificates && doctorData.degreeCertificates.length > 0 ? (
+                      <div>
+                        {doctorData.degreeCertificates.map((url, index) => (
+                          <button 
+                            key={index}
+                            className="btn-secondary" 
+                            onClick={() => handleViewFile(url)}
+                            style={{marginTop: '10px', marginRight: '10px'}}
+                          >
+                            📄 View Certificate {index + 1}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -974,7 +1027,14 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Registration Certificate (Scan/Photo) *</label>
                   <div className="file-upload">
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload(e, 'registrationCertificate')}
+                    />
+                    {doctorData.registrationCertificate && (
+                      <p className="file-uploaded">✅ File uploaded</p>
+                    )}
                     <p>Upload PDF or image of your registration licence</p>
                     <small>Maximum file size: 5MB</small>
                   </div>
@@ -996,7 +1056,15 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Degree Certificate(s) Upload</label>
                   <div className="file-upload">
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png" 
+                      multiple
+                      onChange={(e) => handleMultipleFilesUpload(e, 'degreeCertificates')}
+                    />
+                    {doctorData.degreeCertificates && doctorData.degreeCertificates.length > 0 && (
+                      <p className="file-uploaded">✅ {doctorData.degreeCertificates.length} file(s) uploaded</p>
+                    )}
                     <p>Upload scanned copies of your degree certificates</p>
                     <small>You can select multiple files</small>
                   </div>
@@ -1049,11 +1117,31 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="info-card full-width">
                     <label>Government ID Document</label>
-                    <p>{doctorData.idDocument || 'Not uploaded'}</p>
+                    {doctorData.governmentId ? (
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => handleViewFile(doctorData.governmentId)}
+                        style={{marginTop: '10px'}}
+                      >
+                        🆔 View ID
+                      </button>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                   <div className="info-card full-width">
                     <label>Photo of Signature / Prescription Pad</label>
-                    <p>{doctorData.signaturePhoto || 'Not uploaded'}</p>
+                    {doctorData.signaturePhoto ? (
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => handleViewFile(doctorData.signaturePhoto)}
+                        style={{marginTop: '10px'}}
+                      >
+                        🖼️ View Photo
+                      </button>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1089,7 +1177,14 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Government ID (Scan/Photo) *</label>
                   <div className="file-upload">
-                    <input type="file" accept=".jpg,.jpeg,.png,.pdf" />
+                    <input 
+                      type="file" 
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={(e) => handleFileUpload(e, 'governmentId')}
+                    />
+                    {doctorData.governmentId && (
+                      <p className="file-uploaded">✅ File uploaded</p>
+                    )}
                     <p>Upload clear photo/scan of your government ID</p>
                     <small>Front side required, back side optional</small>
                   </div>
@@ -1098,7 +1193,14 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Photo of Signature / Prescription Pad</label>
                   <div className="file-upload">
-                    <input type="file" accept=".jpg,.jpeg,.png" />
+                    <input 
+                      type="file" 
+                      accept=".jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload(e, 'signaturePhoto')}
+                    />
+                    {doctorData.signaturePhoto && (
+                      <p className="file-uploaded">✅ File uploaded</p>
+                    )}
                     <p>Upload photo to verify practice name (optional)</p>
                     <small>Helps in authenticating your practice</small>
                   </div>
@@ -1183,11 +1285,36 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="info-card full-width">
                     <label>Clinic Photos</label>
-                    <p>{doctorData.clinicPhotos && doctorData.clinicPhotos.length > 0 ? `${doctorData.clinicPhotos.length} photo(s) uploaded` : 'Not uploaded'}</p>
+                    {doctorData.clinicPhotos && doctorData.clinicPhotos.length > 0 ? (
+                      <div>
+                        {doctorData.clinicPhotos.map((url, index) => (
+                          <button 
+                            key={index}
+                            className="btn-secondary" 
+                            onClick={() => handleViewFile(url)}
+                            style={{marginTop: '10px', marginRight: '10px'}}
+                          >
+                            🏥 View Photo {index + 1}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                   <div className="info-card full-width">
                     <label>Ownership Proof</label>
-                    <p>{doctorData.ownershipProof || 'Not uploaded'}</p>
+                    {doctorData.ownershipProof ? (
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => handleViewFile(doctorData.ownershipProof)}
+                        style={{marginTop: '10px'}}
+                      >
+                        📄 View Document
+                      </button>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1320,7 +1447,15 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Clinic Photos</label>
                   <div className="file-upload">
-                    <input type="file" accept=".jpg,.jpeg,.png" multiple />
+                    <input 
+                      type="file" 
+                      accept=".jpg,.jpeg,.png" 
+                      multiple
+                      onChange={(e) => handleMultipleFilesUpload(e, 'clinicPhotos')}
+                    />
+                    {doctorData.clinicPhotos && doctorData.clinicPhotos.length > 0 && (
+                      <p className="file-uploaded">✅ {doctorData.clinicPhotos.length} photo(s) uploaded</p>
+                    )}
                     <p>Upload photos of reception, consultation room, building exterior</p>
                     <small>Multiple photos help improve listing visibility</small>
                   </div>
@@ -1329,7 +1464,14 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Ownership Proof (if applicable)</label>
                   <div className="file-upload">
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload(e, 'ownershipProof')}
+                    />
+                    {doctorData.ownershipProof && (
+                      <p className="file-uploaded">✅ File uploaded</p>
+                    )}
                     <p>Registration certificate, invoice, or prescription copy</p>
                     <small>To prove association with practice name</small>
                   </div>
@@ -1874,7 +2016,17 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="info-card full-width">
                     <label>Bank Document</label>
-                    <p>{doctorData.bankDocument || 'Not uploaded'}</p>
+                    {doctorData.bankProof ? (
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => handleViewFile(doctorData.bankProof)}
+                        style={{marginTop: '10px'}}
+                      >
+                        🏦 View Bank Proof
+                      </button>
+                    ) : (
+                      <p>Not uploaded</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1999,7 +2151,14 @@ const DoctorDashboard = () => {
                 <div className="form-group full-width">
                   <label>Cancelled Cheque / Bank Statement</label>
                   <div className="file-upload">
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => handleFileUpload(e, 'bankProof')}
+                    />
+                    {doctorData.bankProof && (
+                      <p className="file-uploaded">✅ File uploaded</p>
+                    )}
                     <p>Upload cancelled cheque or bank statement for verification</p>
                     <small>Required for account verification</small>
                   </div>

@@ -1,4 +1,5 @@
 const Doctor = require('../models/Doctor');
+const { sendOTPEmail } = require('../config/email');
 
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
@@ -33,8 +34,21 @@ exports.sendOTP = async (req, res) => {
       attempts: 0
     });
 
-    // TODO: In production, integrate with SMS/Email service
-    // For now, log OTP to console (demo mode)
+    // Send OTP via email
+    if (email) {
+      // Get doctor's name if exists
+      const doctor = await Doctor.findOne({ email });
+      const name = doctor ? doctor.fullName : '';
+      
+      const emailResult = await sendOTPEmail(email, otp, name);
+      
+      if (!emailResult.success) {
+        console.error('Failed to send email:', emailResult.error);
+        // Still return success but log the error
+      }
+    }
+
+    // TODO: Integrate SMS service for phone OTP
     console.log(`📱 OTP for ${identifier}: ${otp}`);
 
     res.status(200).json({
@@ -163,6 +177,13 @@ exports.resendOTP = async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000,
       attempts: 0
     });
+
+    // Send OTP via email
+    if (email) {
+      const doctor = await Doctor.findOne({ email });
+      const name = doctor ? doctor.fullName : '';
+      await sendOTPEmail(email, otp, name);
+    }
 
     console.log(`📱 Resent OTP for ${identifier}: ${otp}`);
 

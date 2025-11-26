@@ -1,4 +1,6 @@
 const Doctor = require('../models/Doctor');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
 // @desc    Get doctor profile
 // @route   GET /api/doctors/profile
@@ -205,14 +207,51 @@ exports.uploadFile = async (req, res) => {
       });
     }
 
-    // Return the file URL
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Upload to Cloudinary using buffer
+    const uploadStream = (buffer) => {
+      return new Promise((resolve, reject) => {
+        const uploadOptions = {
+          folder: 'torion-healthcare',
+          resource_type: 'auto', // Automatically detect file type
+        };
+
+        // Add transformation only for images, not for PDFs or documents
+        if (req.file.mimetype.startsWith('image/')) {
+          uploadOptions.transformation = [{ width: 1000, height: 1000, crop: 'limit' }];
+        }
+
+        const stream = cloudinary.uploader.upload_stream(
+          uploadOptions,
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        streamifier.createReadStream(buffer).pipe(stream);
+      });
+    };
+
+    const result = await uploadStream(req.file.buffer);
+
+    console.log('✅ File uploaded to Cloudinary:', {
+      url: result.secure_url,
+      publicId: result.public_id,
+      format: result.format,
+      resourceType: result.resource_type
+    });
 
     res.status(200).json({
       success: true,
       message: 'File uploaded successfully',
-      fileUrl,
-      filename: req.file.filename
+      fileUrl: result.secure_url,
+      publicId: result.public_id,
+      filename: req.file.originalname,
+      format: result.format,
+      resourceType: result.resource_type
     });
   } catch (error) {
     console.error('Upload File Error:', error);
