@@ -34,18 +34,22 @@ exports.sendOTP = async (req, res) => {
       attempts: 0
     });
 
-    // Send OTP via email
+    // Send OTP via email (non-blocking)
     if (email) {
       // Get doctor's name if exists
       const doctor = await Doctor.findOne({ email });
       const name = doctor ? doctor.fullName : '';
       
-      const emailResult = await sendOTPEmail(email, otp, name);
-      
-      if (!emailResult.success) {
-        console.error('Failed to send email:', emailResult.error);
-        // Still return success but log the error
-      }
+      // Don't wait for email - send in background
+      sendOTPEmail(email, otp, name).then(result => {
+        if (result.success) {
+          console.log('✅ Email sent successfully');
+        } else {
+          console.error('⚠️ Email failed (but registration continues):', result.error);
+        }
+      }).catch(err => {
+        console.error('⚠️ Email error (but registration continues):', err.message);
+      });
     }
 
     // TODO: Integrate SMS service for phone OTP
@@ -54,7 +58,7 @@ exports.sendOTP = async (req, res) => {
     res.status(200).json({
       success: true,
       message: `OTP sent successfully to ${type === 'email' ? 'email' : 'phone'}`,
-      // In demo mode, send OTP in response (remove in production)
+      // In demo/development mode, send OTP in response for testing
       otp: process.env.NODE_ENV === 'development' ? otp : undefined
     });
   } catch (error) {
@@ -178,11 +182,21 @@ exports.resendOTP = async (req, res) => {
       attempts: 0
     });
 
-    // Send OTP via email
+    // Send OTP via email (non-blocking)
     if (email) {
       const doctor = await Doctor.findOne({ email });
       const name = doctor ? doctor.fullName : '';
-      await sendOTPEmail(email, otp, name);
+      
+      // Don't wait for email - send in background
+      sendOTPEmail(email, otp, name).then(result => {
+        if (result.success) {
+          console.log('✅ Email resent successfully');
+        } else {
+          console.error('⚠️ Email failed (but registration continues):', result.error);
+        }
+      }).catch(err => {
+        console.error('⚠️ Email error (but registration continues):', err.message);
+      });
     }
 
     console.log(`📱 Resent OTP for ${identifier}: ${otp}`);

@@ -1,13 +1,21 @@
 const nodemailer = require('nodemailer');
 
-// Create email transporter
+// Create email transporter with optimized settings for Render
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail', // or 'smtp.gmail.com'
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use TLS
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
-    }
+      pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000
   });
 };
 
@@ -61,11 +69,18 @@ const sendOTPEmail = async (to, otp, name) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+    // Add timeout to prevent hanging
+    const sendPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Email timeout')), 8000)
+    );
+
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    console.log('✅ Email sent successfully:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('❌ Email failed:', error.message);
+    // Don't block registration - just log the error
     return { success: false, error: error.message };
   }
 };
