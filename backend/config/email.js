@@ -139,7 +139,7 @@ const sendOTPEmail = async (to, otp, name) => {
     // Add timeout to prevent hanging
     const sendPromise = transporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email timeout')), 20000)
+      setTimeout(() => reject(new Error('Email timeout')), 8000)
     );
 
     const info = await Promise.race([sendPromise, timeoutPromise]);
