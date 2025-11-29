@@ -1478,3 +1478,165 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
+/* Degree Management Styles */
+.added-degrees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.degree-tag {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  padding: 10px 15px;
+  border-radius: 25px;
+  margin: 5px;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #a5d6a7;
+}
+
+.degree-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.degree-tag strong {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.degree-tag button {
+  background: transparent;
+  border: none;
+  color: #d32f2f;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 5px;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.degree-tag button:hover {
+  background: rgba(211, 47, 47, 0.1);
+  transform: scale(1.1);
+}
+
+.degree-form {
+  border: 2px dashed #e0e0e0;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.degree-form:hover {
+  border-color: #234f83;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(35, 79, 131, 0.08);
+}
+
+.degree-form .form-group {
+  margin-bottom: 15px;
+}
+
+.degree-form .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.degree-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.degree-form input,
+.degree-form select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.degree-form input:focus,
+.degree-form select:focus {
+  outline: none;
+  border-color: #234f83;
+  box-shadow: 0 0 0 3px rgba(35, 79, 131, 0.1);
+}
+
+.degree-form select {
+  cursor: pointer;
+}
+
+.degree-form select option {
+  padding: 10px;
+}
+
+.degree-form select optgroup {
+  font-weight: 600;
+  color: #234f83;
+  background: #f3f4f6;
+}
+
+.degree-form button.btn-primary {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  background: linear-gradient(135deg, #234f83 0%, #1a3d66 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(35, 79, 131, 0.2);
+}
+
+.degree-form button.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(35, 79, 131, 0.3);
+  background: linear-gradient(135deg, #1a3d66 0%, #234f83 100%);
+}
+
+.degree-form button.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Empty state for degrees */
+.no-degrees-message {
+  text-align: center;
+  padding: 30px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Responsive adjustments for degree form */
+@media (max-width: 768px) {
+  .degree-tag {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  
+  .degree-form {
+    padding: 15px;
+  }
+}

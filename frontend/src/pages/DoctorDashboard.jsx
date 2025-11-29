@@ -3,6 +3,82 @@ import { useNavigate } from 'react-router-dom';
 import { doctorAPI } from '../services/api';
 import './DoctorDashboard.css';
 
+// Comprehensive Medical Degrees List
+const MEDICAL_DEGREES = [
+  // Bachelor Degrees
+  { value: 'MBBS', label: 'MBBS - Bachelor of Medicine and Bachelor of Surgery' },
+  { value: 'BDS', label: 'BDS - Bachelor of Dental Surgery' },
+  { value: 'BAMS', label: 'BAMS - Bachelor of Ayurvedic Medicine & Surgery' },
+  { value: 'BHMS', label: 'BHMS - Bachelor of Homeopathic Medicine & Surgery' },
+  { value: 'BUMS', label: 'BUMS - Bachelor of Unani Medicine & Surgery' },
+  { value: 'BNYS', label: 'BNYS - Bachelor of Naturopathy & Yogic Sciences' },
+  { value: 'BPT', label: 'BPT - Bachelor of Physiotherapy' },
+  { value: 'B.Sc Nursing', label: 'B.Sc Nursing - Bachelor of Science in Nursing' },
+  { value: 'B.Optom', label: 'B.Optom - Bachelor of Optometry' },
+  { value: 'B.VSc&AH', label: 'B.VSc&AH - Bachelor of Veterinary Science & Animal Husbandry' },
+  
+  // Master/Doctorate Degrees
+  { value: 'MD', label: 'MD - Doctor of Medicine' },
+  { value: 'MS', label: 'MS - Master of Surgery' },
+  { value: 'DNB', label: 'DNB - Diplomate of National Board' },
+  { value: 'DM', label: 'DM - Doctorate of Medicine' },
+  { value: 'MCh', label: 'MCh - Magister Chirurgiae (Master of Surgery)' },
+  
+  // MD Specializations
+  { value: 'MD Pediatrics', label: 'MD Pediatrics' },
+  { value: 'MD Medicine', label: 'MD Medicine' },
+  { value: 'MD Dermatology', label: 'MD Dermatology' },
+  { value: 'MD Radiology', label: 'MD Radiology' },
+  { value: 'MD Psychiatry', label: 'MD Psychiatry' },
+  { value: 'MD Anesthesiology', label: 'MD Anesthesiology' },
+  { value: 'MD Pathology', label: 'MD Pathology' },
+  { value: 'MD Emergency Medicine', label: 'MD Emergency Medicine' },
+  { value: 'MD Obstetrics & Gynecology', label: 'MD Obstetrics & Gynecology (MD OBG)' },
+  
+  // MS Specializations
+  { value: 'MS General Surgery', label: 'MS General Surgery' },
+  { value: 'MS Orthopedics', label: 'MS Orthopedics' },
+  { value: 'MS ENT', label: 'MS ENT' },
+  { value: 'MS Ophthalmology', label: 'MS Ophthalmology' },
+  { value: 'MS OBG', label: 'MS OBG' },
+  { value: 'MS Plastic Surgery', label: 'MS Plastic Surgery' },
+  
+  // Diploma Courses
+  { value: 'DGO', label: 'DGO - Diploma in Obstetrics & Gynecology' },
+  { value: 'DMRD', label: 'DMRD - Diploma in Medical Radio-Diagnosis' },
+  { value: 'DA', label: 'DA - Diploma in Anesthesia' },
+  { value: 'DCH', label: 'DCH - Diploma in Child Health' },
+  { value: 'DCP', label: 'DCP - Diploma in Clinical Pathology' },
+  
+  // Super Specializations
+  { value: 'DM Neurology', label: 'DM Neurology - Brain & Nervous system' },
+  { value: 'DM Gastroenterology', label: 'DM Gastroenterology - Digestive tract' },
+  { value: 'DM Nephrology', label: 'DM Nephrology - Kidney' },
+  { value: 'DM Cardiology', label: 'DM Cardiology - Heart' },
+  { value: 'MCh Neurosurgery', label: 'MCh Neurosurgery - Brain surgery' },
+  { value: 'MCh Cardiothoracic Surgery', label: 'MCh Cardiothoracic Surgery - Heart & lungs' },
+  { value: 'MCh Urology', label: 'MCh Urology - Urinary system' },
+  
+  // Dental
+  { value: 'MDS', label: 'MDS - Master of Dental Surgery' },
+  
+  // Allied Health
+  { value: 'MPT', label: 'MPT - Master of Physiotherapy' },
+  { value: 'MOT', label: 'MOT - Master Of Occupational Therapy' },
+  { value: 'M.Sc. Clinical Psychology', label: 'M.Sc. Clinical Psychology - Mental health' },
+  { value: 'M.Sc Medical Microbiology', label: 'M.Sc Medical Microbiology - Lab Science' },
+  
+  // Veterinary
+  { value: 'MVSc', label: 'MVSc - Master of Veterinary Sciences' },
+  { value: 'BVSc & AH', label: 'BVSc & AH - Bachelor of Veterinary Sciences & Animal Husbandry' },
+  
+  // Alternative Medicine
+  { value: 'MD Ayurveda', label: 'MD Ayurveda' },
+  { value: 'MD Homeopathy', label: 'MD Homeopathy' },
+  { value: 'MD Unani', label: 'MD Unani' },
+  { value: 'MD Siddha', label: 'MD Siddha' },
+];
+
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
@@ -11,6 +87,10 @@ const DoctorDashboard = () => {
   const [profileCompletion, setProfileCompletion] = useState(35);
   const [enquiryFilter, setEnquiryFilter] = useState('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // New degree form state
+  const [newDegree, setNewDegree] = useState({ name: '', university: '', year: '' });
+  const [showOtherDegreeInput, setShowOtherDegreeInput] = useState(false);
   
   // Edit mode states for all sections
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -414,6 +494,33 @@ const DoctorDashboard = () => {
     } catch (error) {
       console.error('Save credentials error:', error);
       alert(error.response?.data?.message || 'Failed to save credentials');
+    }
+  };
+  
+  // Degree Management Handlers
+  const handleAddDegree = () => {
+    if (!newDegree.name || !newDegree.university || !newDegree.year) {
+      alert('Please fill all degree fields');
+      return;
+    }
+    
+    const updatedDegrees = [...(doctorData.degrees || []), newDegree];
+    setDoctorData({ ...doctorData, degrees: updatedDegrees });
+    setNewDegree({ name: '', university: '', year: '' });
+    setShowOtherDegreeInput(false);
+  };
+  
+  const handleRemoveDegree = (index) => {
+    const updatedDegrees = doctorData.degrees.filter((_, i) => i !== index);
+    setDoctorData({ ...doctorData, degrees: updatedDegrees });
+  };
+  
+  const handleDegreeChange = (field, value) => {
+    setNewDegree({ ...newDegree, [field]: value });
+    if (field === 'name' && value === 'Other') {
+      setShowOtherDegreeInput(true);
+    } else if (field === 'name' && value !== 'Other') {
+      setShowOtherDegreeInput(false);
     }
   };
   
@@ -1041,16 +1148,153 @@ const DoctorDashboard = () => {
                 </div>
 
                 <div className="form-group full-width">
-                  <label>Degrees / Qualifications</label>
-                  <div className="degree-list">
-                    <div className="degree-item">
-                      <input type="text" placeholder="Degree name (e.g., MBBS)" />
-                      <input type="text" placeholder="College/University" />
-                      <input type="number" placeholder="Year" />
-                      <button className="btn-icon">➕</button>
+                  <label>Degrees / Qualifications *</label>
+                  
+                  {/* Display Added Degrees */}
+                  {doctorData.degrees && doctorData.degrees.length > 0 && (
+                    <div className="added-degrees" style={{marginBottom: '15px'}}>
+                      {doctorData.degrees.map((degree, index) => (
+                        <div key={index} className="degree-tag" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          background: '#e8f5e9',
+                          padding: '8px 12px',
+                          borderRadius: '20px',
+                          margin: '5px',
+                          fontSize: '14px'
+                        }}>
+                          <span style={{marginRight: '8px'}}>
+                            <strong>{degree.name}</strong> - {degree.university} ({degree.year})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDegree(index)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#d32f2f',
+                              cursor: 'pointer',
+                              fontSize: '18px',
+                              padding: '0 5px'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                  
+                  {/* Add New Degree Form */}
+                  <div className="degree-form" style={{
+                    border: '2px dashed #e0e0e0',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    background: '#fafafa'
+                  }}>
+                    <div className="form-group">
+                      <label>Select Degree</label>
+                      <select
+                        value={newDegree.name}
+                        onChange={(e) => handleDegreeChange('name', e.target.value)}
+                        style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                      >
+                        <option value="">-- Select Degree --</option>
+                        <optgroup label="Bachelor Degrees">
+                          {MEDICAL_DEGREES.filter(d => {
+                            const bachelorDegrees = ['MBBS', 'BDS', 'BAMS', 'BHMS', 'BUMS', 'BNYS', 'BPT', 'B.Sc Nursing', 'B.Optom', 'B.VSc&AH'];
+                            return bachelorDegrees.includes(d.value);
+                          }).map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Master & Doctorate Degrees">
+                          {MEDICAL_DEGREES.filter(d => {
+                            const masterDegrees = ['MD', 'MS', 'DNB', 'DM', 'MCh', 'MDS', 'MPT', 'MOT', 'MVSc'];
+                            const specializations = ['MD Pediatrics', 'MD Medicine', 'MD Dermatology', 'MD Radiology', 'MD Psychiatry', 
+                                                    'MD Anesthesiology', 'MD Pathology', 'MD Emergency Medicine', 'MD Obstetrics & Gynecology',
+                                                    'MS General Surgery', 'MS Orthopedics', 'MS ENT', 'MS Ophthalmology', 'MS OBG', 'MS Plastic Surgery',
+                                                    'DM Neurology', 'DM Gastroenterology', 'DM Nephrology', 'DM Cardiology',
+                                                    'MCh Neurosurgery', 'MCh Cardiothoracic Surgery', 'MCh Urology'];
+                            return masterDegrees.includes(d.value) || specializations.includes(d.value);
+                          }).map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Diploma Courses">
+                          {MEDICAL_DEGREES.filter(d => ['DGO', 'DMRD', 'DA', 'DCH', 'DCP'].includes(d.value)).map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Allied Health Sciences">
+                          {MEDICAL_DEGREES.filter(d => d.value.startsWith('M.Sc')).map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Veterinary Sciences">
+                          {MEDICAL_DEGREES.filter(d => d.value === 'BVSc & AH').map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Alternative Medicine">
+                          {MEDICAL_DEGREES.filter(d => ['MD Ayurveda', 'MD Homeopathy', 'MD Unani', 'MD Siddha'].includes(d.value)).map(degree => (
+                            <option key={degree.value} value={degree.value}>{degree.label}</option>
+                          ))}
+                        </optgroup>
+                        <option value="Other" style={{fontWeight: 'bold', background: '#fff3cd'}}>➕ Other (Type manually)</option>
+                      </select>
+                    </div>
+                    
+                    {showOtherDegreeInput && (
+                      <div className="form-group">
+                        <label>Enter Degree Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., PhD in Medical Sciences"
+                          value={newDegree.name === 'Other' ? '' : newDegree.name}
+                          onChange={(e) => setNewDegree({...newDegree, name: e.target.value})}
+                          style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="form-group">
+                      <label>College / University</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., AIIMS New Delhi"
+                        value={newDegree.university}
+                        onChange={(e) => handleDegreeChange('university', e.target.value)}
+                        style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Year of Completion</label>
+                      <input
+                        type="number"
+                        placeholder="e.g., 2020"
+                        min="1950"
+                        max={new Date().getFullYear()}
+                        value={newDegree.year}
+                        onChange={(e) => handleDegreeChange('year', e.target.value)}
+                        style={{width: '100%', padding: '10px', marginBottom: '10px'}}
+                      />
+                    </div>
+                    
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={handleAddDegree}
+                      style={{width: '100%', marginTop: '10px'}}
+                    >
+                      ➕ Add Degree
+                    </button>
                   </div>
-                  <button className="btn-secondary mt-2">+ Add Another Degree</button>
+                  
+                  <small style={{display: 'block', marginTop: '10px', color: '#666'}}>
+                    💡 Add all your medical qualifications. You can add multiple degrees.
+                  </small>
                 </div>
 
                 <div className="form-group full-width">
