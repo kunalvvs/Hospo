@@ -100,8 +100,8 @@ EMAIL_PASSWORD=your-16-char-app-password
 
 ```
 PORT=5000
-MONGODB_URI=mongodb+srv://doctorsoap:Torion2305@cluster6996.j5sqo30.mongodb.net/torion
-JWT_SECRET=b555982a04be0ec1863a0e738f0f3b15c091ff3d11d86225257da00c5edc4e78
+MONGODB_URI=mongodb+sr@cluster6996.j5sqo30.mongodb.net/torion
+JWT_SECRET=b555982a04be0ec1863a0e7311d86225257da00c5edc4e78
 JWT_EXPIRE=30d
 NODE_ENV=production
 FRONTEND_URL=https://your-app.vercel.app
