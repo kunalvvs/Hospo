@@ -51,9 +51,11 @@ const DoctorRegistration = () => {
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
+    const token = localStorage.getItem('token');
     const doctorDataString = localStorage.getItem('doctorData');
     
-    if (!userString) {
+    if (!userString || !token) {
+      alert('Please login first to access this page');
       navigate('/login');
       return;
     }
@@ -175,14 +177,63 @@ const DoctorRegistration = () => {
     }
   };
 
-  const handleSkip = () => {
-    // Save current data even if incomplete
-    localStorage.setItem('doctorData', JSON.stringify(doctorData));
-    navigate('/doctor-dashboard');
+  const handleSkip = async () => {
+    try {
+      // Validate session
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Session expired. Please login again.');
+        navigate('/login');
+        return;
+      }
+      
+      // Mark registration as incomplete and save minimal data
+      const minimalData = {
+        registrationComplete: false
+      };
+      
+      const response = await doctorAPI.updateProfile(minimalData);
+      
+      // Save current form data locally
+      localStorage.setItem('doctorData', JSON.stringify(doctorData));
+      
+      // Update currentUser
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const updatedUser = {
+        ...currentUser,
+        registrationComplete: false
+      };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      
+      alert('Profile saved. You can complete your registration later from the dashboard.');
+      navigate('/doctor-dashboard');
+    } catch (error) {
+      console.error('Skip error:', error);
+      
+      // Check if auth error
+      if (error.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+        navigate('/login');
+      } else {
+        alert(error.response?.data?.message || 'Could not save. Redirecting to dashboard...');
+        // Still navigate to dashboard
+        navigate('/doctor-dashboard');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate session
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Session expired. Please login again.');
+      navigate('/login');
+      return;
+    }
 
     if (validateSection('clinic')) {
       try {
@@ -223,7 +274,17 @@ const DoctorRegistration = () => {
         }, 2000);
       } catch (error) {
         console.error('Error saving doctor data:', error);
-        alert(error.response?.data?.message || 'Failed to save registration data. Please try again.');
+        console.error('Error details:', error.response?.data);
+        
+        // Check if auth error
+        if (error.response?.status === 401) {
+          alert('Session expired. Please login again.');
+          localStorage.removeItem('token');
+          localStorage.removeItem('currentUser');
+          navigate('/login');
+        } else {
+          alert(error.response?.data?.message || 'Failed to save registration data. Please try again.');
+        }
       }
     }
   };

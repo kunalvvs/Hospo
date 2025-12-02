@@ -102,10 +102,19 @@ const Register = () => {
 
         console.log('Registration successful:', response);
 
+        // Store token in localStorage
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+        }
+
         // Store pending registration data for OTP verification
+        const userData = response.user || response.doctor || response;
         localStorage.setItem('pendingRegistration', JSON.stringify({
-          ...response.doctor,
-          role: userRole
+          ...userData,
+          token: response.token,
+          role: userRole,
+          email: formData.email,
+          phone: formData.phone
         }));
         
         // Send OTP
@@ -117,18 +126,36 @@ const Register = () => {
           });
           
           console.log('OTP sent:', otpResponse);
+          // Only log OTP in console during development, never show in alerts
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Development OTP:', otpResponse.otp);
+          }
           
           // Navigate to OTP verification
           alert(`Registration successful! OTP sent to ${formData.email}`);
           navigate('/verify-otp');
         } catch (otpError) {
           console.error('OTP send error:', otpError);
-          // If OTP fails, still proceed to dashboard for doctors
+          // If OTP fails, still allow user to proceed
+          alert('Registration successful! However, OTP could not be sent. You can login directly.');
+          localStorage.setItem('currentUser', JSON.stringify({
+            ...userData,
+            token: response.token,
+            role: userRole
+          }));
+          
           if (userRole === 'doctor') {
-            localStorage.setItem('currentUser', JSON.stringify(response.doctor));
             navigate('/doctor-registration');
+          } else if (userRole === 'hospital') {
+            navigate('/hospital-registration');
+          } else if (userRole === 'ambulance') {
+            navigate('/ambulance-registration');
+          } else if (userRole === 'chemist') {
+            navigate('/chemist-registration');
+          } else if (userRole === 'pathlab') {
+            navigate('/pathlab-registration');
           } else {
-            navigate('/verify-otp');
+            navigate('/login');
           }
         }
       } catch (error) {

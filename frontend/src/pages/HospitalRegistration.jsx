@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hospitalAPI } from '../services/api';
 import './HospitalRegistration.css';
 
 const HospitalRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Basic Identity
     hospitalName: '',
     practiceType: '',
     tagline: '',
     logo: null,
+    logoPreview: '',
     
     // Step 2: Address & Location
     streetAddress: '',
@@ -20,7 +23,7 @@ const HospitalRegistration = () => {
     landmark: '',
     latitude: '',
     longitude: '',
-    branches: [],
+    branches: '', // String for textarea input
     
     // Step 3: Contact Details
     mainPhone: '',
@@ -43,18 +46,53 @@ const HospitalRegistration = () => {
   });
 
   useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'hospital') {
-      navigate('/');
+    // Check if user is logged in and verified
+    const currentUser = localStorage.getItem('currentUser');
+    const token = localStorage.getItem('token');
+    
+    if (!currentUser || !token) {
+      alert('Please login first to access this page');
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const userData = JSON.parse(currentUser);
+      if (userData.role !== 'hospital') {
+        alert('This page is only for hospitals');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      navigate('/login');
     }
   }, [navigate]);
 
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === 'file') {
-      setFormData({ ...formData, [name]: files[0] });
+      const file = files[0];
+      setFormData({ 
+        ...formData, 
+        [name]: file,
+        [`${name}Preview`]: URL.createObjectURL(file)
+      });
     } else {
       setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const uploadFile = async (file) => {
+    try {
+      setUploading(true);
+      const response = await hospitalAPI.uploadFile(file);
+      return response.fileUrl;
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Error uploading file. Please try again.');
+      return null;
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -96,38 +134,166 @@ const HospitalRegistration = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateStep3()) {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const registrationData = {
-        ...currentUser,
-        ...formData,
+    
+    // Validate user session - CRITICAL
+    const currentUserStr = localStorage.getItem('currentUser');
+    const token = localStorage.getItem('token');
+    
+    if (!currentUserStr || !token) {
+      alert('Session expired. Please login again.');
+      navigate('/login');
+      return;
+    }
+    
+    if (!validateStep3()) {
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      
+      // Upload logo if exists
+      let logoUrl = '';
+      if (formData.logo) {
+        console.log('Uploading logo...');
+        logoUrl = await uploadFile(formData.logo);
+        console.log('Logo uploaded:', logoUrl);
+      }
+      
+      // Prepare data for backend
+      const hospitalData = {
+        hospitalName: formData.hospitalName,
+        practiceType: formData.practiceType,
+        tagline: formData.tagline,
+        logo: logoUrl,
+        streetAddress: formData.streetAddress,
+        locality: formData.locality,
+        city: formData.city,
+        pincode: formData.pincode,
+        landmark: formData.landmark,
+        location: {
+          latitude: formData.latitude,
+          longitude: formData.longitude
+        },
+        branches: Array.isArray(formData.branches) 
+          ? formData.branches 
+          : (formData.branches ? formData.branches.split('\n').filter(b => b.trim()) : []),
+        mainPhone: formData.mainPhone,
+        alternatePhone: formData.alternatePhone,
+        contactEmail: formData.email,
+        website: formData.website,
+        socialMedia: {
+          facebook: formData.facebook,
+          instagram: formData.instagram,
+          twitter: formData.twitter
+        },
+        workingHours: {
+          mondayHours: formData.mondayHours,
+          tuesdayHours: formData.tuesdayHours,
+          wednesdayHours: formData.wednesdayHours,
+          thursdayHours: formData.thursdayHours,
+          fridayHours: formData.fridayHours,
+          saturdayHours: formData.saturdayHours,
+          sundayHours: formData.sundayHours,
+          opdHours: formData.opdHours,
+          emergencyHours: formData.emergencyHours,
+          holidayDates: formData.holidayDates
+        },
         registrationComplete: true
       };
-      localStorage.setItem('currentUser', JSON.stringify(registrationData));
-      localStorage.setItem('hospitalData', JSON.stringify(formData));
+      
+      console.log('Submitting hospital data:', hospitalData);
+      
+      // Save to backend
+      const response = await hospitalAPI.updateProfile(hospitalData);
+      
+      console.log('Hospital registration completed:', response);
+      
+      // Update local storage
+      const currentUser = JSON.parse(currentUserStr);
+      const updatedUser = {
+        ...currentUser,
+        ...response.hospital,
+        registrationComplete: true
+      };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
       
       alert('Hospital registration completed successfully!');
       navigate('/hospital-dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      console.error('Error details:', error.response?.data);
+      
+      // Check if it's an auth error
+      if (error.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+        navigate('/login');
+      } else {
+        alert(error.response?.data?.message || 'Error completing registration. Please try again.');
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleSkip = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const minimalData = {
-      hospitalName: formData.hospitalName || 'Hospital',
-      practiceType: formData.practiceType || 'Not specified',
-      city: formData.city || 'Not specified',
-      mainPhone: formData.mainPhone || currentUser.mobile || '',
-      email: formData.email || currentUser.email || '',
-      registrationComplete: false,
-      skipped: true
-    };
-    
-    localStorage.setItem('hospitalData', JSON.stringify(minimalData));
-    alert('Registration skipped. You can complete your profile later from the dashboard.');
-    navigate('/hospital-dashboard');
+  const handleSkip = async () => {
+    try {
+      // Validate session - CRITICAL
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Session expired. Please login again.');
+        navigate('/login');
+        return;
+      }
+      
+      setUploading(true);
+      
+      const minimalData = {
+        hospitalName: formData.hospitalName || 'Hospital',
+        practiceType: formData.practiceType || 'hospital',
+        city: formData.city || 'Not specified',
+        mainPhone: formData.mainPhone || '',
+        contactEmail: formData.email || '',
+        registrationComplete: false
+      };
+      
+      console.log('Saving minimal hospital data:', minimalData);
+      const response = await hospitalAPI.updateProfile(minimalData);
+      console.log('Skip response:', response);
+      
+      // Update localStorage with the response
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const updatedUser = {
+        ...currentUser,
+        registrationComplete: false
+      };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      
+      alert('Profile saved. You can complete your registration later from the dashboard.');
+      navigate('/hospital-dashboard');
+    } catch (error) {
+      console.error('Skip error:', error);
+      console.error('Error details:', error.response?.data);
+      
+      // Check if auth error
+      if (error.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+        navigate('/login');
+      } else {
+        alert(error.response?.data?.message || 'Could not save. Redirecting to dashboard...');
+        // Still navigate to dashboard
+        navigate('/hospital-dashboard');
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -136,9 +302,6 @@ const HospitalRegistration = () => {
         <div className="hosp-reg-header">
           <h1>🏥 Hospital Registration</h1>
           <p>Complete your hospital profile to connect with patients</p>
-          {/* <button type="button" className="hosp-skip-btn" onClick={handleSkip}>
-            Skip Registration →
-          </button> */}
         </div>
 
         {/* Progress Steps */}
@@ -487,20 +650,20 @@ const HospitalRegistration = () => {
           {/* Navigation Buttons */}
           <div className="hosp-form-nav">
             {currentStep > 1 && (
-              <button type="button" className="hosp-btn-secondary" onClick={handlePrevious}>
+              <button type="button" className="hosp-btn-secondary" onClick={handlePrevious} disabled={uploading}>
                 ← Previous
               </button>
             )}
-            <button type="button" className="hosp-btn-skip" onClick={handleSkip}>
+            <button type="button" className="hosp-btn-skip" onClick={handleSkip} disabled={uploading}>
               Skip for Now
             </button>
             {currentStep < 3 ? (
-              <button type="button" className="hosp-btn-primary" onClick={handleNext}>
+              <button type="button" className="hosp-btn-primary" onClick={handleNext} disabled={uploading}>
                 Next →
               </button>
             ) : (
-              <button type="submit" className="hosp-btn-primary">
-                Complete Registration
+              <button type="submit" className="hosp-btn-primary" disabled={uploading}>
+                {uploading ? 'Saving...' : 'Complete Registration'}
               </button>
             )}
           </div>

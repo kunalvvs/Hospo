@@ -77,42 +77,67 @@ const VerifyOTP = () => {
       return;
     }
 
+    if (!registrationData || (!registrationData.email && !registrationData.phone)) {
+      setError('Session expired. Please register again.');
+      setTimeout(() => navigate('/register'), 2000);
+      return;
+    }
+
     try {
-      // Verify OTP with backend
-      const response = await authAPI.verifyOTP({
+      console.log('Verifying OTP:', {
         email: registrationData.email,
         phone: registrationData.phone,
         otp: otpValue
       });
 
+      // Verify OTP with backend
+      const response = await authAPI.verifyOTP({
+        email: registrationData.email || null,
+        phone: registrationData.phone || null,
+        otp: otpValue
+      });
+
+      console.log('OTP verification response:', response);
+
       if (response.success) {
-        // Store user data
+        // Store user data with token
         const userData = {
           ...registrationData,
           isVerified: true
         };
         
+        // Ensure token is stored
+        if (registrationData.token) {
+          localStorage.setItem('token', registrationData.token);
+        }
+        
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.removeItem('pendingRegistration');
         
+        // Show success message
+        alert('✅ OTP verified successfully! Redirecting to complete your profile...');
+        
         // Redirect based on role
-        if (registrationData.role === 'doctor') {
-          navigate('/doctor-registration');
-        } else if (registrationData.role === 'ambulance') {
-          navigate('/ambulance-registration');
-        } else if (registrationData.role === 'chemist') {
-          navigate('/chemist-registration');
-        } else if (registrationData.role === 'hospital') {
-          navigate('/hospital-registration');
-        } else if (registrationData.role === 'pathlab') {
-          navigate('/pathlab-registration');
-        } else {
-          alert('OTP verified successfully! Please login with your credentials.');
-          navigate('/login');
-        }
+        setTimeout(() => {
+          if (registrationData.role === 'doctor') {
+            navigate('/doctor-registration');
+          } else if (registrationData.role === 'ambulance') {
+            navigate('/ambulance-registration');
+          } else if (registrationData.role === 'chemist') {
+            navigate('/chemist-registration');
+          } else if (registrationData.role === 'hospital') {
+            navigate('/hospital-registration');
+          } else if (registrationData.role === 'pathlab') {
+            navigate('/pathlab-registration');
+          } else {
+            alert('Registration complete! Please login with your credentials.');
+            navigate('/login');
+          }
+        }, 1500);
       }
     } catch (error) {
       console.error('OTP verification error:', error);
+      console.error('Error details:', error.response?.data);
       setError(error.response?.data?.message || 'Invalid OTP. Please try again.');
     }
   };
@@ -183,7 +208,7 @@ const VerifyOTP = () => {
             <p className="phone-number">{registrationData.email || registrationData.phone}</p>
             {process.env.NODE_ENV === 'development' && (
               <p className="demo-hint" style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                💡 Check browser console for OTP in development mode
+                💡 Check Mail Inbox
               </p>
             )}
           </div>

@@ -28,35 +28,48 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Call backend API
+      // Call backend API with role parameter
       const response = await authAPI.login({
         email: email,
-        password: password
+        password: password,
+        role: userRole
       });
 
       console.log('Login successful:', response);
 
-      // Store user data
-      localStorage.setItem('currentUser', JSON.stringify(response.doctor));
+      // Store user data and token
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+      localStorage.setItem('authToken', response.token);
       
       // Navigate based on role
-      if (response.doctor.role === 'doctor') {
-        alert(`Welcome Dr. ${response.doctor.name}!`);
+      if (response.user.role === 'doctor') {
+        alert(`Welcome Dr. ${response.user.name}!`);
         navigate('/doctor-dashboard');
-      } else if (response.doctor.role === 'ambulance') {
-        alert(`Welcome Ambulance Service!`);
+      } else if (response.user.role === 'hospital') {
+        alert(`Welcome ${response.user.name}!`);
+        // Check if registration is complete
+        if (!response.user.registrationComplete) {
+          navigate('/hospital-registration');
+        } else {
+          navigate('/hospital-dashboard');
+        }
+      } else if (response.user.role === 'ambulance') {
+        alert(`Welcome ${response.user.name}!`);
         navigate('/ambulance-dashboard');
-      } else if (response.doctor.role === 'chemist') {
-        alert(`Welcome Chemist!`);
+      } else if (response.user.role === 'chemist') {
+        alert(`Welcome ${response.user.name}!`);
         navigate('/chemist-dashboard');
-      } else if (response.doctor.role === 'hospital') {
-        alert(`Welcome Hospital!`);
-        navigate('/hospital-dashboard');
-      } else if (response.doctor.role === 'pathlab') {
-        alert(`Welcome Pathlab!`);
+      } else if (response.user.role === 'pathlab') {
+        alert(`Welcome ${response.user.name}!`);
         navigate('/pathlab-dashboard');
+      } else if (response.user.role === 'patient') {
+        alert(`Welcome ${response.user.name}!`);
+        navigate('/');
+      } else if (response.user.role === 'admin') {
+        alert(`Welcome Admin ${response.user.name}!`);
+        navigate('/admin-dashboard');
       } else {
-        alert(`Welcome Patient!`);
+        alert(`Welcome ${response.user.name}!`);
         navigate('/');
       }
     } catch (error) {

@@ -693,9 +693,9 @@ const DoctorDashboard = () => {
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        background: '#f5f7fa',
+        background: '#234f83',
         fontSize: '18px',
-        color: '#6b7280'
+        color: '#fff'
       }}>
         Loading...
       </div>

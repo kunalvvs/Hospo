@@ -1,5 +1,22 @@
 const Doctor = require('../models/Doctor');
+const User = require('../models/User');
+const Hospital = require('../models/Hospital');
+const Chemist = require('../models/Chemist');
+const Ambulance = require('../models/Ambulance');
+const Pathlab = require('../models/Pathlab');
+const Admin = require('../models/Admin');
 const { sendOTPEmail } = require('../config/email');
+
+// Role to Model mapping
+const roleModelMap = {
+  doctor: Doctor,
+  patient: User,
+  hospital: Hospital,
+  chemist: Chemist,
+  ambulance: Ambulance,
+  pathlab: Pathlab,
+  admin: Admin
+};
 
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
@@ -36,12 +53,18 @@ exports.sendOTP = async (req, res) => {
 
     // Send OTP via email (non-blocking)
     if (email) {
-      // Get doctor's name if exists
-      const doctor = await Doctor.findOne({ email });
-      const name = doctor ? doctor.fullName : '';
+      // Get user's name from any model
+      let userName = '';
+      for (const [roleName, Model] of Object.entries(roleModelMap)) {
+        const user = await Model.findOne({ email });
+        if (user) {
+          userName = user.name || user.fullName || user.hospitalName || '';
+          break;
+        }
+      }
       
       // Don't wait for email - send in background
-      sendOTPEmail(email, otp, name).then(result => {
+      sendOTPEmail(email, otp, userName).then(result => {
         if (result.success) {
           console.log('✅ Email sent successfully');
         } else {
@@ -52,8 +75,10 @@ exports.sendOTP = async (req, res) => {
       });
     }
 
-    // TODO: Integrate SMS service for phone OTP
-    console.log(`📱 OTP for ${identifier}: ${otp}`);
+    // Log OTP only in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 Development OTP for ${identifier}: ${otp}`);
+    }
 
     res.status(200).json({
       success: true,
@@ -127,17 +152,26 @@ exports.verifyOTP = async (req, res) => {
     // OTP verified successfully
     otpStore.delete(identifier);
 
-    // Mark user as verified in database
-    if (email) {
-      await Doctor.findOneAndUpdate(
-        { email },
-        { isVerified: true, emailVerified: true }
-      );
-    } else if (phone) {
-      await Doctor.findOneAndUpdate(
-        { phone },
-        { isVerified: true, phoneVerified: true }
-      );
+    // Mark user as verified in the correct model
+    let updatedUser = null;
+    for (const [roleName, Model] of Object.entries(roleModelMap)) {
+      if (email) {
+        updatedUser = await Model.findOneAndUpdate(
+          { email },
+          { isVerified: true, emailVerified: true },
+          { new: true }
+        );
+      } else if (phone) {
+        updatedUser = await Model.findOneAndUpdate(
+          { phone },
+          { isVerified: true, phoneVerified: true },
+          { new: true }
+        );
+      }
+      if (updatedUser) {
+        console.log(`✅ User verified in ${roleName} collection`);
+        break;
+      }
     }
 
     res.status(200).json({
@@ -184,11 +218,18 @@ exports.resendOTP = async (req, res) => {
 
     // Send OTP via email (non-blocking)
     if (email) {
-      const doctor = await Doctor.findOne({ email });
-      const name = doctor ? doctor.fullName : '';
+      // Get user's name from any model
+      let userName = '';
+      for (const [roleName, Model] of Object.entries(roleModelMap)) {
+        const user = await Model.findOne({ email });
+        if (user) {
+          userName = user.name || user.fullName || user.hospitalName || '';
+          break;
+        }
+      }
       
       // Don't wait for email - send in background
-      sendOTPEmail(email, otp, name).then(result => {
+      sendOTPEmail(email, otp, userName).then(result => {
         if (result.success) {
           console.log('✅ Email resent successfully');
         } else {
@@ -199,7 +240,10 @@ exports.resendOTP = async (req, res) => {
       });
     }
 
-    console.log(`📱 Resent OTP for ${identifier}: ${otp}`);
+    // Log OTP only in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 Development - Resent OTP for ${identifier}: ${otp}`);
+    }
 
     res.status(200).json({
       success: true,

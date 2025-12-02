@@ -7,7 +7,8 @@ const streamifier = require('streamifier');
 // @access  Private
 exports.getProfile = async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.doctor.id);
+    const doctorId = req.doctor?.id || req.user?.id;
+    const doctor = await Doctor.findById(doctorId);
     
     if (!doctor) {
       return res.status(404).json({
@@ -35,7 +36,7 @@ exports.getProfile = async (req, res) => {
 // @access  Private
 exports.updateProfile = async (req, res) => {
   try {
-    const doctorId = req.doctor.id;
+    const doctorId = req.doctor?.id || req.user?.id;
     const updateData = req.body;
 
     // Remove fields that shouldn't be updated directly
@@ -76,7 +77,7 @@ exports.updateProfile = async (req, res) => {
 // @access  Private
 exports.updateSection = async (req, res) => {
   try {
-    const doctorId = req.doctor.id;
+    const doctorId = req.doctor?.id || req.user?.id;
     const section = req.params.section;
     const updateData = req.body;
 
@@ -172,7 +173,8 @@ exports.getDoctorById = async (req, res) => {
 // @access  Private
 exports.deleteProfile = async (req, res) => {
   try {
-    const doctor = await Doctor.findByIdAndDelete(req.doctor.id);
+    const doctorId = req.doctor?.id || req.user?.id;
+    const doctor = await Doctor.findByIdAndDelete(doctorId);
     
     if (!doctor) {
       return res.status(404).json({
@@ -268,7 +270,8 @@ exports.uploadFile = async (req, res) => {
 // @access  Private
 exports.getProfileCompletion = async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.doctor.id);
+    const doctorId = req.doctor?.id || req.user?.id;
+    const doctor = await Doctor.findById(doctorId);
     
     if (!doctor) {
       return res.status(404).json({

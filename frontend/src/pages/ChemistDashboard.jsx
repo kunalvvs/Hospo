@@ -126,7 +126,8 @@ const ChemistDashboard = () => {
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        background: '#f5f7fa'
+        background: '#234f83',
+        color:'#fff'
       }}>
         Loading...
       </div>

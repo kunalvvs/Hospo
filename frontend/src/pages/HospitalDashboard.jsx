@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hospitalAPI } from '../services/api';
 import './HospitalDashboard.css';
 
 const HospitalDashboard = () => {
@@ -13,6 +14,7 @@ const HospitalDashboard = () => {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editFormData, setEditFormData] = useState({});
+  const [uploading, setUploading] = useState(false);
 
   // Expense Modal States
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -20,32 +22,27 @@ const HospitalDashboard = () => {
   const [expenseCategory, setExpenseCategory] = useState('');
   const [currentExpenseData, setCurrentExpenseData] = useState(null);
 
-  // Mock expense data - Same as Admin Panel
-  const [rooms, setRooms] = useState([
-    { room_id: 'R001', room_type: 'General Ward', room_name: 'Ward A', floor: '1st Floor', charge_per_day: 1500, max_patients: 4, status: 'Active' },
-    { room_id: 'R002', room_type: 'Private Room', room_name: 'Private 101', floor: '2nd Floor', charge_per_day: 3500, max_patients: 1, status: 'Active' },
-    { room_id: 'R003', room_type: 'ICU', room_name: 'ICU Ward', floor: '3rd Floor', charge_per_day: 8000, max_patients: 6, status: 'Active' }
-  ]);
+  // Expense data states
+  const [rooms, setRooms] = useState([]);
+  const [procedures, setProcedures] = useState([]);
+  const [doctorFees, setDoctorFees] = useState([]);
+  const [nursingCharges, setNursingCharges] = useState([]);
+  const [miscServices, setMiscServices] = useState([]);
 
-  const [procedures, setProcedures] = useState([
-    { procedure_id: 'P001', procedure_name: 'Appendectomy', procedure_type: 'Surgical', base_charge: 45000, ot_charges: 15000, anesthesia_charge: 8000, status: 'Active' },
-    { procedure_id: 'P002', procedure_name: 'Cataract Surgery', procedure_type: 'Surgical', base_charge: 35000, ot_charges: 10000, anesthesia_charge: 5000, status: 'Active' }
-  ]);
+  // Section-specific editing states
+  const [isEditingServices, setIsEditingServices] = useState(false);
+  const [isEditingSpecialities, setIsEditingSpecialities] = useState(false);
+  const [isEditingAppointments, setIsEditingAppointments] = useState(false);
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [isEditingOperational, setIsEditingOperational] = useState(false);
 
-  const [doctorFees, setDoctorFees] = useState([
-    { doctor_id: 'D001', name: 'Dr. Sharma', specialization: 'Cardiologist', visit_fee_opd: 800, visit_fee_ipd_per_visit: 1200, consultation_fee_emergency: 1500, status: 'Active' },
-    { doctor_id: 'D002', name: 'Dr. Mehta', specialization: 'Orthopedic', visit_fee_opd: 700, visit_fee_ipd_per_visit: 1000, consultation_fee_emergency: 1300, status: 'Active' }
-  ]);
-
-  const [nursingCharges, setNursingCharges] = useState([
-    { service_id: 'N001', service_name: 'Nursing Care (12 hrs)', charge_type: 'per_day', charge_amount: 1200, status: 'Active' },
-    { service_id: 'N002', service_name: 'Nursing Care (24 hrs)', charge_type: 'per_day', charge_amount: 2000, status: 'Active' }
-  ]);
-
-  const [miscServices, setMiscServices] = useState([
-    { service_id: 'M001', service: 'Ambulance Service', charge: 1500, status: 'Active' },
-    { service_id: 'M002', service: 'Medical Certificate', charge: 200, status: 'Active' }
-  ]);
+  // Section data states
+  const [services, setServices] = useState({});
+  const [specialities, setSpecialities] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [appointmentSettings, setAppointmentSettings] = useState({});
+  const [billingDetails, setBillingDetails] = useState({});
+  const [operationalDetails, setOperationalDetails] = useState({});
 
   // Mock appointments data
   const [appointments] = useState([
@@ -56,7 +53,6 @@ const HospitalDashboard = () => {
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
-    const hospitalDataString = localStorage.getItem('hospitalData');
     
     if (!userString) {
       navigate('/login');
@@ -72,30 +68,91 @@ const HospitalDashboard = () => {
         return;
       }
 
-      if (hospitalDataString) {
-        setHospitalData(JSON.parse(hospitalDataString));
-      } else {
-        navigate('/hospital-registration');
-        return;
-      }
-      
       setCurrentUser(userData);
-      setLoading(false);
+      
+      // Fetch hospital data from backend
+      fetchHospitalData();
     } catch (error) {
       console.error('Error parsing user data:', error);
       navigate('/login');
     }
   }, [navigate]);
 
+  const fetchHospitalData = async () => {
+    try {
+      setLoading(true);
+      const response = await hospitalAPI.getProfile();
+      
+      console.log('=== FETCH HOSPITAL DATA RESPONSE ===');
+      console.log('Full response:', response);
+      console.log('Hospital data:', response.hospital);
+      console.log('Doctors array:', response.hospital?.doctors);
+      console.log('Appointment settings:', {
+        acceptOnlineBooking: response.hospital?.acceptOnlineBooking,
+        bookingType: response.hospital?.bookingType,
+        slotDuration: response.hospital?.slotDuration
+      });
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        
+        // Set expense data from hospital profile
+        setRooms(response.hospital.rooms || []);
+        setProcedures(response.hospital.procedures || []);
+        setDoctorFees(response.hospital.doctorFees || []);
+        setNursingCharges(response.hospital.nursingCharges || []);
+        setMiscServices(response.hospital.miscServices || []);
+        
+        // Set doctors from hospital profile
+        setDoctors(response.hospital.doctors || []);
+        console.log('Doctors set to state:', response.hospital.doctors || []);
+        
+        // Update local storage
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        
+        // Check if registration is complete
+        if (!response.hospital.registrationComplete) {
+          navigate('/hospital-registration');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching hospital data:', error);
+      
+      // Check if it's a 404 or user doesn't have profile yet
+      if (error.response?.status === 404) {
+        navigate('/hospital-registration');
+      } else {
+        alert('Error loading hospital data. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('hospitalData');
+    localStorage.removeItem('authToken');
     navigate('/');
   };
 
   const handleBottomNavClick = (section) => {
     setActiveSection(section);
     setIsMobileMenuOpen(false);
+  };
+
+  const uploadFile = async (file) => {
+    try {
+      setUploading(true);
+      const response = await hospitalAPI.uploadFile(file);
+      return response.fileUrl;
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Error uploading file. Please try again.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleEditIdentity = () => {
@@ -109,44 +166,527 @@ const HospitalDashboard = () => {
   };
 
   const handleEditContact = () => {
-    setEditFormData({ ...hospitalData });
+    setEditFormData({ 
+      ...hospitalData,
+      'workingHours.mondayHours': hospitalData.workingHours?.mondayHours || '',
+      'workingHours.tuesdayHours': hospitalData.workingHours?.tuesdayHours || '',
+      'workingHours.wednesdayHours': hospitalData.workingHours?.wednesdayHours || '',
+      'workingHours.thursdayHours': hospitalData.workingHours?.thursdayHours || '',
+      'workingHours.fridayHours': hospitalData.workingHours?.fridayHours || '',
+      'workingHours.saturdayHours': hospitalData.workingHours?.saturdayHours || '',
+      'workingHours.sundayHours': hospitalData.workingHours?.sundayHours || '',
+      'workingHours.opdHours': hospitalData.workingHours?.opdHours || '',
+      'workingHours.emergencyHours': hospitalData.workingHours?.emergencyHours || '24×7'
+    });
     setIsEditingContact(true);
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData({ ...editFormData, [name]: value });
+    const { name, value, type, files, checked } = e.target;
+    
+    if (type === 'file') {
+      setEditFormData({ 
+        ...editFormData, 
+        [name]: files[0],
+        [`${name}Preview`]: URL.createObjectURL(files[0])
+      });
+    } else if (type === 'checkbox') {
+      setEditFormData({ ...editFormData, [name]: checked });
+    } else {
+      // Handle nested objects
+      if (name.includes('.')) {
+        const [parent, child] = name.split('.');
+        setEditFormData({
+          ...editFormData,
+          [parent]: {
+            ...(editFormData[parent] || {}),
+            [child]: value
+          }
+        });
+      } else {
+        setEditFormData({ ...editFormData, [name]: value });
+      }
+    }
   };
 
-  const handleSaveIdentity = () => {
-    const updatedData = { ...hospitalData, ...editFormData };
-    setHospitalData(updatedData);
-    localStorage.setItem('hospitalData', JSON.stringify(updatedData));
-    setIsEditingIdentity(false);
-    alert('Hospital identity updated successfully!');
+  const handleSaveIdentity = async () => {
+    try {
+      setUploading(true);
+      
+      // Upload logo if changed
+      let logoUrl = editFormData.logo;
+      if (editFormData.logo && typeof editFormData.logo !== 'string') {
+        logoUrl = await uploadFile(editFormData.logo);
+      }
+      
+      const updateData = {
+        hospitalName: editFormData.hospitalName,
+        practiceType: editFormData.practiceType,
+        tagline: editFormData.tagline,
+        logo: logoUrl
+      };
+      
+      const response = await hospitalAPI.updateSection('identity', updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingIdentity(false);
+        alert('Hospital identity updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating hospital identity');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleSaveAddress = () => {
-    const updatedData = { ...hospitalData, ...editFormData };
-    setHospitalData(updatedData);
-    localStorage.setItem('hospitalData', JSON.stringify(updatedData));
-    setIsEditingAddress(false);
-    alert('Address details updated successfully!');
+  const handleSaveAddress = async () => {
+    try {
+      setUploading(true);
+      
+      const updateData = {
+        streetAddress: editFormData.streetAddress,
+        locality: editFormData.locality,
+        city: editFormData.city,
+        pincode: editFormData.pincode,
+        landmark: editFormData.landmark,
+        location: {
+          latitude: editFormData['location.latitude'] || editFormData.location?.latitude || '',
+          longitude: editFormData['location.longitude'] || editFormData.location?.longitude || ''
+        }
+      };
+      
+      const response = await hospitalAPI.updateSection('address', updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingAddress(false);
+        alert('Address details updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating address');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleSaveContact = () => {
-    const updatedData = { ...hospitalData, ...editFormData };
-    setHospitalData(updatedData);
-    localStorage.setItem('hospitalData', JSON.stringify(updatedData));
-    setIsEditingContact(false);
-    alert('Contact details updated successfully!');
+  const handleSaveContact = async () => {
+    try {
+      setUploading(true);
+      
+      const updateData = {
+        mainPhone: editFormData.mainPhone,
+        alternatePhone: editFormData.alternatePhone,
+        contactEmail: editFormData.contactEmail || editFormData.email,
+        website: editFormData.website,
+        socialMedia: {
+          facebook: editFormData['socialMedia.facebook'] || editFormData.socialMedia?.facebook || '',
+          instagram: editFormData['socialMedia.instagram'] || editFormData.socialMedia?.instagram || '',
+          twitter: editFormData['socialMedia.twitter'] || editFormData.socialMedia?.twitter || ''
+        },
+        workingHours: {
+          mondayHours: editFormData['workingHours.mondayHours'] || editFormData.workingHours?.mondayHours || '',
+          tuesdayHours: editFormData['workingHours.tuesdayHours'] || editFormData.workingHours?.tuesdayHours || '',
+          wednesdayHours: editFormData['workingHours.wednesdayHours'] || editFormData.workingHours?.wednesdayHours || '',
+          thursdayHours: editFormData['workingHours.thursdayHours'] || editFormData.workingHours?.thursdayHours || '',
+          fridayHours: editFormData['workingHours.fridayHours'] || editFormData.workingHours?.fridayHours || '',
+          saturdayHours: editFormData['workingHours.saturdayHours'] || editFormData.workingHours?.saturdayHours || '',
+          sundayHours: editFormData['workingHours.sundayHours'] || editFormData.workingHours?.sundayHours || '',
+          opdHours: editFormData['workingHours.opdHours'] || editFormData.workingHours?.opdHours || '',
+          emergencyHours: editFormData['workingHours.emergencyHours'] || editFormData.workingHours?.emergencyHours || '24×7'
+        }
+      };
+      
+      const response = await hospitalAPI.updateSection('contact', updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingContact(false);
+        alert('Contact details updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating contact details');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditingIdentity(false);
     setIsEditingAddress(false);
     setIsEditingContact(false);
+    setIsEditingServices(false);
+    setIsEditingAppointments(false);
+    setIsEditingBilling(false);
+    setIsEditingOperational(false);
     setEditFormData({});
+  };
+
+  // Services & Facilities handlers
+  const handleEditServices = () => {
+    setEditFormData({
+      ...hospitalData,
+      facilities: hospitalData.facilities || [],
+      specializations: hospitalData.specializations || [],
+      emergencyServices: hospitalData.emergencyServices || false,
+      ambulanceAvailable: hospitalData.ambulanceAvailable || false,
+      insuranceAccepted: hospitalData.insuranceAccepted || false,
+      insuranceProviders: hospitalData.insuranceProviders ? hospitalData.insuranceProviders.join(', ') : ''
+    });
+    setIsEditingServices(true);
+  };
+
+  const handleServiceCheckbox = (service) => {
+    const currentFacilities = editFormData.facilities || [];
+    const updated = currentFacilities.includes(service)
+      ? currentFacilities.filter(f => f !== service)
+      : [...currentFacilities, service];
+    setEditFormData({ ...editFormData, facilities: updated });
+  };
+
+  const handleSaveServices = async () => {
+    try {
+      setUploading(true);
+      
+      const updateData = {
+        facilities: editFormData.facilities || [],
+        specializations: editFormData.specializations || [],
+        emergencyServices: editFormData.emergencyServices || false,
+        ambulanceAvailable: editFormData.ambulanceAvailable || false,
+        insuranceAccepted: editFormData.insuranceAccepted || false,
+        insuranceProviders: editFormData.insuranceProviders 
+          ? editFormData.insuranceProviders.split(',').map(p => p.trim()).filter(p => p)
+          : []
+      };
+      
+      const response = await hospitalAPI.updateProfile(updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingServices(false);
+        alert('Services & Facilities updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating services');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Specialities handlers
+  const [newSpeciality, setNewSpeciality] = useState({
+    name: '',
+    subSpeciality: '',
+    beds: ''
+  });
+
+  const handleAddSpeciality = async () => {
+    if (!newSpeciality.name) {
+      alert('Please select a speciality');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const currentSpecialities = hospitalData.specializations || [];
+      const updated = [...currentSpecialities, newSpeciality.name];
+      
+      const response = await hospitalAPI.updateProfile({ specializations: updated });
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setNewSpeciality({ name: '', subSpeciality: '', beds: '' });
+        alert('Speciality added successfully!');
+      }
+    } catch (error) {
+      console.error('Add speciality error:', error);
+      alert('Error adding speciality');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteSpeciality = async (speciality) => {
+    if (!window.confirm(`Remove ${speciality} speciality?`)) return;
+
+    try {
+      setUploading(true);
+      const updated = hospitalData.specializations.filter(s => s !== speciality);
+      const response = await hospitalAPI.updateProfile({ specializations: updated });
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        alert('Speciality removed successfully!');
+      }
+    } catch (error) {
+      console.error('Delete speciality error:', error);
+      alert('Error removing speciality');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Doctor Profile handlers
+  const [newDoctor, setNewDoctor] = useState({
+    name: '',
+    qualification: '',
+    registration: '',
+    speciality: '',
+    experience: '',
+    languages: '',
+    opdDays: '',
+    opdTimings: '',
+    consultFeeInPerson: '',
+    consultFeeOnline: '',
+    photo: null
+  });
+
+  const handleAddDoctor = async (e) => {
+    e.preventDefault();
+    
+    if (!newDoctor.name || !newDoctor.qualification || !newDoctor.speciality) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      
+      // Upload doctor photo if provided
+      let photoUrl = '';
+      if (newDoctor.photo) {
+        photoUrl = await uploadFile(newDoctor.photo);
+      }
+
+      const doctorData = {
+        ...newDoctor,
+        photo: photoUrl,
+        languages: newDoctor.languages.split(',').map(l => l.trim()),
+        opdDays: newDoctor.opdDays.split(',').map(d => d.trim())
+      };
+
+      const currentDoctors = doctors.length > 0 ? doctors : [];
+      const response = await hospitalAPI.updateProfile({ 
+        doctors: [...currentDoctors, doctorData] 
+      });
+      
+      console.log('=== ADD DOCTOR RESPONSE ===', response);
+      
+      if (response.success) {
+        console.log('Updated doctors:', response.hospital.doctors);
+        setHospitalData(response.hospital);
+        setDoctors(response.hospital.doctors || []);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setNewDoctor({
+          name: '',
+          qualification: '',
+          registration: '',
+          speciality: '',
+          experience: '',
+          languages: '',
+          opdDays: '',
+          opdTimings: '',
+          consultFeeInPerson: '',
+          consultFeeOnline: '',
+          photo: null
+        });
+        alert('Doctor profile added successfully!');
+      }
+    } catch (error) {
+      console.error('Add doctor error:', error);
+      alert('Error adding doctor profile');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteDoctor = async (doctorIndex) => {
+    if (!window.confirm('Remove this doctor profile?')) return;
+
+    try {
+      setUploading(true);
+      const updated = doctors.filter((_, idx) => idx !== doctorIndex);
+      const response = await hospitalAPI.updateProfile({ doctors: updated });
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        setDoctors(response.hospital.doctors || []);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        alert('Doctor profile removed successfully!');
+      }
+    } catch (error) {
+      console.error('Delete doctor error:', error);
+      alert('Error removing doctor profile');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Appointment Settings handlers
+  const handleEditAppointments = () => {
+    setEditFormData({ 
+      ...hospitalData,
+      acceptOnlineBooking: hospitalData.acceptOnlineBooking || 'yes',
+      bookingType: hospitalData.bookingType || 'appointment',
+      slotDuration: hospitalData.slotDuration || '30',
+      advanceBookingDays: hospitalData.advanceBookingDays || '7',
+      cancellationPolicy: hospitalData.cancellationPolicy || 'free',
+      prepaymentRequired: hospitalData.prepaymentRequired || 'no',
+      patientInstructions: hospitalData.patientInstructions || ''
+    });
+    setIsEditingAppointments(true);
+  };
+
+  const handleSaveAppointments = async () => {
+    try {
+      setUploading(true);
+      const response = await hospitalAPI.updateProfile(editFormData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingAppointments(false);
+        alert('Appointment settings updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating appointment settings');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Billing & Bank handlers
+  const handleEditBilling = () => {
+    setEditFormData({
+      ...hospitalData,
+      ...hospitalData.accountDetails
+    });
+    setIsEditingBilling(true);
+  };
+
+  const handleSaveBilling = async () => {
+    try {
+      setUploading(true);
+      
+      // Upload cancelled cheque if provided
+      let bankProofUrl = editFormData.bankProof;
+      if (editFormData.cancelledCheque && typeof editFormData.cancelledCheque !== 'string') {
+        bankProofUrl = await uploadFile(editFormData.cancelledCheque);
+      }
+      
+      const updateData = {
+        gstNumber: editFormData.gstNumber,
+        accountDetails: {
+          accountHolderName: editFormData.accountHolderName,
+          accountNumber: editFormData.accountNumber,
+          ifscCode: editFormData.ifscCode,
+          bankName: editFormData.bankName,
+          branchName: editFormData.branchName,
+          accountType: editFormData.accountType,
+          upiId: editFormData.upiId,
+          bankProof: bankProofUrl
+        }
+      };
+      
+      const response = await hospitalAPI.updateSection('bank', updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingBilling(false);
+        alert('Billing & Bank details updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating billing details');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Document upload handler
+  const handleDocumentUpload = async (docType, file) => {
+    try {
+      setUploading(true);
+      const fileUrl = await uploadFile(file);
+      
+      const updateData = { [docType]: fileUrl };
+      const response = await hospitalAPI.updateProfile(updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        alert('Document uploaded successfully!');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Error uploading document');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Media upload handler
+  const handleMediaUpload = async (category, files) => {
+    try {
+      setUploading(true);
+      const uploadPromises = Array.from(files).map(file => uploadFile(file));
+      const uploadedUrls = await Promise.all(uploadPromises);
+      
+      const currentPhotos = hospitalData.hospitalPhotos || [];
+      const updateData = {
+        hospitalPhotos: [...currentPhotos, ...uploadedUrls]
+      };
+      
+      const response = await hospitalAPI.updateProfile(updateData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        alert(`${files.length} photo(s) uploaded successfully!`);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Error uploading photos');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Operational Details handlers
+  const handleEditOperational = () => {
+    setEditFormData({ ...hospitalData });
+    setIsEditingOperational(true);
+  };
+
+  const handleSaveOperational = async () => {
+    try {
+      setUploading(true);
+      const response = await hospitalAPI.updateProfile(editFormData);
+      
+      if (response.success) {
+        setHospitalData(response.hospital);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        setIsEditingOperational(false);
+        alert('Operational details updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert(error.response?.data?.message || 'Error updating operational details');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Expense Modal Handlers
@@ -164,17 +704,123 @@ const HospitalDashboard = () => {
     setCurrentExpenseData(null);
   };
 
-  const handleExpenseSave = (category, data) => {
-    // Mock save functionality - in real app, this would call API
-    console.log(`Saving ${category} data:`, data);
-    alert(`${category} data saved successfully!`);
-    closeExpenseModal();
+  const handleExpenseSave = async (category, data) => {
+    try {
+      setUploading(true);
+      let response;
+
+      if (expenseModalMode === 'add') {
+        // Add new entry
+        if (category === 'rooms') {
+          data.room_id = `room_${Date.now()}`;
+          response = await hospitalAPI.addRoom(data);
+        } else if (category === 'procedures') {
+          data.procedure_id = `proc_${Date.now()}`;
+          response = await hospitalAPI.addProcedure(data);
+        } else if (category === 'doctorFees') {
+          data.doctor_id = `doc_${Date.now()}`;
+          const updatedData = {
+            doctorFees: [...doctorFees, data]
+          };
+          response = await hospitalAPI.updateProfile(updatedData);
+        } else if (category === 'nursing') {
+          data.service_id = `nurs_${Date.now()}`;
+          const updatedData = {
+            nursingCharges: [...nursingCharges, data]
+          };
+          response = await hospitalAPI.updateProfile(updatedData);
+        } else if (category === 'miscellaneous') {
+          data.service_id = `misc_${Date.now()}`;
+          const updatedData = {
+            miscServices: [...miscServices, data]
+          };
+          response = await hospitalAPI.updateProfile(updatedData);
+        }
+      } else {
+        // Edit existing entry
+        if (category === 'rooms') {
+          response = await hospitalAPI.updateRoom(currentExpenseData._id, data);
+        } else if (category === 'procedures') {
+          response = await hospitalAPI.updateProcedure(currentExpenseData._id, data);
+        } else {
+          // For doctorFees, nursing, misc - update full array
+          const field = category === 'doctorFees' ? 'doctorFees' : 
+                       category === 'nursing' ? 'nursingCharges' : 'miscServices';
+          const currentArray = category === 'doctorFees' ? doctorFees :
+                              category === 'nursing' ? nursingCharges : miscServices;
+          
+          const updatedArray = currentArray.map(item => 
+            item._id === currentExpenseData._id ? { ...item, ...data } : item
+          );
+          
+          response = await hospitalAPI.updateProfile({ [field]: updatedArray });
+        }
+      }
+
+      if (response.success) {
+        // Update local state
+        setHospitalData(response.hospital);
+        setRooms(response.hospital.rooms || []);
+        setProcedures(response.hospital.procedures || []);
+        setDoctorFees(response.hospital.doctorFees || []);
+        setNursingCharges(response.hospital.nursingCharges || []);
+        setMiscServices(response.hospital.miscServices || []);
+        
+        alert(`${category} ${expenseModalMode === 'add' ? 'added' : 'updated'} successfully!`);
+        closeExpenseModal();
+      }
+    } catch (error) {
+      console.error('Save expense error:', error);
+      alert(error.response?.data?.message || `Error saving ${category}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleExpenseDelete = (category, id) => {
-    if (window.confirm(`Are you sure you want to delete this ${category} entry?`)) {
-      console.log(`Deleting ${category} with ID:`, id);
-      alert(`${category} entry deleted successfully!`);
+  const handleExpenseDelete = async (category, id) => {
+    if (!window.confirm(`Are you sure you want to delete this ${category} entry?`)) {
+      return;
+    }
+
+    try {
+      setUploading(true);
+      let response;
+
+      if (category === 'rooms') {
+        response = await hospitalAPI.deleteRoom(id);
+      } else if (category === 'procedures') {
+        response = await hospitalAPI.deleteProcedure(id);
+      } else {
+        // For doctorFees, nursing, miscellaneous - update full array
+        const field = category === 'doctorFees' ? 'doctorFees' : 
+                     category === 'nursing' ? 'nursingCharges' : 'miscServices';
+        const currentArray = category === 'doctorFees' ? doctorFees :
+                            category === 'nursing' ? nursingCharges : miscServices;
+        
+        const updatedArray = currentArray.filter(item => 
+          (item._id || item.doctor_id || item.service_id) !== id
+        );
+        
+        response = await hospitalAPI.updateProfile({ [field]: updatedArray });
+      }
+
+      if (response.success) {
+        // Update local state
+        setHospitalData(response.hospital);
+        setRooms(response.hospital.rooms || []);
+        setProcedures(response.hospital.procedures || []);
+        setDoctorFees(response.hospital.doctorFees || []);
+        setNursingCharges(response.hospital.nursingCharges || []);
+        setMiscServices(response.hospital.miscServices || []);
+        localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+        
+        alert(`${category} entry deleted successfully!`);
+      }
+    } catch (error) {
+      console.error('Delete expense error:', error);
+      alert(error.response?.data?.message || `Error deleting ${category}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -198,14 +844,23 @@ const HospitalDashboard = () => {
 
   if (loading) {
     return (
-      <div style={{ 
+      <div style={{
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        background: '#f5f7fa'
+        width: '100vw',
+        background: '#234f83',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 9999
       }}>
-        Loading...
+        <div style={{
+          fontSize: '18px',
+          color: '#fff',
+          fontWeight: '600'
+        }}>Loading...</div>
       </div>
     );
   }
@@ -373,6 +1028,15 @@ const HospitalDashboard = () => {
               {!isEditingIdentity ? (
                 <>
                   <div className="hosp-info-display">
+                    {hospitalData.logo && (
+                      <div style={{marginBottom: '20px', textAlign: 'center'}}>
+                        <img 
+                          src={hospitalData.logo} 
+                          alt="Hospital Logo" 
+                          style={{maxWidth: '200px', maxHeight: '150px', borderRadius: '8px', border: '2px solid #e5e7eb'}}
+                        />
+                      </div>
+                    )}
                     <div className="hosp-info-row">
                       <label>Hospital Name:</label>
                       <span>{hospitalData.hospitalName}</span>
@@ -389,12 +1053,42 @@ const HospitalDashboard = () => {
 
                   <div className="hosp-form-actions">
                     <button className="hosp-dash-btn-secondary" onClick={handleEditIdentity}>Edit Identity</button>
-                    <button className="hosp-dash-btn-primary">Upload Logo</button>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="hosp-dash-form-grid">
+                    <div className="hosp-dash-form-group full-width">
+                      <label>Hospital Logo</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          if (e.target.files[0]) {
+                            try {
+                              setUploading(true);
+                              const logoUrl = await uploadFile(e.target.files[0]);
+                              setEditFormData({...editFormData, logo: logoUrl});
+                              alert('Logo uploaded successfully!');
+                            } catch (error) {
+                              alert('Error uploading logo');
+                            } finally {
+                              setUploading(false);
+                            }
+                          }
+                        }}
+                        disabled={uploading}
+                      />
+                      {(editFormData.logo || hospitalData.logo) && (
+                        <div style={{marginTop: '10px'}}>
+                          <img 
+                            src={editFormData.logo || hospitalData.logo} 
+                            alt="Logo Preview" 
+                            style={{maxWidth: '150px', maxHeight: '100px', borderRadius: '8px'}}
+                          />
+                        </div>
+                      )}
+                    </div>
                     <div className="hosp-dash-form-group full-width">
                       <label>Hospital Name *</label>
                       <input
@@ -603,23 +1297,23 @@ const HospitalDashboard = () => {
                     <h3 className="hosp-info-section-title">Working Hours</h3>
                     <div className="hosp-info-row">
                       <label>OPD Hours:</label>
-                      <span>{hospitalData.opdHours || 'Not specified'}</span>
+                      <span>{hospitalData.workingHours?.opdHours || 'Not specified'}</span>
                     </div>
                     <div className="hosp-info-row">
                       <label>Emergency Hours:</label>
-                      <span>{hospitalData.emergencyHours || '24×7'}</span>
+                      <span>{hospitalData.workingHours?.emergencyHours || '24×7'}</span>
                     </div>
                     <div className="hosp-info-row">
-                      <label>Weekday Hours:</label>
-                      <span>{hospitalData.mondayHours || 'Not specified'}</span>
+                      <label>Monday-Friday:</label>
+                      <span>{hospitalData.workingHours?.mondayHours || 'Not specified'}</span>
                     </div>
                     <div className="hosp-info-row">
                       <label>Saturday Hours:</label>
-                      <span>{hospitalData.saturdayHours || 'Not specified'}</span>
+                      <span>{hospitalData.workingHours?.saturdayHours || 'Not specified'}</span>
                     </div>
                     <div className="hosp-info-row">
                       <label>Sunday Hours:</label>
-                      <span>{hospitalData.sundayHours || 'Not specified'}</span>
+                      <span>{hospitalData.workingHours?.sundayHours || 'Not specified'}</span>
                     </div>
                   </div>
 
@@ -677,8 +1371,8 @@ const HospitalDashboard = () => {
                       <label>OPD Hours</label>
                       <input
                         type="text"
-                        name="opdHours"
-                        value={editFormData.opdHours || ''}
+                        name="workingHours.opdHours"
+                        value={editFormData['workingHours.opdHours'] || editFormData.workingHours?.opdHours || ''}
                         onChange={handleInputChange}
                         placeholder="e.g., 9:00 AM - 5:00 PM"
                       />
@@ -687,18 +1381,18 @@ const HospitalDashboard = () => {
                       <label>Emergency Hours</label>
                       <input
                         type="text"
-                        name="emergencyHours"
-                        value={editFormData.emergencyHours || ''}
+                        name="workingHours.emergencyHours"
+                        value={editFormData['workingHours.emergencyHours'] || editFormData.workingHours?.emergencyHours || '24×7'}
                         onChange={handleInputChange}
                         placeholder="24×7"
                       />
                     </div>
                     <div className="hosp-dash-form-group">
-                      <label>Weekday Hours</label>
+                      <label>Monday-Friday Hours</label>
                       <input
                         type="text"
-                        name="mondayHours"
-                        value={editFormData.mondayHours || ''}
+                        name="workingHours.mondayHours"
+                        value={editFormData['workingHours.mondayHours'] || editFormData.workingHours?.mondayHours || ''}
                         onChange={handleInputChange}
                         placeholder="Monday-Friday hours"
                       />
@@ -707,8 +1401,8 @@ const HospitalDashboard = () => {
                       <label>Saturday Hours</label>
                       <input
                         type="text"
-                        name="saturdayHours"
-                        value={editFormData.saturdayHours || ''}
+                        name="workingHours.saturdayHours"
+                        value={editFormData['workingHours.saturdayHours'] || editFormData.workingHours?.saturdayHours || ''}
                         onChange={handleInputChange}
                         placeholder="Saturday hours"
                       />
@@ -717,8 +1411,8 @@ const HospitalDashboard = () => {
                       <label>Sunday Hours</label>
                       <input
                         type="text"
-                        name="sundayHours"
-                        value={editFormData.sundayHours || ''}
+                        name="workingHours.sundayHours"
+                        value={editFormData['workingHours.sundayHours'] || editFormData.workingHours?.sundayHours || ''}
                         onChange={handleInputChange}
                         placeholder="Sunday hours"
                       />
@@ -742,56 +1436,115 @@ const HospitalDashboard = () => {
                 <p>Manage medical services and hospital facilities</p>
               </div>
 
-              <div className="hosp-services-grid">
-                <div className="hosp-service-category">
-                  <h3>🏥 Medical Services</h3>
-                  <div className="hosp-checkbox-group">
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> OPD (Outpatient)</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> IPD (Inpatient)</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Emergency Services</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Surgeries</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Lab Tests</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Radiology & Imaging</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Physiotherapy</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Pharmacy</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Teleconsultation</label>
+              {!isEditingServices ? (
+                <>
+                  <div className="hosp-info-display">
+                    <h3 className="hosp-info-section-title">Medical Services</h3>
+                    <div className="hosp-info-row full-width">
+                      <label>Facilities:</label>
+                      <span>{hospitalData.facilities?.length > 0 ? hospitalData.facilities.join(', ') : 'None selected'}</span>
+                    </div>
+                    
+                    <h3 className="hosp-info-section-title">Emergency & Ambulance</h3>
+                    <div className="hosp-info-row">
+                      <label>Emergency Services:</label>
+                      <span>{hospitalData.emergencyServices ? '✅ Available' : '❌ Not Available'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Ambulance Service:</label>
+                      <span>{hospitalData.ambulanceAvailable ? '✅ Available' : '❌ Not Available'}</span>
+                    </div>
+                    
+                    <h3 className="hosp-info-section-title">Insurance</h3>
+                    <div className="hosp-info-row">
+                      <label>Insurance Accepted:</label>
+                      <span>{hospitalData.insuranceAccepted ? '✅ Yes' : '❌ No'}</span>
+                    </div>
+                    <div className="hosp-info-row full-width">
+                      <label>Insurance Providers:</label>
+                      <span>{hospitalData.insuranceProviders?.length > 0 ? hospitalData.insuranceProviders.join(', ') : 'None listed'}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="hosp-service-category">
-                  <h3>🏗️ Facilities</h3>
-                  <div className="hosp-checkbox-group">
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> ICU</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Operation Theatre (OT)</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> NICU</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Dialysis</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Ambulance</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Parking</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Wheelchair Access</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Blood Bank</label>
-                    <label className="hosp-checkbox-label"><input type="checkbox" /> Cafeteria</label>
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleEditServices}>Edit Services & Facilities</button>
                   </div>
-                </div>
+                </>
+              ) : (
+                <>
+                  <div className="hosp-services-grid">
+                    <div className="hosp-service-category">
+                      <h3>🏥 Medical Services & Facilities</h3>
+                      <div className="hosp-checkbox-group">
+                        {['OPD (Outpatient)', 'IPD (Inpatient)', 'Emergency Services', 'Surgeries', 'Lab Tests', 'Radiology & Imaging', 'Physiotherapy', 'Pharmacy', 'Teleconsultation', 'ICU', 'Operation Theatre (OT)', 'NICU', 'Dialysis', 'Ambulance', 'Parking', 'Wheelchair Access', 'Blood Bank', 'Cafeteria'].map(service => (
+                          <label key={service} className="hosp-checkbox-label">
+                            <input 
+                              type="checkbox" 
+                              checked={editFormData.facilities?.includes(service)}
+                              onChange={() => handleServiceCheckbox(service)}
+                            /> {service}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
 
-                <div className="hosp-service-category full-width">
-                  <h3>💼 Insurance & Corporate</h3>
-                  <div className="hosp-dash-form-group">
-                    <label>Insurance Empanelment</label>
-                    <select>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                  <div className="hosp-dash-form-group">
-                    <label>List of Insurers</label>
-                    <textarea rows="3" placeholder="List insurance companies you're empanelled with..."></textarea>
-                  </div>
-                </div>
-              </div>
+                    <div className="hosp-service-category full-width">
+                      <h3>🚑 Emergency Services</h3>
+                      <div className="hosp-dash-form-group">
+                        <label className="hosp-checkbox-label">
+                          <input 
+                            type="checkbox"
+                            name="emergencyServices"
+                            checked={editFormData.emergencyServices || false}
+                            onChange={handleInputChange}
+                          /> Emergency Services Available
+                        </label>
+                      </div>
+                      <div className="hosp-dash-form-group">
+                        <label className="hosp-checkbox-label">
+                          <input 
+                            type="checkbox"
+                            name="ambulanceAvailable"
+                            checked={editFormData.ambulanceAvailable || false}
+                            onChange={handleInputChange}
+                          /> Ambulance Service Available
+                        </label>
+                      </div>
+                    </div>
 
-              <div className="hosp-form-actions">
-                <button className="hosp-dash-btn-primary">Save Services & Facilities</button>
-              </div>
+                    <div className="hosp-service-category full-width">
+                      <h3>💼 Insurance & Corporate</h3>
+                      <div className="hosp-dash-form-group">
+                        <label className="hosp-checkbox-label">
+                          <input 
+                            type="checkbox"
+                            name="insuranceAccepted"
+                            checked={editFormData.insuranceAccepted || false}
+                            onChange={handleInputChange}
+                          /> Insurance Accepted
+                        </label>
+                      </div>
+                      <div className="hosp-dash-form-group">
+                        <label>List of Insurers (comma separated)</label>
+                        <textarea 
+                          rows="3" 
+                          name="insuranceProviders"
+                          value={editFormData.insuranceProviders || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., Star Health, HDFC Ergo, ICICI Lombard"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+                    <button className="hosp-dash-btn-primary" onClick={handleSaveServices} disabled={uploading}>
+                      {uploading ? 'Saving...' : 'Save Services & Facilities'}
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -809,37 +1562,69 @@ const HospitalDashboard = () => {
                   <div className="hosp-dash-form-grid">
                     <div className="hosp-dash-form-group">
                       <label>Speciality Name *</label>
-                      <select>
+                      <select 
+                        value={newSpeciality.name}
+                        onChange={(e) => setNewSpeciality({...newSpeciality, name: e.target.value})}
+                      >
                         <option value="">Select speciality</option>
-                        <option value="cardiology">Cardiology</option>
-                        <option value="orthopaedics">Orthopaedics</option>
-                        <option value="neurology">Neurology</option>
-                        <option value="pediatrics">Pediatrics</option>
-                        <option value="gynecology">Gynecology</option>
-                        <option value="dermatology">Dermatology</option>
-                        <option value="ent">ENT</option>
-                        <option value="ophthalmology">Ophthalmology</option>
-                        <option value="general-medicine">General Medicine</option>
-                        <option value="general-surgery">General Surgery</option>
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Orthopaedics">Orthopaedics</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Gynecology">Gynecology</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="ENT">ENT</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
+                        <option value="General Medicine">General Medicine</option>
+                        <option value="General Surgery">General Surgery</option>
                       </select>
                     </div>
                     <div className="hosp-dash-form-group">
-                      <label>Sub-speciality</label>
-                      <input type="text" placeholder="e.g., Interventional Cardiology" />
-                    </div>
-                    <div className="hosp-dash-form-group">
-                      <label>Number of Beds</label>
-                      <input type="number" placeholder="Department bed capacity" />
-                    </div>
-                    <div className="hosp-dash-form-group">
-                      <button className="hosp-dash-btn-primary">Add Speciality</button>
+                      <button 
+                        className="hosp-dash-btn-primary" 
+                        onClick={handleAddSpeciality}
+                        disabled={uploading}
+                      >
+                        {uploading ? 'Adding...' : 'Add Speciality'}
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <div className="hosp-specialities-list">
                   <h3>Current Specialities</h3>
-                  <p className="hosp-info-placeholder">No specialities added yet. Add your first speciality above.</p>
+                  {hospitalData.specializations?.length > 0 ? (
+                    <div style={{display: 'grid', gap: '10px', marginTop: '15px'}}>
+                      {hospitalData.specializations.map((spec, idx) => (
+                        <div key={idx} style={{
+                          padding: '15px',
+                          background: '#f9fafb',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <span style={{fontSize: '16px', fontWeight: '500'}}>🩺 {spec}</span>
+                          <button 
+                            onClick={() => handleDeleteSpeciality(spec)}
+                            style={{
+                              background: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              padding: '5px 15px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            disabled={uploading}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="hosp-info-placeholder">No specialities added yet. Add your first speciality above.</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -853,62 +1638,169 @@ const HospitalDashboard = () => {
                 <p>Manage visiting doctors and consultants</p>
               </div>
 
-              <div className="hosp-doctor-form">
+              <form onSubmit={handleAddDoctor} className="hosp-doctor-form">
                 <h3>Add New Doctor</h3>
                 <div className="hosp-dash-form-grid">
                   <div className="hosp-dash-form-group">
                     <label>Doctor Name *</label>
-                    <input type="text" placeholder="Dr. Full Name" />
+                    <input 
+                      type="text" 
+                      placeholder="Dr. Full Name"
+                      value={newDoctor.name}
+                      onChange={(e) => setNewDoctor({...newDoctor, name: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>Qualification *</label>
-                    <input type="text" placeholder="e.g., MBBS, MD" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g., MBBS, MD"
+                      value={newDoctor.qualification}
+                      onChange={(e) => setNewDoctor({...newDoctor, qualification: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
-                    <label>Medical Registration Number *</label>
-                    <input type="text" placeholder="Medical council registration" />
+                    <label>Medical Registration Number</label>
+                    <input 
+                      type="text" 
+                      placeholder="Medical council registration"
+                      value={newDoctor.registration}
+                      onChange={(e) => setNewDoctor({...newDoctor, registration: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>Speciality *</label>
-                    <select>
-                      <option value="">Select speciality</option>
-                      <option value="cardiology">Cardiology</option>
-                      <option value="orthopaedics">Orthopaedics</option>
-                      <option value="general-medicine">General Medicine</option>
-                    </select>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., Cardiology"
+                      value={newDoctor.speciality}
+                      onChange={(e) => setNewDoctor({...newDoctor, speciality: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>Years of Experience</label>
-                    <input type="number" placeholder="Total experience" />
+                    <input 
+                      type="number" 
+                      placeholder="Total experience"
+                      value={newDoctor.experience}
+                      onChange={(e) => setNewDoctor({...newDoctor, experience: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
-                    <label>Languages Spoken</label>
-                    <input type="text" placeholder="e.g., English, Hindi, Tamil" />
+                    <label>Languages Spoken (comma separated)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., English, Hindi, Tamil"
+                      value={newDoctor.languages}
+                      onChange={(e) => setNewDoctor({...newDoctor, languages: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
-                    <label>OPD Days</label>
-                    <input type="text" placeholder="e.g., Mon, Wed, Fri" />
+                    <label>OPD Days (comma separated)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., Mon, Wed, Fri"
+                      value={newDoctor.opdDays}
+                      onChange={(e) => setNewDoctor({...newDoctor, opdDays: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>OPD Timings</label>
-                    <input type="text" placeholder="e.g., 10:00 AM - 2:00 PM" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g., 10:00 AM - 2:00 PM"
+                      value={newDoctor.opdTimings}
+                      onChange={(e) => setNewDoctor({...newDoctor, opdTimings: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>Consultation Fee (In-person)</label>
-                    <input type="number" placeholder="Fee in ₹" />
+                    <input 
+                      type="number" 
+                      placeholder="Fee in ₹"
+                      value={newDoctor.consultFeeInPerson}
+                      onChange={(e) => setNewDoctor({...newDoctor, consultFeeInPerson: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group">
                     <label>Online Consultation Fee</label>
-                    <input type="number" placeholder="Fee in ₹" />
+                    <input 
+                      type="number" 
+                      placeholder="Fee in ₹"
+                      value={newDoctor.consultFeeOnline}
+                      onChange={(e) => setNewDoctor({...newDoctor, consultFeeOnline: e.target.value})}
+                    />
                   </div>
                   <div className="hosp-dash-form-group full-width">
                     <label>Doctor Photo</label>
-                    <input type="file" accept="image/*" />
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => setNewDoctor({...newDoctor, photo: e.target.files[0]})}
+                    />
                   </div>
                 </div>
                 <div className="hosp-form-actions">
-                  <button className="hosp-dash-btn-primary">Add Doctor Profile</button>
+                  <button type="submit" className="hosp-dash-btn-primary" disabled={uploading}>
+                    {uploading ? 'Adding...' : 'Add Doctor Profile'}
+                  </button>
                 </div>
+              </form>
+
+              {/* Display Added Doctors */}
+              {console.log('=== RENDERING DOCTORS SECTION ===', 'Doctors array:', doctors, 'Length:', doctors.length)}
+              <div style={{marginTop: '30px'}}>
+                <h3>Added Doctors ({doctors.length})</h3>
+                {doctors.length > 0 ? (
+                  <div style={{display: 'grid', gap: '15px', marginTop: '15px'}}>
+                    {doctors.map((doc, idx) => (
+                      <div key={idx} style={{
+                        padding: '20px',
+                        background: '#f9fafb',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start'}}>
+                          <div>
+                            <h4 style={{margin: '0 0 10px 0'}}>👨‍⚕️ {doc.name}</h4>
+                            <p style={{margin: '5px 0'}}><strong>Qualification:</strong> {doc.qualification}</p>
+                            <p style={{margin: '5px 0'}}><strong>Speciality:</strong> {doc.speciality}</p>
+                            {doc.opdDays && <p style={{margin: '5px 0'}}><strong>OPD Days:</strong> {Array.isArray(doc.opdDays) ? doc.opdDays.join(', ') : doc.opdDays}</p>}
+                            {doc.consultFeeInPerson && <p style={{margin: '5px 0'}}><strong>Fee:</strong> ₹{doc.consultFeeInPerson}</p>}
+                          </div>
+                          <button 
+                            onClick={() => handleDeleteDoctor(idx)}
+                            style={{
+                              background: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 15px',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                            disabled={uploading}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '2px dashed #e5e7eb',
+                    marginTop: '15px'
+                  }}>
+                    <p style={{fontSize: '16px', color: '#6b7280', margin: 0}}>📝 No doctors added yet. Add your first doctor profile above.</p>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -921,55 +1813,139 @@ const HospitalDashboard = () => {
                 <p>Configure appointment booking and management</p>
               </div>
 
-              <div className="hosp-dash-form-grid">
-                <div className="hosp-dash-form-group">
-                  <label>Accept Online Booking?</label>
-                  <select>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Booking Type</label>
-                  <select>
-                    <option value="appointment">Appointment Slots</option>
-                    <option value="walk-in">Walk-in Only</option>
-                    <option value="both">Both</option>
-                  </select>
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Slot Duration (minutes)</label>
-                  <input type="number" placeholder="e.g., 15, 30" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Advance Booking (days)</label>
-                  <input type="number" placeholder="e.g., 7, 14, 30" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Cancellation Policy</label>
-                  <select>
-                    <option value="free">Free Cancellation</option>
-                    <option value="24hrs">24 Hours Notice</option>
-                    <option value="no-refund">No Refund</option>
-                  </select>
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Prepayment Required?</label>
-                  <select>
-                    <option value="no">No</option>
-                    <option value="partial">Partial</option>
-                    <option value="full">Full Payment</option>
-                  </select>
-                </div>
-                <div className="hosp-dash-form-group full-width">
-                  <label>Special Instructions for Patients</label>
-                  <textarea rows="3" placeholder="Any special instructions or guidelines..."></textarea>
-                </div>
-              </div>
+              {console.log('=== RENDERING APPOINTMENT SECTION ===', {
+                acceptOnlineBooking: hospitalData.acceptOnlineBooking,
+                bookingType: hospitalData.bookingType,
+                slotDuration: hospitalData.slotDuration,
+                allData: hospitalData
+              })}
+              {!isEditingAppointments ? (
+                <>
+                  <div className="hosp-info-display">
+                    <div className="hosp-info-row">
+                      <label>Accept Online Booking:</label>
+                      <span>{hospitalData.acceptOnlineBooking === 'yes' ? '✅ Yes' : '❌ No'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Booking Type:</label>
+                      <span style={{textTransform: 'capitalize'}}>{hospitalData.bookingType || 'Not set'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Slot Duration:</label>
+                      <span>{hospitalData.slotDuration ? `${hospitalData.slotDuration} minutes` : 'Not set'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Advance Booking:</label>
+                      <span>{hospitalData.advanceBookingDays ? `${hospitalData.advanceBookingDays} days` : 'Not set'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Cancellation Policy:</label>
+                      <span style={{textTransform: 'capitalize'}}>{hospitalData.cancellationPolicy || 'Not set'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Prepayment Required:</label>
+                      <span style={{textTransform: 'capitalize'}}>{hospitalData.prepaymentRequired || 'No'}</span>
+                    </div>
+                    <div className="hosp-info-row full-width">
+                      <label>Patient Instructions:</label>
+                      <span style={{whiteSpace: 'pre-wrap'}}>{hospitalData.patientInstructions || 'None specified'}</span>
+                    </div>
+                  </div>
 
-              <div className="hosp-form-actions">
-                <button className="hosp-dash-btn-primary">Save Appointment Settings</button>
-              </div>
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleEditAppointments}>Edit Appointment Settings</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="hosp-dash-form-grid">
+                    <div className="hosp-dash-form-group">
+                      <label>Accept Online Booking?</label>
+                      <select
+                        name="acceptOnlineBooking"
+                        value={editFormData.acceptOnlineBooking || 'yes'}
+                        onChange={handleInputChange}
+                      >
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Booking Type</label>
+                      <select
+                        name="bookingType"
+                        value={editFormData.bookingType || 'appointment'}
+                        onChange={handleInputChange}
+                      >
+                        <option value="appointment">Appointment Slots</option>
+                        <option value="walk-in">Walk-in Only</option>
+                        <option value="both">Both</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Slot Duration (minutes)</label>
+                      <input 
+                        type="number" 
+                        name="slotDuration"
+                        value={editFormData.slotDuration || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 15, 30" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Advance Booking (days)</label>
+                      <input 
+                        type="number" 
+                        name="advanceBookingDays"
+                        value={editFormData.advanceBookingDays || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 7, 14, 30" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Cancellation Policy</label>
+                      <select
+                        name="cancellationPolicy"
+                        value={editFormData.cancellationPolicy || 'free'}
+                        onChange={handleInputChange}
+                      >
+                        <option value="free">Free Cancellation</option>
+                        <option value="24hrs">24 Hours Notice</option>
+                        <option value="no-refund">No Refund</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Prepayment Required?</label>
+                      <select
+                        name="prepaymentRequired"
+                        value={editFormData.prepaymentRequired || 'no'}
+                        onChange={handleInputChange}
+                      >
+                        <option value="no">No</option>
+                        <option value="partial">Partial</option>
+                        <option value="full">Full Payment</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group full-width">
+                      <label>Special Instructions for Patients</label>
+                      <textarea 
+                        rows="3" 
+                        name="patientInstructions"
+                        value={editFormData.patientInstructions || ''}
+                        onChange={handleInputChange}
+                        placeholder="Any special instructions or guidelines..."
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+                    <button className="hosp-dash-btn-primary" onClick={handleSaveAppointments} disabled={uploading}>
+                      {uploading ? 'Saving...' : 'Save Appointment Settings'}
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -981,61 +1957,144 @@ const HospitalDashboard = () => {
                 <p>Payment and banking information</p>
               </div>
 
-              <div className="hosp-dash-form-grid">
-                <h3 className="hosp-dash-section-title">Billing Information</h3>
-                <div className="hosp-dash-form-group">
-                  <label>Official Billing Name *</label>
-                  <input type="text" placeholder="As per registration" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>GSTIN (if applicable)</label>
-                  <input type="text" placeholder="GST Identification Number" />
-                </div>
+              {!isEditingBilling ? (
+                <>
+                  <div className="hosp-info-display">
+                    <h3 className="hosp-info-section-title">Billing Information</h3>
+                    <div className="hosp-info-row">
+                      <label>GST Number:</label>
+                      <span>{hospitalData.gstNumber || 'Not provided'}</span>
+                    </div>
 
-                <h3 className="hosp-dash-section-title">Bank Account Details</h3>
-                <div className="hosp-dash-form-group">
-                  <label>Account Holder Name *</label>
-                  <input type="text" placeholder="As per bank records" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Account Type *</label>
-                  <select>
-                    <option value="">Select type</option>
-                    <option value="current">Current Account</option>
-                    <option value="savings">Savings Account</option>
-                  </select>
-                </div>
-                <div className="hosp-dash-form-group full-width">
-                  <label>Bank Account Number *</label>
-                  <input type="text" placeholder="Account number" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>IFSC Code *</label>
-                  <input type="text" placeholder="Bank IFSC code" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Bank Name *</label>
-                  <input type="text" placeholder="Name of bank" />
-                </div>
-                <div className="hosp-dash-form-group">
-                  <label>Branch Name</label>
-                  <input type="text" placeholder="Branch location" />
-                </div>
-                <div className="hosp-dash-form-group full-width">
-                  <label>Upload Cancelled Cheque</label>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
-                </div>
+                    <h3 className="hosp-info-section-title">Bank Account Details</h3>
+                    <div className="hosp-info-row">
+                      <label>Account Holder:</label>
+                      <span>{hospitalData.accountDetails?.accountHolderName || 'Not provided'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Account Number:</label>
+                      <span>{hospitalData.accountDetails?.accountNumber || 'Not provided'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>IFSC Code:</label>
+                      <span>{hospitalData.accountDetails?.ifscCode || 'Not provided'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Bank Name:</label>
+                      <span>{hospitalData.accountDetails?.bankName || 'Not provided'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Branch Name:</label>
+                      <span>{hospitalData.accountDetails?.branchName || 'Not provided'}</span>
+                    </div>
+                    <div className="hosp-info-row">
+                      <label>Cancelled Cheque:</label>
+                      <span>{hospitalData.accountDetails?.bankProof ? '✅ Uploaded' : '❌ Not uploaded'}</span>
+                    </div>
+                  </div>
 
-                <h3 className="hosp-dash-section-title">Insurance Billing</h3>
-                <div className="hosp-dash-form-group full-width">
-                  <label>Cashless Billing Rules</label>
-                  <textarea rows="3" placeholder="Rules for insured patients and cashless claims..."></textarea>
-                </div>
-              </div>
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleEditBilling}>Edit Billing & Bank Details</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="hosp-dash-form-grid">
+                    <h3 className="hosp-dash-section-title">Billing Information</h3>
+                    <div className="hosp-dash-form-group">
+                      <label>GSTIN (if applicable)</label>
+                      <input 
+                        type="text" 
+                        name="gstNumber"
+                        value={editFormData.gstNumber || ''}
+                        onChange={handleInputChange}
+                        placeholder="GST Identification Number" 
+                      />
+                    </div>
 
-              <div className="hosp-form-actions">
-                <button className="hosp-dash-btn-primary">Save Billing & Bank Details</button>
-              </div>
+                    <h3 className="hosp-dash-section-title">Bank Account Details</h3>
+                    <div className="hosp-dash-form-group">
+                      <label>Account Holder Name *</label>
+                      <input 
+                        type="text" 
+                        name="accountHolderName"
+                        value={editFormData.accountHolderName || ''}
+                        onChange={handleInputChange}
+                        placeholder="As per bank records" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Account Type *</label>
+                      <select
+                        name="accountType"
+                        value={editFormData.accountType || ''}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select type</option>
+                        <option value="current">Current Account</option>
+                        <option value="savings">Savings Account</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group full-width">
+                      <label>Bank Account Number *</label>
+                      <input 
+                        type="text" 
+                        name="accountNumber"
+                        value={editFormData.accountNumber || ''}
+                        onChange={handleInputChange}
+                        placeholder="Account number" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>IFSC Code *</label>
+                      <input 
+                        type="text" 
+                        name="ifscCode"
+                        value={editFormData.ifscCode || ''}
+                        onChange={handleInputChange}
+                        placeholder="Bank IFSC code" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Bank Name *</label>
+                      <input 
+                        type="text" 
+                        name="bankName"
+                        value={editFormData.bankName || ''}
+                        onChange={handleInputChange}
+                        placeholder="Name of bank" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Branch Name</label>
+                      <input 
+                        type="text" 
+                        name="branchName"
+                        value={editFormData.branchName || ''}
+                        onChange={handleInputChange}
+                        placeholder="Branch location" 
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group full-width">
+                      <label>Upload Cancelled Cheque</label>
+                      <input 
+                        type="file" 
+                        name="cancelledCheque"
+                        onChange={handleInputChange}
+                        accept=".pdf,.jpg,.jpeg,.png" 
+                      />
+                      {hospitalData.accountDetails?.bankProof && <small style={{color: '#10b981'}}>✅ Current file uploaded</small>}
+                    </div>
+                  </div>
+
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+                    <button className="hosp-dash-btn-primary" onClick={handleSaveBilling} disabled={uploading}>
+                      {uploading ? 'Saving...' : 'Save Billing & Bank Details'}
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -1050,56 +2109,102 @@ const HospitalDashboard = () => {
               <div className="hosp-documents-grid">
                 <div className="hosp-document-item">
                   <h4>🏥 Hospital Registration Certificate *</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                  <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('registrationCertificate', e.target.files[0])}
+                    disabled={uploading}
+                  />
                   <small>Required: Registration proof</small>
+                  {hospitalData.registrationCertificate && (
+                    <>
+                      <p style={{color: '#10b981', fontSize: '12px'}}>✅ Uploaded</p>
+                      <button 
+                        onClick={() => window.open(hospitalData.registrationCertificate, '_blank')}
+                        className="hosp-dash-btn-secondary"
+                        style={{marginTop: '10px', fontSize: '12px', padding: '5px 10px'}}
+                      >
+                        View Document
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="hosp-document-item">
                   <h4>📋 Municipal/Utility Documents</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                  <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('ownershipProof', e.target.files[0])}
+                    disabled={uploading}
+                  />
                   <small>Optional: Additional proof</small>
+                  {hospitalData.ownershipProof && (
+                    <>
+                      <p style={{color: '#10b981', fontSize: '12px'}}>✅ Uploaded</p>
+                      <button 
+                        onClick={() => window.open(hospitalData.ownershipProof, '_blank')}
+                        className="hosp-dash-btn-secondary"
+                        style={{marginTop: '10px', fontSize: '12px', padding: '5px 10px'}}
+                      >
+                        View Document
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="hosp-document-item">
-                  <h4>🆔 Owner Identity Proof *</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
-                  <small>Aadhaar/PAN/Passport</small>
-                </div>
-
-                <div className="hosp-document-item">
-                  <h4>👨‍⚕️ Doctor Registration Certificates</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                  <small>Medical council certificates</small>
-                </div>
-
-                <div className="hosp-document-item">
-                  <h4>🎓 Doctor Degree Copies</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                  <small>Educational qualifications</small>
-                </div>
-
-                <div className="hosp-document-item">
-                  <h4>📜 Medical License Copies</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
-                  <small>Practice licenses</small>
+                  <h4>💳 PAN Card *</h4>
+                  <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('panCard', e.target.files[0])}
+                    disabled={uploading}
+                  />
+                  <small>PAN card copy</small>
+                  {hospitalData.panCard && (
+                    <>
+                      <p style={{color: '#10b981', fontSize: '12px'}}>✅ Uploaded</p>
+                      <button 
+                        onClick={() => window.open(hospitalData.panCard, '_blank')}
+                        className="hosp-dash-btn-secondary"
+                        style={{marginTop: '10px', fontSize: '12px', padding: '5px 10px'}}
+                      >
+                        View Document
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="hosp-document-item">
                   <h4>💼 GST Certificate</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                  <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('gstCertificate', e.target.files[0])}
+                    disabled={uploading}
+                  />
                   <small>If applicable</small>
-                </div>
-
-                <div className="hosp-document-item">
-                  <h4>🏪 Trade License</h4>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" />
-                  <small>Municipal trade license</small>
+                  {hospitalData.gstCertificate && (
+                    <>
+                      <p style={{color: '#10b981', fontSize: '12px'}}>✅ Uploaded</p>
+                      <button 
+                        onClick={() => window.open(hospitalData.gstCertificate, '_blank')}
+                        className="hosp-dash-btn-secondary"
+                        style={{marginTop: '10px', fontSize: '12px', padding: '5px 10px'}}
+                      >
+                        View Document
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="hosp-form-actions">
-                <button className="hosp-dash-btn-primary">Save & Submit for Verification</button>
-              </div>
+              {uploading && (
+                <div style={{textAlign: 'center', padding: '20px', color: '#234f83'}}>
+                  <p>Uploading document... Please wait.</p>
+                </div>
+              )}
             </section>
           )}
 
@@ -1113,52 +2218,86 @@ const HospitalDashboard = () => {
 
               <div className="hosp-media-upload-section">
                 <div className="hosp-media-category">
-                  <h3>🏢 Hospital Exterior Photos</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Building exterior, entrance, parking</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>🏥 Interior Photos</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Lobby, corridors, general ambiance</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>🩺 OPD & Waiting Area</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Consultation rooms, waiting areas</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>🔬 Labs & Diagnostic Areas</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Laboratory, radiology, testing areas</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>⚕️ Operation Theatre (OT)</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>OT facilities (if permitted)</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>👥 Staff Photos</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Optional: Team photos</small>
-                </div>
-
-                <div className="hosp-media-category">
-                  <h3>🎨 Logo & Banner Images</h3>
-                  <input type="file" accept="image/*" multiple />
-                  <small>Branding materials</small>
+                  <h3>🏢 Hospital Photos</h3>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple
+                    onChange={(e) => e.target.files.length > 0 && handleMediaUpload('hospital', e.target.files)}
+                    disabled={uploading}
+                  />
+                  <small>Exterior, interior, OPD, labs, facilities</small>
+                  {hospitalData.hospitalPhotos?.length > 0 && (
+                    <p style={{color: '#10b981', fontSize: '12px'}}>
+                      ✅ {hospitalData.hospitalPhotos.length} photo(s) uploaded
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="hosp-form-actions">
-                <button className="hosp-dash-btn-primary">Upload Media</button>
-                <button className="hosp-dash-btn-secondary">Preview Gallery</button>
-              </div>
+              {uploading && (
+                <div style={{textAlign: 'center', padding: '20px', color: '#234f83'}}>
+                  <p>Uploading photos... Please wait.</p>
+                </div>
+              )}
+
+              {hospitalData.hospitalPhotos?.length > 0 && (
+                <div style={{marginTop: '30px'}}>
+                  <h3>Uploaded Photos</h3>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px', marginTop: '15px'}}>
+                    {hospitalData.hospitalPhotos.map((photo, idx) => (
+                      <div key={idx} style={{position: 'relative'}}>
+                        <img 
+                          src={photo} 
+                          alt={`Hospital ${idx + 1}`}
+                          style={{width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px'}}
+                        />
+                        <button
+                          onClick={async () => {
+                            if (window.confirm('Delete this image?')) {
+                              try {
+                                setUploading(true);
+                                const updatedPhotos = hospitalData.hospitalPhotos.filter((_, i) => i !== idx);
+                                const response = await hospitalAPI.updateProfile({ hospitalPhotos: updatedPhotos });
+                                if (response.success) {
+                                  setHospitalData(response.hospital);
+                                  localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
+                                  alert('Image deleted successfully!');
+                                }
+                              } catch (error) {
+                                alert('Error deleting image');
+                              } finally {
+                                setUploading(false);
+                              }
+                            }
+                          }}
+                          disabled={uploading}
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                          title="Delete image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -1178,12 +2317,33 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-value">{hospitalData.gstNumber || 'Not provided'}</span>
                   </div>
                   <div className="hosp-field-row">
-                    <span className="hosp-field-label">Status:</span>
-                    <span className={`hosp-status-badge ${hospitalData.kycStatus || 'pending'}`}>
-                      {(hospitalData.kycStatus || 'Pending').charAt(0).toUpperCase() + (hospitalData.kycStatus || 'pending').slice(1)}
-                    </span>
+                    <span className="hosp-field-label">Certificate:</span>
+                    <span className="hosp-field-value">{hospitalData.gstCertificate ? '✅ Uploaded' : '❌ Not uploaded'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload GST Certificate</button>
+                  <input 
+                    type="file" 
+                    id="gstCert" 
+                    accept=".pdf,.jpg,.jpeg,.png" 
+                    style={{display: 'none'}}
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('gstCertificate', e.target.files[0])}
+                  />
+                  <button 
+                    className="hosp-dash-btn-secondary" 
+                    style={{marginTop: '10px'}}
+                    onClick={() => document.getElementById('gstCert').click()}
+                    disabled={uploading}
+                  >
+                    Upload GST Certificate
+                  </button>
+                  {hospitalData.gstCertificate && (
+                    <button 
+                      onClick={() => window.open(hospitalData.gstCertificate, '_blank')}
+                      className="hosp-dash-btn-secondary"
+                      style={{marginTop: '10px', marginLeft: '10px'}}
+                    >
+                      View Certificate
+                    </button>
+                  )}
                 </div>
 
                 <div className="hosp-info-card">
@@ -1196,7 +2356,30 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Certificate:</span>
                     <span className="hosp-field-value">{hospitalData.registrationCertificate ? '✅ Uploaded' : '❌ Not uploaded'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload Certificate</button>
+                  <input 
+                    type="file" 
+                    id="regCert" 
+                    accept=".pdf,.jpg,.jpeg,.png" 
+                    style={{display: 'none'}}
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('registrationCertificate', e.target.files[0])}
+                  />
+                  <button 
+                    className="hosp-dash-btn-secondary" 
+                    style={{marginTop: '10px'}}
+                    onClick={() => document.getElementById('regCert').click()}
+                    disabled={uploading}
+                  >
+                    Upload Certificate
+                  </button>
+                  {hospitalData.registrationCertificate && (
+                    <button 
+                      onClick={() => window.open(hospitalData.registrationCertificate, '_blank')}
+                      className="hosp-dash-btn-secondary"
+                      style={{marginTop: '10px', marginLeft: '10px'}}
+                    >
+                      View Certificate
+                    </button>
+                  )}
                 </div>
 
                 <div className="hosp-info-card">
@@ -1209,46 +2392,66 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Document:</span>
                     <span className="hosp-field-value">{hospitalData.panCard ? '✅ Uploaded' : '❌ Not uploaded'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload PAN Card</button>
-                </div>
-
-                <div className="hosp-info-card">
-                  <h3>🆔 Aadhaar Card</h3>
-                  <div className="hosp-field-row">
-                    <span className="hosp-field-label">Aadhaar:</span>
-                    <span className="hosp-field-value">{hospitalData.aadhaarNumber || 'Not provided'}</span>
-                  </div>
-                  <div className="hosp-field-row">
-                    <span className="hosp-field-label">Document:</span>
-                    <span className="hosp-field-value">{hospitalData.aadhaarCard ? '✅ Uploaded' : '❌ Not uploaded'}</span>
-                  </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload Aadhaar</button>
+                  <input 
+                    type="file" 
+                    id="panCard" 
+                    accept=".pdf,.jpg,.jpeg,.png" 
+                    style={{display: 'none'}}
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('panCard', e.target.files[0])}
+                  />
+                  <button 
+                    className="hosp-dash-btn-secondary" 
+                    style={{marginTop: '10px'}}
+                    onClick={() => document.getElementById('panCard').click()}
+                    disabled={uploading}
+                  >
+                    Upload PAN Card
+                  </button>
+                  {hospitalData.panCard && (
+                    <button 
+                      onClick={() => window.open(hospitalData.panCard, '_blank')}
+                      className="hosp-dash-btn-secondary"
+                      style={{marginTop: '10px', marginLeft: '10px'}}
+                    >
+                      View PAN Card
+                    </button>
+                  )}
                 </div>
 
                 <div className="hosp-info-card">
                   <h3>🏦 Bank Account Verification</h3>
                   <div className="hosp-field-row">
                     <span className="hosp-field-label">Account No:</span>
-                    <span className="hosp-field-value">{hospitalData.accountNumber || 'Not provided'}</span>
+                    <span className="hosp-field-value">{hospitalData.accountDetails?.accountNumber || 'Not provided'}</span>
                   </div>
                   <div className="hosp-field-row">
-                    <span className="hosp-field-label">IFSC Code:</span>
-                    <span className="hosp-field-value">{hospitalData.ifscCode || 'Not provided'}</span>
+                    <span className="hosp-field-label">Proof:</span>
+                    <span className="hosp-field-value">{hospitalData.accountDetails?.bankProof ? '✅ Uploaded' : '❌ Not uploaded'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload Passbook/Cancelled Cheque</button>
-                </div>
-
-                <div className="hosp-info-card">
-                  <h3>📜 Other Legal Documents</h3>
-                  <div className="hosp-field-row">
-                    <span className="hosp-field-label">Trade License:</span>
-                    <span className="hosp-field-value">{hospitalData.tradeLicense ? '✅ Uploaded' : '❌ Not uploaded'}</span>
-                  </div>
-                  <div className="hosp-field-row">
-                    <span className="hosp-field-label">Fire Safety:</span>
-                    <span className="hosp-field-value">{hospitalData.fireSafety ? '✅ Uploaded' : '❌ Not uploaded'}</span>
-                  </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Upload Documents</button>
+                  <input 
+                    type="file" 
+                    id="bankProof" 
+                    accept=".pdf,.jpg,.jpeg,.png" 
+                    style={{display: 'none'}}
+                    onChange={(e) => e.target.files[0] && handleDocumentUpload('accountDetails.bankProof', e.target.files[0])}
+                  />
+                  <button 
+                    className="hosp-dash-btn-secondary" 
+                    style={{marginTop: '10px'}}
+                    onClick={() => document.getElementById('bankProof').click()}
+                    disabled={uploading}
+                  >
+                    Upload Passbook/Cancelled Cheque
+                  </button>
+                  {hospitalData.accountDetails?.bankProof && (
+                    <button 
+                      onClick={() => window.open(hospitalData.accountDetails.bankProof, '_blank')}
+                      className="hosp-dash-btn-secondary"
+                      style={{marginTop: '10px', marginLeft: '10px'}}
+                    >
+                      View Bank Proof
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -1262,7 +2465,9 @@ const HospitalDashboard = () => {
                 <p>Hospital working hours, fees, and operational information</p>
               </div>
 
-              <div className="hosp-info-grid">
+              {!isEditingOperational ? (
+                <>
+                  <div className="hosp-info-grid">
                 <div className="hosp-info-card">
                   <h3>🕒 Operating Hours</h3>
                   <div className="hosp-field-row">
@@ -1279,7 +2484,7 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Closing Time:</span>
                     <span className="hosp-field-value">{hospitalData.closingTime || 'Not set'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Edit Hours</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={handleEditOperational}>Edit Hours</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1296,21 +2501,21 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Emergency Fee:</span>
                     <span className="hosp-field-value">₹{hospitalData.emergencyFee || 0}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Update Fees</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={handleEditOperational}>Update Fees</button>
                 </div>
 
                 <div className="hosp-info-card">
                   <h3>🏥 Available Services</h3>
                   <div className="hosp-field-row">
                     <span className="hosp-field-label">Total Services:</span>
-                    <span className="hosp-field-value">{hospitalData.availableServices?.length || 0}</span>
+                    <span className="hosp-field-value">{hospitalData.facilities?.length || 0}</span>
                   </div>
                   <div style={{marginTop: '10px'}}>
-                    {hospitalData.availableServices?.slice(0, 5).map((service, idx) => (
+                    {hospitalData.facilities?.slice(0, 5).map((service, idx) => (
                       <div key={idx} style={{padding: '5px 0', fontSize: '14px'}}>✅ {service}</div>
                     ))}
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Manage Services</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => setActiveSection('services')}>Manage Services</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1324,7 +2529,7 @@ const HospitalDashboard = () => {
                       <div key={idx} style={{padding: '5px 0', fontSize: '14px'}}>✅ {facility}</div>
                     ))}
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Manage Facilities</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => setActiveSection('services')}>Manage Facilities</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1341,7 +2546,7 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Ventilators:</span>
                     <span className="hosp-field-value">{hospitalData.ventilators || 'Not specified'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Update Capacity</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={handleEditOperational}>Update Capacity</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1358,9 +2563,138 @@ const HospitalDashboard = () => {
                       {hospitalData.ambulanceService ? 'Available' : 'Not Available'}
                     </span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Update Services</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={handleEditOperational}>Update Services</button>
                 </div>
               </div>
+              </>
+              ) : (
+                <>
+                  <div className="hosp-dash-form-grid">
+                    <div className="hosp-dash-form-group">
+                      <label>24x7 Status</label>
+                      <select
+                        name="is24x7"
+                        value={editFormData.is24x7 || false}
+                        onChange={(e) => setEditFormData({...editFormData, is24x7: e.target.value === 'true'})}
+                      >
+                        <option value="true">24x7 Open</option>
+                        <option value="false">Limited Hours</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Opening Time</label>
+                      <input 
+                        type="time" 
+                        name="openingTime"
+                        value={editFormData.openingTime || ''}
+                        onChange={(e) => setEditFormData({...editFormData, openingTime: e.target.value})}
+                        disabled={editFormData.is24x7 === true || editFormData.is24x7 === 'true'}
+                        style={{cursor: (editFormData.is24x7 === true || editFormData.is24x7 === 'true') ? 'not-allowed' : 'pointer'}}
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Closing Time</label>
+                      <input 
+                        type="time" 
+                        name="closingTime"
+                        value={editFormData.closingTime || ''}
+                        onChange={(e) => setEditFormData({...editFormData, closingTime: e.target.value})}
+                        disabled={editFormData.is24x7 === true || editFormData.is24x7 === 'true'}
+                        style={{cursor: (editFormData.is24x7 === true || editFormData.is24x7 === 'true') ? 'not-allowed' : 'pointer'}}
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Min Consultation Fee (₹)</label>
+                      <input 
+                        type="number" 
+                        name="minConsultFee"
+                        value={editFormData.minConsultFee || ''}
+                        onChange={handleInputChange}
+                        placeholder="Minimum fee"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Max Consultation Fee (₹)</label>
+                      <input 
+                        type="number" 
+                        name="maxConsultFee"
+                        value={editFormData.maxConsultFee || ''}
+                        onChange={handleInputChange}
+                        placeholder="Maximum fee"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Emergency Fee (₹)</label>
+                      <input 
+                        type="number" 
+                        name="emergencyFee"
+                        value={editFormData.emergencyFee || ''}
+                        onChange={handleInputChange}
+                        placeholder="Emergency consultation fee"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Total Beds</label>
+                      <input 
+                        type="number" 
+                        name="totalBeds"
+                        value={editFormData.totalBeds || ''}
+                        onChange={handleInputChange}
+                        placeholder="Total bed capacity"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>ICU Beds</label>
+                      <input 
+                        type="number" 
+                        name="icuBeds"
+                        value={editFormData.icuBeds || ''}
+                        onChange={handleInputChange}
+                        placeholder="ICU bed count"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Ventilators</label>
+                      <input 
+                        type="number" 
+                        name="ventilators"
+                        value={editFormData.ventilators || ''}
+                        onChange={handleInputChange}
+                        placeholder="Number of ventilators"
+                      />
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Emergency Services Available</label>
+                      <select
+                        name="emergencyAvailable"
+                        value={editFormData.emergencyAvailable || false}
+                        onChange={(e) => setEditFormData({...editFormData, emergencyAvailable: e.target.value === 'true'})}
+                      >
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                    <div className="hosp-dash-form-group">
+                      <label>Ambulance Service</label>
+                      <select
+                        name="ambulanceService"
+                        value={editFormData.ambulanceService || false}
+                        onChange={(e) => setEditFormData({...editFormData, ambulanceService: e.target.value === 'true'})}
+                      >
+                        <option value="true">Available</option>
+                        <option value="false">Not Available</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="hosp-form-actions">
+                    <button className="hosp-dash-btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+                    <button className="hosp-dash-btn-primary" onClick={handleSaveOperational} disabled={uploading}>
+                      {uploading ? 'Saving...' : 'Save Operational Details'}
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -1389,7 +2723,7 @@ const HospitalDashboard = () => {
                         : `₹${hospitalData.commissionValue || 0}`}
                     </span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>View Details</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => alert('Commission details:\n\nType: ' + (hospitalData.commissionType || 'Not Set') + '\nValue: ' + (hospitalData.commissionType === 'percentage' ? hospitalData.commissionValue + '%' : '₹' + (hospitalData.commissionValue || 0)) + '\n\nContact admin for modifications.')}>View Details</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1406,24 +2740,24 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Last Settlement:</span>
                     <span className="hosp-field-value">{hospitalData.lastSettlement || 'N/A'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>View History</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => alert('Settlement History:\n\nFrequency: ' + (hospitalData.settlementCycle || 'Not Set') + '\nPayment Mode: ' + (hospitalData.paymentMode || 'Not Set') + '\nLast Settlement: ' + (hospitalData.lastSettlement || 'N/A') + '\n\nNo transaction history available yet.')}>View History</button>
                 </div>
 
                 <div className="hosp-info-card">
                   <h3>💳 Payout Account</h3>
                   <div className="hosp-field-row">
                     <span className="hosp-field-label">Account Number:</span>
-                    <span className="hosp-field-value">{hospitalData.accountNumber || 'Not provided'}</span>
+                    <span className="hosp-field-value">{hospitalData.accountDetails?.accountNumber || 'Not provided'}</span>
                   </div>
                   <div className="hosp-field-row">
                     <span className="hosp-field-label">Bank Name:</span>
-                    <span className="hosp-field-value">{hospitalData.bankName || 'Not provided'}</span>
+                    <span className="hosp-field-value">{hospitalData.accountDetails?.bankName || 'Not provided'}</span>
                   </div>
                   <div className="hosp-field-row">
                     <span className="hosp-field-label">IFSC Code:</span>
-                    <span className="hosp-field-value">{hospitalData.ifscCode || 'Not provided'}</span>
+                    <span className="hosp-field-value">{hospitalData.accountDetails?.ifscCode || 'Not provided'}</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>Update Account</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => setActiveSection('billing')}>Update Account</button>
                 </div>
 
                 <div className="hosp-info-card">
@@ -1440,7 +2774,7 @@ const HospitalDashboard = () => {
                     <span className="hosp-field-label">Pending Settlement:</span>
                     <span className="hosp-field-value" style={{color: '#f59e0b', fontWeight: 'bold'}}>₹0</span>
                   </div>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}}>View Report</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '10px'}} onClick={() => alert('Commission Report (This Month):\n\nTotal Bookings: 0\nCommission Earned: ₹0\nPending Settlement: ₹0\n\nNo transactions recorded yet.')}>View Report</button>
                 </div>
               </div>
 
@@ -1472,78 +2806,78 @@ const HospitalDashboard = () => {
               </div>
 
               <div className="hosp-info-grid">
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>🛏️ Rooms & Boards</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>{rooms.length}</div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Room types configured</p>
                   <button 
                     className="hosp-dash-btn-secondary" 
-                    style={{marginTop: '15px', background: '#fff', color: '#667eea'}}
+                    style={{marginTop: '15px', background: '#fff', color: '#234f83'}}
                     onClick={() => openExpenseModal('rooms', 'add')}
                   >
                     + Add Room Type
                   </button>
                 </div>
 
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>🏥 Medical Procedures</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>{procedures.length}</div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Procedures listed</p>
                   <button 
                     className="hosp-dash-btn-secondary" 
-                    style={{marginTop: '15px', background: '#fff', color: '#f5576c'}}
+                    style={{marginTop: '15px', background: '#fff', color: '#234f83'}}
                     onClick={() => openExpenseModal('procedures', 'add')}
                   >
                     + Add Procedure
                   </button>
                 </div>
 
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>👨‍⚕️ Doctor Fees</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>{doctorFees.length}</div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Doctor fee structures</p>
                   <button 
                     className="hosp-dash-btn-secondary" 
-                    style={{marginTop: '15px', background: '#fff', color: '#00f2fe'}}
+                    style={{marginTop: '15px', background: '#fff', color: '#234f83'}}
                     onClick={() => openExpenseModal('doctorFees', 'add')}
                   >
                     + Add Doctor Fee
                   </button>
                 </div>
 
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>👩‍⚕️ Nursing & Staff</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>{nursingCharges.length}</div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Nursing charges</p>
                   <button 
                     className="hosp-dash-btn-secondary" 
-                    style={{marginTop: '15px', background: '#fff', color: '#38f9d7'}}
+                    style={{marginTop: '15px', background: '#fff', color: '#234f83'}}
                     onClick={() => openExpenseModal('nursing', 'add')}
                   >
                     + Add Service
                   </button>
                 </div>
 
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>🔧 Miscellaneous</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>{miscServices.length}</div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Other services</p>
                   <button 
                     className="hosp-dash-btn-secondary" 
-                    style={{marginTop: '15px', background: '#fff', color: '#fa709a'}}
+                    style={{marginTop: '15px', background: '#fff', color: '#234f83'}}
                     onClick={() => openExpenseModal('miscellaneous', 'add')}
                   >
                     + Add Service
                   </button>
                 </div>
 
-                <div className="hosp-info-card" style={{background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', color: '#fff'}}>
+                <div className="hosp-info-card" style={{backgroundColor :'#234f83', color: '#fff'}}>
                   <h3 style={{color: '#fff'}}>📊 Total Entries</h3>
                   <div style={{fontSize: '32px', fontWeight: 'bold', margin: '15px 0'}}>
                     {rooms.length + procedures.length + doctorFees.length + nursingCharges.length + miscServices.length}
                   </div>
                   <p style={{fontSize: '14px', opacity: 0.9}}>Total expense entries</p>
-                  <button className="hosp-dash-btn-secondary" style={{marginTop: '15px', background: '#fff', color: '#330867'}}>View All</button>
+                  <button className="hosp-dash-btn-secondary" style={{marginTop: '15px', background: '#fff', color: '#234f83'}}>View All</button>
                 </div>
               </div>
 
@@ -1697,6 +3031,108 @@ const HospitalDashboard = () => {
                 </div>
               </div>
 
+              {/* Nursing Charges Table */}
+              <div style={{marginTop: '30px'}}>
+                <h3 style={{color: '#234f83', marginBottom: '20px'}}>👩‍⚕️ Nursing & Staff Charges</h3>
+                <div style={{background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e5e7eb', overflowX: 'auto'}}>
+                  <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                    <thead>
+                      <tr style={{borderBottom: '2px solid #e5e7eb'}}>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Service ID</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Service Name</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Charge Type</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Amount</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Status</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {nursingCharges.length > 0 ? nursingCharges.map(charge => (
+                        <tr key={charge.service_id} style={{borderBottom: '1px solid #f3f4f6'}}>
+                          <td style={{padding: '12px'}}>{charge.service_id}</td>
+                          <td style={{padding: '12px'}}>{charge.service_name}</td>
+                          <td style={{padding: '12px'}}>{charge.charge_type}</td>
+                          <td style={{padding: '12px', fontWeight: '600'}}>₹{charge.charge_amount}</td>
+                          <td style={{padding: '12px'}}>
+                            <span className={`hosp-status-badge ${charge.status?.toLowerCase() || 'active'}`}>{charge.status || 'Active'}</span>
+                          </td>
+                          <td style={{padding: '12px'}}>
+                            <button 
+                              style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', marginRight: '8px'}}
+                              onClick={() => openExpenseModal('nursing', 'edit', charge)}
+                              title="Edit"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px'}}
+                              onClick={() => handleExpenseDelete('nursing', charge.service_id)}
+                              title="Delete"
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan="6" style={{padding: '20px', textAlign: 'center', color: '#6b7280'}}>No nursing charges added yet</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Miscellaneous Services Table */}
+              <div style={{marginTop: '30px'}}>
+                <h3 style={{color: '#234f83', marginBottom: '20px'}}>🔧 Miscellaneous Services</h3>
+                <div style={{background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e5e7eb', overflowX: 'auto'}}>
+                  <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                    <thead>
+                      <tr style={{borderBottom: '2px solid #e5e7eb'}}>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Service ID</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Service</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Charge</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Status</th>
+                        <th style={{padding: '12px', textAlign: 'left', color: '#6b7280', fontWeight: '600'}}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {miscServices.length > 0 ? miscServices.map(service => (
+                        <tr key={service.service_id} style={{borderBottom: '1px solid #f3f4f6'}}>
+                          <td style={{padding: '12px'}}>{service.service_id}</td>
+                          <td style={{padding: '12px'}}>{service.service}</td>
+                          <td style={{padding: '12px', fontWeight: '600'}}>₹{service.charge}</td>
+                          <td style={{padding: '12px'}}>
+                            <span className={`hosp-status-badge ${service.status?.toLowerCase() || 'active'}`}>{service.status || 'Active'}</span>
+                          </td>
+                          <td style={{padding: '12px'}}>
+                            <button 
+                              style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', marginRight: '8px'}}
+                              onClick={() => openExpenseModal('miscellaneous', 'edit', service)}
+                              title="Edit"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px'}}
+                              onClick={() => handleExpenseDelete('miscellaneous', service.service_id)}
+                              title="Delete"
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan="5" style={{padding: '20px', textAlign: 'center', color: '#6b7280'}}>No miscellaneous services added yet</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               <div style={{marginTop: '30px', padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb'}}>
                 <h3 style={{marginTop: 0, marginBottom: '15px'}}>💡 Quick Actions</h3>
                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px'}}>
@@ -1704,8 +3140,44 @@ const HospitalDashboard = () => {
                   <button className="hosp-dash-btn-primary" onClick={() => openExpenseModal('procedures', 'add')}>+ Add Procedure</button>
                   <button className="hosp-dash-btn-primary" onClick={() => openExpenseModal('doctorFees', 'add')}>+ Add Doctor Fee</button>
                   <button className="hosp-dash-btn-secondary" onClick={() => alert('Import functionality coming soon')}>📥 Import from CSV</button>
-                  <button className="hosp-dash-btn-secondary" onClick={() => alert('Export functionality coming soon')}>📤 Export Data</button>
-                  <button className="hosp-dash-btn-secondary" onClick={() => alert('Report generation coming soon')}>📊 Generate Report</button>
+                  <button className="hosp-dash-btn-secondary" onClick={() => {
+                    const data = {
+                      rooms,
+                      procedures,
+                      doctorFees,
+                      nursingCharges,
+                      miscServices
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${hospitalData.hospitalName || 'hospital'}-expenses-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}>📤 Export Data</button>
+                  <button className="hosp-dash-btn-secondary" onClick={() => {
+                    const reportData = `
+=== HOSPITAL EXPENSE REPORT ===
+Hospital: ${hospitalData.hospitalName || 'N/A'}
+Generated: ${new Date().toLocaleString()}
+
+ROOMS & BOARDS: ${rooms.length} entries
+PROCEDURES: ${procedures.length} entries  
+DOCTOR FEES: ${doctorFees.length} entries
+NURSING CHARGES: ${nursingCharges.length} entries
+MISC SERVICES: ${miscServices.length} entries
+
+TOTAL ENTRIES: ${rooms.length + procedures.length + doctorFees.length + nursingCharges.length + miscServices.length}
+                    `;
+                    const blob = new Blob([reportData], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${hospitalData.hospitalName || 'hospital'}-report-${new Date().toISOString().split('T')[0]}.txt`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}>📊 Generate Report</button>
                 </div>
               </div>
             </section>

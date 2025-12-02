@@ -736,11 +736,13 @@ body {
   border: none;
 }
 
+
 .hosp-dash-btn-primary {
   /* background: linear-gradient(135deg, #1e40af, #3b82f6); */
   background-color: #234f83;
   color: white;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+  box-shadow: 0 4px  rgba(30, 64, 175, 0.3);
+  margin-top: 25px;
 }
 
 .hosp-dash-btn-primary:hover {
@@ -756,6 +758,7 @@ body {
   background: white;
   color: #1e40af;
   border: 2px solid #1e40af;
+  
 }
 
 .hosp-dash-btn-secondary:hover {

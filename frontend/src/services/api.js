@@ -11,7 +11,7 @@ const API = axios.create({
 // Add token to all requests automatically
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -143,6 +143,91 @@ export const doctorAPI = {
   // Delete profile
   deleteProfile: async () => {
     const response = await API.delete('/doctors/profile');
+    return response.data;
+  }
+};
+
+// ==================== HOSPITAL APIs ====================
+export const hospitalAPI = {
+  // Get hospital profile
+  getProfile: async () => {
+    const response = await API.get('/hospitals/profile');
+    return response.data;
+  },
+
+  // Update complete profile
+  updateProfile: async (data) => {
+    const response = await API.put('/hospitals/profile', data);
+    return response.data;
+  },
+
+  // Update specific section
+  updateSection: async (section, data) => {
+    const response = await API.put(`/hospitals/profile/${section}`, data);
+    return response.data;
+  },
+
+  // Upload file
+  uploadFile: async (file, onUploadProgress) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await API.post('/hospitals/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress
+    });
+    return response.data;
+  },
+
+  // Add doctor to hospital
+  addDoctor: async (doctorId) => {
+    const response = await API.post(`/hospitals/doctors/${doctorId}`);
+    return response.data;
+  },
+
+  // Remove doctor from hospital
+  removeDoctor: async (doctorId) => {
+    const response = await API.delete(`/hospitals/doctors/${doctorId}`);
+    return response.data;
+  },
+
+  // Get all hospitals (public)
+  getAllHospitals: async () => {
+    const response = await API.get('/hospitals');
+    return response.data;
+  },
+
+  // Room management
+  addRoom: async (data) => {
+    const response = await API.post('/hospitals/rooms', data);
+    return response.data;
+  },
+
+  updateRoom: async (roomId, data) => {
+    const response = await API.put(`/hospitals/rooms/${roomId}`, data);
+    return response.data;
+  },
+
+  deleteRoom: async (roomId) => {
+    const response = await API.delete(`/hospitals/rooms/${roomId}`);
+    return response.data;
+  },
+
+  // Procedure management
+  addProcedure: async (data) => {
+    const response = await API.post('/hospitals/procedures', data);
+    return response.data;
+  },
+
+  updateProcedure: async (procedureId, data) => {
+    const response = await API.put(`/hospitals/procedures/${procedureId}`, data);
+    return response.data;
+  },
+
+  deleteProcedure: async (procedureId) => {
+    const response = await API.delete(`/hospitals/procedures/${procedureId}`);
     return response.data;
   }
 };
