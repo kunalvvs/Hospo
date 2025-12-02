@@ -784,25 +784,39 @@ const HospitalDashboard = () => {
 
     try {
       setUploading(true);
-      let response;
-
+      
+      // Determine field name and current array based on category
+      let field, currentArray, idField;
+      
       if (category === 'rooms') {
-        response = await hospitalAPI.deleteRoom(id);
+        field = 'rooms';
+        currentArray = rooms;
+        idField = 'room_id';
       } else if (category === 'procedures') {
-        response = await hospitalAPI.deleteProcedure(id);
-      } else {
-        // For doctorFees, nursing, miscellaneous - update full array
-        const field = category === 'doctorFees' ? 'doctorFees' : 
-                     category === 'nursing' ? 'nursingCharges' : 'miscServices';
-        const currentArray = category === 'doctorFees' ? doctorFees :
-                            category === 'nursing' ? nursingCharges : miscServices;
-        
-        const updatedArray = currentArray.filter(item => 
-          (item._id || item.doctor_id || item.service_id) !== id
-        );
-        
-        response = await hospitalAPI.updateProfile({ [field]: updatedArray });
+        field = 'procedures';
+        currentArray = procedures;
+        idField = 'procedure_id';
+      } else if (category === 'doctorFees') {
+        field = 'doctorFees';
+        currentArray = doctorFees;
+        idField = 'doctor_id';
+      } else if (category === 'nursing') {
+        field = 'nursingCharges';
+        currentArray = nursingCharges;
+        idField = 'service_id';
+      } else if (category === 'miscellaneous') {
+        field = 'miscServices';
+        currentArray = miscServices;
+        idField = 'service_id';
       }
+      
+      // Filter out the item to delete
+      const updatedArray = currentArray.filter(item => 
+        item[idField] !== id
+      );
+      
+      // Update profile with the filtered array
+      const response = await hospitalAPI.updateProfile({ [field]: updatedArray });
 
       if (response.success) {
         // Update local state
@@ -814,11 +828,11 @@ const HospitalDashboard = () => {
         setMiscServices(response.hospital.miscServices || []);
         localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
         
-        alert(`${category} entry deleted successfully!`);
+        alert(`Entry deleted successfully!`);
       }
     } catch (error) {
       console.error('Delete expense error:', error);
-      alert(error.response?.data?.message || `Error deleting ${category}`);
+      alert(error.response?.data?.message || `Error deleting entry. Please try again.`);
     } finally {
       setUploading(false);
     }
