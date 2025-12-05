@@ -2,24 +2,25 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const chemistSchema = new mongoose.Schema({
-  // Basic Information
+  // Authentication Fields
   name: {
     type: String,
-    required: [true, 'Please provide shop name'],
+    required: [true, 'Please provide a name'],
     trim: true
   },
   email: {
     type: String,
-    required: [true, 'Please provide email'],
+    required: [true, 'Please provide an email'],
     unique: true,
     lowercase: true,
+    trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
   phone: {
     type: String,
-    required: [true, 'Please provide phone number'],
+    required: [true, 'Please provide a phone number'],
     unique: true,
-    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
+    trim: true
   },
   password: {
     type: String,
@@ -32,64 +33,168 @@ const chemistSchema = new mongoose.Schema({
     default: 'chemist',
     enum: ['chemist']
   },
-  
-  // License & Registration
-  licenseNumber: {
+
+  // Pharmacy Identity (matching ChemistRegistration.jsx Step 1)
+  pharmacyName: {
     type: String,
-    unique: true,
-    sparse: true
+    trim: true,
+    default: ''
   },
-  licenseDocument: String,
-  gstNumber: String,
-  drugLicense: String,
-  
-  // Owner Information
-  ownerName: String,
-  ownerPhoto: String,
-  ownerIdType: {
+  businessType: {
     type: String,
-    enum: ['Aadhaar', 'PAN', 'Voter ID', 'Driving License', 'Passport']
+    enum: ['', 'retail-pharmacy', 'wholesale', 'online-pharmacy', 'franchise'],
+    default: ''
   },
-  ownerIdNumber: String,
-  ownerIdDocument: String,
-  
-  // Shop Details
-  shopPhoto: String,
-  shopType: {
+  tagline: {
     type: String,
-    enum: ['Medical Store', 'Pharmacy', 'Chain Store', 'Hospital Pharmacy']
+    trim: true,
+    default: ''
   },
-  establishedYear: Number,
-  
-  // Address
-  address: {
-    street: {
-      type: String,
-      required: [true, 'Please provide street address']
-    },
-    landmark: String,
-    city: {
-      type: String,
-      required: [true, 'Please provide city']
-    },
-    state: {
-      type: String,
-      required: [true, 'Please provide state']
-    },
-    pincode: {
-      type: String,
-      required: [true, 'Please provide pincode'],
-      match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
-    },
-    country: {
-      type: String,
-      default: 'India'
-    }
+  logo: {
+    type: String,
+    default: ''
   },
-  
-  // Contact Details
-  alternatePhone: String,
-  whatsappNumber: String,
+
+  // Address & Location (matching ChemistRegistration.jsx Step 2)
+  shopNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  building: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  locality: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  city: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  state: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  pin: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  landmark: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  latitude: {
+    type: String,
+    default: ''
+  },
+  longitude: {
+    type: String,
+    default: ''
+  },
+  branches: {
+    type: String,
+    default: ''
+  },
+
+  // Contact Details (matching ChemistRegistration.jsx Step 3)
+  primaryPhone: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  mobile: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  whatsappNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  contactEmail: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: ''
+  },
+  website: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  facebook: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  instagram: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  twitter: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // License & KYC
+  drugLicenseNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  drugLicenseCertificate: {
+    type: String,
+    default: ''
+  },
+  drugLicenseExpiry: {
+    type: Date
+  },
+  gstNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  gstCertificate: {
+    type: String,
+    default: ''
+  },
+  panNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  panCard: {
+    type: String,
+    default: ''
+  },
+  shopLicense: {
+    type: String,
+    default: ''
+  },
+  ownerIdentityProof: {
+    type: String,
+    default: ''
+  },
+  pharmacistRegistrationNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  pharmacistCertificate: {
+    type: String,
+    default: ''
+  },
   
   // Operating Hours
   operatingHours: {
@@ -105,50 +210,251 @@ const chemistSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
-  // Services
-  services: [{
+  deliveryStartTime: {
     type: String,
-    enum: [
-      'Prescription Medicines',
-      'OTC Medicines',
-      'Ayurvedic',
-      'Homeopathic',
-      'Health Supplements',
-      'Medical Devices',
-      'Surgical Items',
-      'Baby Care',
-      'Personal Care',
-      'Home Delivery',
-      'Online Consultation'
-    ]
-  }],
-  
-  // Payment Options
-  paymentMethods: [{
+    default: ''
+  },
+  deliveryEndTime: {
     type: String,
-    enum: ['Cash', 'Card', 'UPI', 'Net Banking', 'Wallet', 'Insurance']
+    default: ''
+  },
+  nightServiceAvailable: {
+    type: Boolean,
+    default: false
+  },
+
+  // Inventory Management
+  inventory: [{
+    productId: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    medicineName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    genericName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    manufacturer: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    formulation: {
+      type: String,
+      enum: ['', 'tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'inhaler', 'other'],
+      default: ''
+    },
+    strength: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    packDescription: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    batchNumber: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    expiryDate: {
+      type: Date
+    },
+    quantity: {
+      type: Number,
+      default: 0
+    },
+    mrp: {
+      type: Number,
+      default: 0
+    },
+    price: {
+      type: Number,
+      default: 0
+    },
+    costPrice: {
+      type: Number,
+      default: 0
+    },
+    gstSlab: {
+      type: Number,
+      default: 0
+    },
+    discount: {
+      type: Number,
+      default: 0
+    },
+    offerTag: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    supplier: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    category: {
+      type: String,
+      enum: ['prescription', 'otc', 'ayurvedic', 'surgical', 'wellness', 'other'],
+      default: 'other'
+    },
+    addedDate: {
+      type: Date,
+      default: Date.now
+    }
   }],
-  
-  // Bank Details
-  bankDetails: {
-    accountHolderName: String,
-    accountNumber: String,
-    ifscCode: String,
-    bankName: String,
-    branchName: String,
-    upiId: String
+
+  // Services Offered
+  services: {
+    prescriptionFulfilment: {
+      type: Boolean,
+      default: true
+    },
+    homeDelivery: {
+      type: Boolean,
+      default: false
+    },
+    sameDayDelivery: {
+      type: Boolean,
+      default: false
+    },
+    scheduledDelivery: {
+      type: Boolean,
+      default: false
+    },
+    onlineOrdering: {
+      type: Boolean,
+      default: false
+    },
+    prepaidOrders: {
+      type: Boolean,
+      default: false
+    },
+    cashOnDelivery: {
+      type: Boolean,
+      default: false
+    },
+    twentyFourSeven: {
+      type: Boolean,
+      default: false
+    },
+    surgicalItems: {
+      type: Boolean,
+      default: false
+    },
+    ayurvedic: {
+      type: Boolean,
+      default: false
+    }
   },
   
-  // Certifications
-  certifications: [String],
+  // Service Settings
+  serviceSettings: {
+    substitutionAllowed: {
+      type: String,
+      default: ''
+    },
+    onlineOrderAccept: {
+      type: String,
+      default: ''
+    },
+    orderCutoffTime: {
+      type: String,
+      default: ''
+    },
+    maxDeliveryRadius: {
+      type: Number,
+      default: 0
+    },
+    minimumOrderValue: {
+      type: Number,
+      default: 0
+    },
+    refundPolicy: {
+      type: String,
+      default: ''
+    },
+    prescriptionVerificationPolicy: {
+      type: String,
+      default: ''
+    }
+  },
   
-  // Orders & Inventory
+  // Payment Settings
+  paymentSettings: {
+    paymentMethods: {
+      cash: { type: Boolean, default: true },
+      card: { type: Boolean, default: false },
+      upi: { type: Boolean, default: false },
+      wallet: { type: Boolean, default: false }
+    },
+    gstBilling: {
+      gstin: { type: String, default: '' },
+      legalName: { type: String, default: '' }
+    },
+    cancelledCheque: {
+      type: String,
+      default: ''
+    }
+  },
+
+  // Bank Details
+  accountDetails: {
+    accountNumber: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    ifscCode: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    bankName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    branchName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    accountHolderName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    accountType: {
+      type: String,
+      enum: ['', 'savings', 'current'],
+      default: ''
+    },
+    bankProof: {
+      type: String,
+      default: ''
+    },
+    upiId: {
+      type: String,
+      trim: true,
+      default: ''
+    }
+  },
+
+  // Orders & Stats
   totalOrders: {
     type: Number,
     default: 0
   },
-  inventorySize: Number,
   
   // Ratings & Reviews
   rating: {
@@ -161,47 +467,113 @@ const chemistSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  
-  // Account Status
+
+  // Verification & Status
   isVerified: {
     type: Boolean,
     default: false
+  },
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'in-review', 'verified', 'rejected'],
+    default: 'pending'
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  isBlocked: {
-    type: Boolean,
-    default: false
-  },
   registrationComplete: {
     type: Boolean,
     default: false
   },
+  profileCompletion: {
+    type: Number,
+    default: 0
+  },
+
+  // Additional Information
+  description: {
+    type: String,
+    default: ''
+  },
+  establishedYear: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   
-  // Additional Info
-  description: String,
-  facilities: [String],
-  
-  // Timestamps
-  lastLogin: Date
+  // System Fields
+  lastActive: {
+    type: Date,
+    default: Date.now
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  }
 }, {
   timestamps: true
 });
 
-// Encrypt password before saving
+// Hash password before saving
 chemistSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Compare password method
-chemistSchema.methods.comparePassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+chemistSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error('Password comparison failed');
+  }
+};
+
+// Calculate profile completion percentage
+chemistSchema.methods.calculateProfileCompletion = function() {
+  let completed = 0;
+  const totalFields = 15;
+
+  // Basic fields (5)
+  if (this.pharmacyName) completed++;
+  if (this.businessType) completed++;
+  if (this.logo) completed++;
+  if (this.tagline) completed++;
+  if (this.description) completed++;
+
+  // Address fields (3)
+  if (this.locality && this.city && this.pin) completed++;
+  if (this.latitude && this.longitude) completed++;
+  if (this.landmark) completed++;
+
+  // Contact fields (2)
+  if (this.primaryPhone && this.mobile) completed++;
+  if (this.contactEmail) completed++;
+
+  // License fields (3)
+  if (this.drugLicenseNumber && this.drugLicenseCertificate) completed++;
+  if (this.gstNumber && this.gstCertificate) completed++;
+  if (this.panNumber && this.panCard) completed++;
+
+  // Bank details (1)
+  if (this.accountDetails.accountNumber && this.accountDetails.ifscCode) completed++;
+
+  // Inventory (1)
+  if (this.inventory && this.inventory.length > 0) completed++;
+
+  const percentage = Math.round((completed / totalFields) * 100);
+  this.profileCompletion = percentage;
+  return percentage;
 };
 
 module.exports = mongoose.model('Chemist', chemistSchema);

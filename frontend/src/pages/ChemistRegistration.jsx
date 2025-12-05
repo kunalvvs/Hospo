@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { chemistAPI } from '../services/api';
 import './ChemistRegistration.css';
 
 const ChemistRegistration = () => {
@@ -87,45 +88,98 @@ const ChemistRegistration = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateStep3()) {
-      // Store registration data
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const registrationData = {
-        ...currentUser,
-        ...formData,
-        registrationComplete: true
-      };
-      localStorage.setItem('currentUser', JSON.stringify(registrationData));
-      localStorage.setItem('chemistData', JSON.stringify(formData));
-      
-      alert('Registration completed successfully!');
-      navigate('/chemist-dashboard');
+      try {
+        // Save registration data to backend
+        const registrationData = {
+          pharmacyName: formData.pharmacyName,
+          businessType: formData.businessType,
+          tagline: formData.tagline,
+          shopNumber: formData.shopNumber,
+          building: formData.building,
+          locality: formData.locality,
+          city: formData.city,
+          pin: formData.pin,
+          landmark: formData.landmark,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          branches: formData.branches,
+          primaryPhone: formData.primaryPhone,
+          mobile: formData.mobile,
+          whatsappNumber: formData.whatsappNumber,
+          contactEmail: formData.email,
+          website: formData.website,
+          facebook: formData.facebook,
+          instagram: formData.instagram,
+          twitter: formData.twitter,
+          registrationComplete: true
+        };
+
+        const response = await chemistAPI.updateProfile(registrationData);
+        
+        if (response.success) {
+          // Update current user in localStorage
+          const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+          const updatedUser = {
+            ...currentUser,
+            ...registrationData
+          };
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          
+          alert('Registration completed successfully!');
+          navigate('/chemist-dashboard');
+        } else {
+          alert(response.message || 'Failed to save registration data');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        const errorMessage = error.response?.data?.message || 'Failed to complete registration. Please try again.';
+        alert(errorMessage);
+      }
     }
   };
 
-  const handleSkip = () => {
-    // Store minimal data and skip to dashboard
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const minimalData = {
-      pharmacyName: formData.pharmacyName || 'Pharmacy',
-      businessType: formData.businessType || 'Not specified',
-      tagline: formData.tagline || '',
-      locality: formData.locality || 'Not specified',
-      city: formData.city || 'Not specified',
-      pin: formData.pin || '000000',
-      primaryPhone: formData.primaryPhone || currentUser.phone || '',
-      mobile: formData.mobile || currentUser.phone || '',
-      email: formData.email || currentUser.email || '',
-      registrationComplete: false,
-      skipped: true
-    };
-    
-    localStorage.setItem('chemistData', JSON.stringify(minimalData));
-    
-    alert('Registration skipped. You can complete your profile later from the dashboard.');
-    navigate('/chemist-dashboard');
+  const handleSkip = async () => {
+    try {
+      // Get current user data
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      
+      // Create minimal data for skip
+      const minimalData = {
+        pharmacyName: formData.pharmacyName || 'Pharmacy',
+        businessType: formData.businessType || 'retail-pharmacy',
+        tagline: formData.tagline || '',
+        locality: formData.locality || 'Not specified',
+        city: formData.city || 'Not specified',
+        pin: formData.pin || '000000',
+        primaryPhone: formData.primaryPhone || currentUser.phone || '',
+        mobile: formData.mobile || currentUser.phone || '',
+        contactEmail: formData.email || currentUser.email || '',
+        registrationComplete: false
+      };
+      
+      const response = await chemistAPI.updateProfile(minimalData);
+      
+      if (response.success) {
+        // Update current user in localStorage
+        const updatedUser = {
+          ...currentUser,
+          ...minimalData
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        
+        alert('Registration skipped. You can complete your profile later from the dashboard.');
+        navigate('/chemist-dashboard');
+      } else {
+        alert(response.message || 'Failed to skip registration');
+      }
+    } catch (error) {
+      console.error('Skip registration error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to skip registration. Please try again.';
+      alert(errorMessage);
+    }
   };
 
   return (

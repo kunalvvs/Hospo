@@ -232,4 +232,63 @@ export const hospitalAPI = {
   }
 };
 
+// ==================== CHEMIST APIs ====================
+export const chemistAPI = {
+  // Get chemist profile
+  getProfile: async () => {
+    const response = await API.get('/chemists/profile');
+    return response.data;
+  },
+
+  // Update complete profile
+  updateProfile: async (data) => {
+    const response = await API.put('/chemists/profile', data);
+    return response.data;
+  },
+
+  // Update specific section
+  updateSection: async (section, data) => {
+    const response = await API.put(`/chemists/profile/${section}`, data);
+    return response.data;
+  },
+
+  // Upload file
+  uploadFile: async (file, fieldName) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fieldName', fieldName);
+
+    const response = await API.post('/chemists/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  // Get profile completion percentage
+  getProfileCompletion: async () => {
+    const response = await API.get('/chemists/profile-completion');
+    return response.data;
+  },
+
+  // Get all chemists (public)
+  getAllChemists: async () => {
+    const response = await API.get('/chemists');
+    return response.data;
+  },
+
+  // Get chemist by ID (public)
+  getChemistById: async (id) => {
+    const response = await API.get(`/chemists/${id}`);
+    return response.data;
+  },
+
+  // Delete profile
+  deleteProfile: async () => {
+    const response = await API.delete('/chemists/profile');
+    return response.data;
+  }
+};
+
 export default API;

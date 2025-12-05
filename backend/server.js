@@ -42,6 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/hospitals', require('./routes/hospitalRoutes'));
+app.use('/api/chemists', require('./routes/chemistRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
