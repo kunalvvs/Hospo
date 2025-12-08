@@ -243,7 +243,7 @@ const HospitalRegistration = () => {
 
   const handleSkip = async () => {
     try {
-      // Validate session - CRITICAL
+      // Validate session
       const token = localStorage.getItem('token');
       if (!token) {
         alert('Session expired. Please login again.');
@@ -253,23 +253,27 @@ const HospitalRegistration = () => {
       
       setUploading(true);
       
+      // Mark registration as incomplete and save minimal data
       const minimalData = {
         hospitalName: formData.hospitalName || 'Hospital',
         practiceType: formData.practiceType || 'hospital',
+        streetAddress: formData.streetAddress || '',
         city: formData.city || 'Not specified',
+        pincode: formData.pincode || '',
         mainPhone: formData.mainPhone || '',
         contactEmail: formData.email || '',
         registrationComplete: false
       };
       
-      console.log('Saving minimal hospital data:', minimalData);
       const response = await hospitalAPI.updateProfile(minimalData);
-      console.log('Skip response:', response);
       
-      // Update localStorage with the response
+      // Save current form data locally
+      localStorage.setItem('hospitalData', JSON.stringify(formData));
+      
+      // Update currentUser
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const updatedUser = {
-        ...currentUser,
+        ...currentUser, 
         registrationComplete: false
       };
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));
@@ -278,7 +282,6 @@ const HospitalRegistration = () => {
       navigate('/hospital-dashboard');
     } catch (error) {
       console.error('Skip error:', error);
-      console.error('Error details:', error.response?.data);
       
       // Check if auth error
       if (error.response?.status === 401) {
@@ -288,7 +291,6 @@ const HospitalRegistration = () => {
         navigate('/login');
       } else {
         alert(error.response?.data?.message || 'Could not save. Redirecting to dashboard...');
-        // Still navigate to dashboard
         navigate('/hospital-dashboard');
       }
     } finally {

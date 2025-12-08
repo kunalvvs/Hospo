@@ -247,7 +247,7 @@ const chemistSchema = new mongoose.Schema({
     },
     formulation: {
       type: String,
-      enum: ['', 'tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'inhaler', 'other'],
+      enum: ['', 'tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'inhaler', 'supplement', 'device', 'other'],
       default: ''
     },
     strength: {
@@ -304,10 +304,70 @@ const chemistSchema = new mongoose.Schema({
     },
     category: {
       type: String,
-      enum: ['prescription', 'otc', 'ayurvedic', 'surgical', 'wellness', 'other'],
+      enum: ['', 'tablets', 'syrup', 'drops', 'ointment', 'injection', 'supplement', 'device', 'prescription', 'otc', 'ayurvedic', 'surgical', 'wellness', 'other'],
       default: 'other'
     },
+    subCategory: {
+      type: String,
+      enum: ['', 'fever', 'cold-cough', 'diabetes', 'bp', 'skin', 'pain-relief', 'antibiotics', 'vitamins', 'digestive', 'cardiac', 'respiratory', 'neurological', 'other'],
+      default: ''
+    },
+    prescriptionRequired: {
+      type: Boolean,
+      default: false
+    },
+    productStatus: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active'
+    },
+    mainImage: {
+      type: String,
+      default: ''
+    },
+    additionalImages: [{
+      type: String
+    }],
+    howToUse: {
+      type: String,
+      default: ''
+    },
+    dosageInformation: {
+      type: String,
+      default: ''
+    },
+    safetyInformation: {
+      type: String,
+      default: ''
+    },
+    stockHistory: [{
+      type: {
+        type: String,
+        enum: ['in', 'out'],
+        required: true
+      },
+      quantity: {
+        type: Number,
+        required: true
+      },
+      reason: {
+        type: String,
+        default: ''
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      },
+      updatedBy: {
+        type: String,
+        default: ''
+      }
+    }],
     addedDate: {
+      type: Date,
+      default: Date.now
+    },
+    lastUpdated: {
       type: Date,
       default: Date.now
     }
@@ -397,6 +457,10 @@ const chemistSchema = new mongoose.Schema({
       upi: { type: Boolean, default: false },
       wallet: { type: Boolean, default: false }
     },
+    paymentGateway: {
+      provider: { type: String, default: '' },
+      apiKey: { type: String, default: '' }
+    },
     gstBilling: {
       gstin: { type: String, default: '' },
       legalName: { type: String, default: '' }
@@ -409,6 +473,11 @@ const chemistSchema = new mongoose.Schema({
 
   // Bank Details
   accountDetails: {
+    accountHolderName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     accountNumber: {
       type: String,
       trim: true,

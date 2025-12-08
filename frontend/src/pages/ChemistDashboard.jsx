@@ -27,6 +27,8 @@ const ChemistDashboard = () => {
   // Inventory management states
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showProductList, setShowProductList] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProductIndex, setEditingProductIndex] = useState(null);
   const [newProduct, setNewProduct] = useState({
     productId: '',
     medicineName: '',
@@ -41,8 +43,25 @@ const ChemistDashboard = () => {
     gstSlab: '',
     discount: '',
     quantity: '',
-    offerTag: ''
+    offerTag: '',
+    category: '',
+    subCategory: '',
+    prescriptionRequired: false,
+    productStatus: 'active',
+    mainImage: '',
+    additionalImages: [],
+    howToUse: '',
+    dosageInformation: '',
+    safetyInformation: ''
   });
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [stockAction, setStockAction] = useState({ type: 'in', productIndex: null, quantity: '', reason: '' });
+  
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterPrescription, setFilterPrescription] = useState('');
   
   // Medicine name suggestions based on existing inventory
   const [medicineSuggestions, setMedicineSuggestions] = useState([]);
@@ -297,8 +316,11 @@ const ChemistDashboard = () => {
       else if (section === 'payments') {
         const updateData = {
           paymentSettings: editedData.paymentSettings || {},
+          accountDetails: editedData.accountDetails || {},
           upiId: editedData.upiId
         };
+        console.log('Saving payment data:', updateData);
+        console.log('Account details being sent:', editedData.accountDetails);
         response = await chemistAPI.updateSection('payments', updateData);
         setIsEditingPayments(false);
       }
@@ -330,24 +352,121 @@ const ChemistDashboard = () => {
   
   // Inventory management handlers
   const handleProductInputChange = (field, value) => {
-    setNewProduct(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (editingProduct !== null) {
+      setEditingProduct(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    } else {
+      setNewProduct(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const resetProductForm = () => {
+    setNewProduct({
+      productId: '',
+      medicineName: '',
+      genericName: '',
+      manufacturer: '',
+      formulation: '',
+      strength: '',
+      packDescription: '',
+      mrp: '',
+      price: '',
+      costPrice: '',
+      gstSlab: '',
+      discount: '',
+      quantity: '',
+      offerTag: '',
+      category: '',
+      subCategory: '',
+      prescriptionRequired: false,
+      productStatus: 'active',
+      mainImage: '',
+      additionalImages: [],
+      howToUse: '',
+      dosageInformation: '',
+      safetyInformation: ''
+    });
+    setEditingProduct(null);
+    setEditingProductIndex(null);
+  };
+
+  const handleProductImageUpload = async (file, fieldName) => {
+    try {
+      setUploading(true);
+      const uploadedUrl = await handleFileUpload(file, fieldName);
+      if (uploadedUrl) {
+        if (fieldName === 'mainImage') {
+          if (editingProduct !== null) {
+            setEditingProduct(prev => ({ ...prev, mainImage: uploadedUrl }));
+          } else {
+            setNewProduct(prev => ({ ...prev, mainImage: uploadedUrl }));
+          }
+        } else if (fieldName.startsWith('additionalImage')) {
+          if (editingProduct !== null) {
+            setEditingProduct(prev => ({
+              ...prev,
+              additionalImages: [...(prev.additionalImages || []), uploadedUrl]
+            }));
+          } else {
+            setNewProduct(prev => ({
+              ...prev,
+              additionalImages: [...(prev.additionalImages || []), uploadedUrl]
+            }));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAdditionalImage = (index) => {
+    if (editingProduct !== null) {
+      setEditingProduct(prev => ({
+        ...prev,
+        additionalImages: prev.additionalImages.filter((_, i) => i !== index)
+      }));
+    } else {
+      setNewProduct(prev => ({
+        ...prev,
+        additionalImages: prev.additionalImages.filter((_, i) => i !== index)
+      }));
+    }
   };
   
   const handleAddProduct = async () => {
     try {
-      if (!newProduct.medicineName || !newProduct.mrp || !newProduct.price) {
+      const productData = editingProduct || newProduct;
+      
+      if (!productData.medicineName || !productData.mrp || !productData.price) {
         alert('Please fill in required fields: Medicine Name, MRP, and Selling Price');
         return;
       }
       
       const currentInventory = chemistData?.inventory || [];
-      const updatedInventory = [...currentInventory, {
-        ...newProduct,
-        addedDate: new Date()
-      }];
+      let updatedInventory;
+
+      if (editingProductIndex !== null) {
+        // Update existing product
+        updatedInventory = currentInventory.map((item, index) =>
+          index === editingProductIndex ? { ...productData, lastUpdated: new Date() } : item
+        );
+      } else {
+        // Add new product
+        updatedInventory = [...currentInventory, {
+          ...productData,
+          addedDate: new Date(),
+          lastUpdated: new Date()
+        }];
+      }
       
       const response = await chemistAPI.updateSection('inventory', { inventory: updatedInventory });
       
@@ -355,33 +474,26 @@ const ChemistDashboard = () => {
         setChemistData(response.data);
         localStorage.setItem('chemistData', JSON.stringify(response.data));
         
-        // Reset form
-        setNewProduct({
-          productId: '',
-          medicineName: '',
-          genericName: '',
-          manufacturer: '',
-          formulation: '',
-          strength: '',
-          packDescription: '',
-          mrp: '',
-          price: '',
-          costPrice: '',
-          gstSlab: '',
-          discount: '',
-          quantity: '',
-          offerTag: ''
-        });
-        
-        alert('Product added successfully!');
+        alert(editingProductIndex !== null ? 'Product updated successfully!' : 'Product added successfully!');
+        resetProductForm();
         setShowAddProduct(false);
         setShowProductList(true);
       } else {
-        alert(response.message || 'Failed to add product');
+        alert(response.message || 'Failed to save product');
       }
     } catch (error) {
-      console.error('Error adding product:', error);
-      alert(error.response?.data?.message || 'Failed to add product');
+      console.error('Error saving product:', error);
+      alert(error.response?.data?.message || 'Failed to save product');
+    }
+  };
+
+  const handleEditProduct = (index) => {
+    const product = chemistData?.inventory[index];
+    if (product) {
+      setEditingProduct({ ...product });
+      setEditingProductIndex(index);
+      setShowAddProduct(true);
+      setShowProductList(false);
     }
   };
   
@@ -405,6 +517,113 @@ const ChemistDashboard = () => {
       console.error('Error deleting product:', error);
       alert(error.response?.data?.message || 'Failed to delete product');
     }
+  };
+
+  const handleStockUpdate = async () => {
+    try {
+      if (!stockAction.quantity || stockAction.quantity <= 0) {
+        alert('Please enter a valid quantity');
+        return;
+      }
+
+      const currentInventory = chemistData?.inventory || [];
+      const product = currentInventory[stockAction.productIndex];
+
+      if (!product) {
+        alert('Product not found');
+        return;
+      }
+
+      const quantityChange = stockAction.type === 'in' 
+        ? parseInt(stockAction.quantity) 
+        : -parseInt(stockAction.quantity);
+
+      const newQuantity = (product.quantity || 0) + quantityChange;
+
+      if (newQuantity < 0) {
+        alert('Insufficient stock for this operation');
+        return;
+      }
+
+      const stockHistoryEntry = {
+        type: stockAction.type,
+        quantity: parseInt(stockAction.quantity),
+        reason: stockAction.reason,
+        date: new Date(),
+        updatedBy: chemistData.name || 'Admin'
+      };
+
+      const updatedInventory = currentInventory.map((item, index) => {
+        if (index === stockAction.productIndex) {
+          return {
+            ...item,
+            quantity: newQuantity,
+            stockHistory: [...(item.stockHistory || []), stockHistoryEntry],
+            lastUpdated: new Date()
+          };
+        }
+        return item;
+      });
+
+      const response = await chemistAPI.updateSection('inventory', { inventory: updatedInventory });
+
+      if (response.success) {
+        setChemistData(response.data);
+        localStorage.setItem('chemistData', JSON.stringify(response.data));
+        alert(`Stock ${stockAction.type === 'in' ? 'added' : 'removed'} successfully!`);
+        setShowStockModal(false);
+        setStockAction({ type: 'in', productIndex: null, quantity: '', reason: '' });
+      } else {
+        alert(response.message || 'Failed to update stock');
+      }
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      alert(error.response?.data?.message || 'Failed to update stock');
+    }
+  };
+
+  const openStockModal = (index, type) => {
+    setStockAction({ type, productIndex: index, quantity: '', reason: '' });
+    setShowStockModal(true);
+  };
+
+  // Filter inventory based on search and filter criteria
+  const getFilteredInventory = () => {
+    if (!chemistData?.inventory) return [];
+    
+    let filtered = chemistData.inventory;
+    
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.medicineName?.toLowerCase().includes(query) ||
+        product.genericName?.toLowerCase().includes(query) ||
+        product.manufacturer?.toLowerCase().includes(query) ||
+        product.category?.toLowerCase().includes(query) ||
+        product.subCategory?.toLowerCase().includes(query) ||
+        product.productId?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply category filter
+    if (filterCategory) {
+      filtered = filtered.filter(product => product.category === filterCategory);
+    }
+    
+    // Apply status filter
+    if (filterStatus) {
+      filtered = filtered.filter(product => product.productStatus === filterStatus);
+    }
+    
+    // Apply prescription filter
+    if (filterPrescription === 'yes') {
+      filtered = filtered.filter(product => product.prescriptionRequired === true);
+    } else if (filterPrescription === 'no') {
+      filtered = filtered.filter(product => product.prescriptionRequired === false);
+    }
+    
+    return filtered;
   };
 
   const menuItems = [
@@ -1898,16 +2117,37 @@ const ChemistDashboard = () => {
                       <label>Mobile Wallets:</label>
                       <span>{chemistData?.paymentSettings?.paymentMethods?.wallet ? 'Yes' : 'No'}</span>
                     </div>
+                    
                     <div className="info-row full-width">
-                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>GST Billing Settings</h3>
+                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>Online Payment Gateway</h3>
                     </div>
                     <div className="info-row">
-                      <label>GSTIN:</label>
-                      <span>{chemistData?.paymentSettings?.gstBilling?.gstin || 'Not provided'}</span>
+                      <label>Payment Gateway Provider:</label>
+                      <span>{chemistData?.paymentSettings?.paymentGateway?.provider || 'Not configured'}</span>
                     </div>
                     <div className="info-row">
-                      <label>Legal Name on Bills:</label>
-                      <span>{chemistData?.paymentSettings?.gstBilling?.legalName || 'Not provided'}</span>
+                      <label>Gateway API Key:</label>
+                      <span>{chemistData?.paymentSettings?.paymentGateway?.apiKey ? '••••••••' : 'Not configured'}</span>
+                    </div>
+
+                    <div className="info-row full-width">
+                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>Bank Account for Payouts</h3>
+                    </div>
+                    <div className="info-row">
+                      <label>Account Holder Name:</label>
+                      <span>{chemistData?.accountDetails?.accountHolderName || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Account Number:</label>
+                      <span>{chemistData?.accountDetails?.accountNumber || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>IFSC Code:</label>
+                      <span>{chemistData?.accountDetails?.ifscCode || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Bank Name:</label>
+                      <span>{chemistData?.accountDetails?.bankName || 'Not provided'}</span>
                     </div>
                     <div className="info-row">
                       <label>Cancelled Cheque:</label>
@@ -1924,6 +2164,18 @@ const ChemistDashboard = () => {
                       ) : (
                         <span>Not uploaded</span>
                       )}
+                    </div>
+
+                    <div className="info-row full-width">
+                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>GST Billing Settings</h3>
+                    </div>
+                    <div className="info-row">
+                      <label>GSTIN:</label>
+                      <span>{chemistData?.paymentSettings?.gstBilling?.gstin || 'Not provided'}</span>
+                    </div>
+                    <div className="info-row">
+                      <label>Legal Name on Bills:</label>
+                      <span>{chemistData?.paymentSettings?.gstBilling?.legalName || 'Not provided'}</span>
                     </div>
                   </div>
                   <div className="form-actions">
@@ -2011,7 +2263,121 @@ const ChemistDashboard = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>Bank Account for Verification</h3>
+                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>Online Payment Gateway</h3>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Payment Gateway Provider</label>
+                      <select 
+                        value={editedData.paymentSettings?.paymentGateway?.provider || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          paymentSettings: {
+                            ...prev.paymentSettings,
+                            paymentGateway: {
+                              ...prev.paymentSettings?.paymentGateway,
+                              provider: e.target.value
+                            }
+                          }
+                        }))}
+                      >
+                        <option value="">Select provider</option>
+                        <option value="razorpay">Razorpay</option>
+                        <option value="paytm">Paytm</option>
+                        <option value="phonepe">PhonePe</option>
+                        <option value="stripe">Stripe</option>
+                        <option value="ccavenue">CCAvenue</option>
+                        <option value="instamojo">Instamojo</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Gateway API Key</label>
+                      <input 
+                        type="text" 
+                        value={editedData.paymentSettings?.paymentGateway?.apiKey || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          paymentSettings: {
+                            ...prev.paymentSettings,
+                            paymentGateway: {
+                              ...prev.paymentSettings?.paymentGateway,
+                              apiKey: e.target.value
+                            }
+                          }
+                        }))}
+                        placeholder="API Key (if applicable)" 
+                      />
+                      <small>Enter your payment gateway API key</small>
+                    </div>
+
+                    <div className="form-group full-width">
+                      <h3 style={{ fontSize: '18px', margin: '20px 0 15px' }}>Bank Account for Payouts</h3>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Account Holder Name</label>
+                      <input 
+                        type="text" 
+                        value={editedData.accountDetails?.accountHolderName || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          accountDetails: {
+                            ...prev.accountDetails,
+                            accountHolderName: e.target.value
+                          }
+                        }))}
+                        placeholder="As per bank records" 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Bank Account Number</label>
+                      <input 
+                        type="text" 
+                        value={editedData.accountDetails?.accountNumber || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          accountDetails: {
+                            ...prev.accountDetails,
+                            accountNumber: e.target.value
+                          }
+                        }))}
+                        placeholder="Account number" 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>IFSC Code</label>
+                      <input 
+                        type="text" 
+                        value={editedData.accountDetails?.ifscCode || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          accountDetails: {
+                            ...prev.accountDetails,
+                            ifscCode: e.target.value
+                          }
+                        }))}
+                        placeholder="Bank IFSC code" 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Bank Name</label>
+                      <input 
+                        type="text" 
+                        value={editedData.accountDetails?.bankName || ''}
+                        onChange={(e) => setEditedData(prev => ({
+                          ...prev,
+                          accountDetails: {
+                            ...prev.accountDetails,
+                            bankName: e.target.value
+                          }
+                        }))}
+                        placeholder="Name of bank" 
+                      />
                     </div>
 
                     <div className="form-group full-width">
@@ -2125,12 +2491,33 @@ const ChemistDashboard = () => {
 
               {showAddProduct && (
                 <>
+                  <h3 style={{ marginBottom: '20px', color: '#234f83' }}>
+                    {editingProductIndex !== null ? 'Edit Product' : 'Add New Product'}
+                  </h3>
+                  
                   <div className="form-grid">
+                    {/* Basic Information */}
+                    <div className="form-group full-width">
+                      <h4 style={{ fontSize: '16px', marginBottom: '15px', color: '#234f83' }}>Basic Information</h4>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Product Status *</label>
+                      <select 
+                        value={(editingProduct || newProduct).productStatus}
+                        onChange={(e) => handleProductInputChange('productStatus', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+
                     <div className="form-group">
                       <label>Product ID / SKU</label>
                       <input 
                         type="text" 
-                        value={newProduct.productId}
+                        value={(editingProduct || newProduct).productId}
                         onChange={(e) => handleProductInputChange('productId', e.target.value)}
                         placeholder="Unique identifier" 
                       />
@@ -2142,7 +2529,7 @@ const ChemistDashboard = () => {
                       <input 
                         type="text" 
                         list="medicine-suggestions"
-                        value={newProduct.medicineName}
+                        value={(editingProduct || newProduct).medicineName}
                         onChange={(e) => handleProductInputChange('medicineName', e.target.value)}
                         placeholder="Brand + Generic name" 
                       />
@@ -2155,29 +2542,70 @@ const ChemistDashboard = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Manufacturer *</label>
-                      <input 
-                        type="text" 
-                        value={newProduct.manufacturer}
-                        onChange={(e) => handleProductInputChange('manufacturer', e.target.value)}
-                        placeholder="Company name" 
-                      />
-                    </div>
-
-                    <div className="form-group">
                       <label>Generic Name / Active Ingredient</label>
                       <input 
                         type="text" 
-                        value={newProduct.genericName}
+                        value={(editingProduct || newProduct).genericName}
                         onChange={(e) => handleProductInputChange('genericName', e.target.value)}
                         placeholder="e.g., Paracetamol" 
                       />
                     </div>
 
                     <div className="form-group">
+                      <label>Manufacturer *</label>
+                      <input 
+                        type="text" 
+                        value={(editingProduct || newProduct).manufacturer}
+                        onChange={(e) => handleProductInputChange('manufacturer', e.target.value)}
+                        placeholder="Company name" 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Category *</label>
+                      <select 
+                        value={(editingProduct || newProduct).category}
+                        onChange={(e) => handleProductInputChange('category', e.target.value)}
+                      >
+                        <option value="">Select category</option>
+                        <option value="tablets">Tablets</option>
+                        <option value="syrup">Syrup</option>
+                        <option value="drops">Drops</option>
+                        <option value="ointment">Ointment</option>
+                        <option value="injection">Injection</option>
+                        <option value="supplement">Supplement</option>
+                        <option value="device">Device</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Sub-Category</label>
+                      <select 
+                        value={(editingProduct || newProduct).subCategory}
+                        onChange={(e) => handleProductInputChange('subCategory', e.target.value)}
+                      >
+                        <option value="">Select sub-category</option>
+                        <option value="fever">Fever</option>
+                        <option value="cold-cough">Cold & Cough</option>
+                        <option value="diabetes">Diabetes</option>
+                        <option value="bp">Blood Pressure</option>
+                        <option value="skin">Skin</option>
+                        <option value="pain-relief">Pain Relief</option>
+                        <option value="antibiotics">Antibiotics</option>
+                        <option value="vitamins">Vitamins</option>
+                        <option value="digestive">Digestive</option>
+                        <option value="cardiac">Cardiac</option>
+                        <option value="respiratory">Respiratory</option>
+                        <option value="neurological">Neurological</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
                       <label>Formulation *</label>
                       <select 
-                        value={newProduct.formulation}
+                        value={(editingProduct || newProduct).formulation}
                         onChange={(e) => handleProductInputChange('formulation', e.target.value)}
                       >
                         <option value="">Select type</option>
@@ -2188,6 +2616,8 @@ const ChemistDashboard = () => {
                         <option value="ointment">Ointment</option>
                         <option value="drops">Drops</option>
                         <option value="inhaler">Inhaler</option>
+                        <option value="supplement">Supplement</option>
+                        <option value="device">Device</option>
                       </select>
                     </div>
 
@@ -2195,7 +2625,7 @@ const ChemistDashboard = () => {
                       <label>Strength</label>
                       <input 
                         type="text" 
-                        value={newProduct.strength}
+                        value={(editingProduct || newProduct).strength}
                         onChange={(e) => handleProductInputChange('strength', e.target.value)}
                         placeholder="e.g., 500 mg, 5 mg/5 ml" 
                       />
@@ -2205,10 +2635,27 @@ const ChemistDashboard = () => {
                       <label>Pack Description</label>
                       <input 
                         type="text" 
-                        value={newProduct.packDescription}
+                        value={(editingProduct || newProduct).packDescription}
                         onChange={(e) => handleProductInputChange('packDescription', e.target.value)}
                         placeholder="e.g., Strip of 10 tablets" 
                       />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(editingProduct || newProduct).prescriptionRequired || false}
+                          onChange={(e) => handleProductInputChange('prescriptionRequired', e.target.checked)}
+                          style={{ width: 'auto' }}
+                        />
+                        <span>Prescription Required?</span>
+                      </label>
+                    </div>
+
+                    {/* Pricing Information */}
+                    <div className="form-group full-width">
+                      <h4 style={{ fontSize: '16px', marginBottom: '15px', marginTop: '20px', color: '#234f83' }}>Pricing Information</h4>
                     </div>
 
                     <div className="form-group">
@@ -2217,7 +2664,7 @@ const ChemistDashboard = () => {
                         <span className="icon">₹</span>
                         <input 
                           type="number" 
-                          value={newProduct.mrp}
+                          value={(editingProduct || newProduct).mrp}
                           onChange={(e) => handleProductInputChange('mrp', e.target.value)}
                           placeholder="Printed MRP" 
                         />
@@ -2230,7 +2677,7 @@ const ChemistDashboard = () => {
                         <span className="icon">₹</span>
                         <input 
                           type="number" 
-                          value={newProduct.price}
+                          value={(editingProduct || newProduct).price}
                           onChange={(e) => handleProductInputChange('price', e.target.value)}
                           placeholder="Customer price" 
                         />
@@ -2243,7 +2690,7 @@ const ChemistDashboard = () => {
                         <span className="icon">₹</span>
                         <input 
                           type="number" 
-                          value={newProduct.costPrice}
+                          value={(editingProduct || newProduct).costPrice}
                           onChange={(e) => handleProductInputChange('costPrice', e.target.value)}
                           placeholder="Your buying cost" 
                         />
@@ -2253,7 +2700,7 @@ const ChemistDashboard = () => {
                     <div className="form-group">
                       <label>GST Slab %</label>
                       <select 
-                        value={newProduct.gstSlab}
+                        value={(editingProduct || newProduct).gstSlab}
                         onChange={(e) => handleProductInputChange('gstSlab', e.target.value)}
                       >
                         <option value="">Select GST rate</option>
@@ -2268,7 +2715,7 @@ const ChemistDashboard = () => {
                       <label>Discount %</label>
                       <input 
                         type="number" 
-                        value={newProduct.discount}
+                        value={(editingProduct || newProduct).discount}
                         onChange={(e) => handleProductInputChange('discount', e.target.value)}
                         placeholder="Current discount" 
                       />
@@ -2278,7 +2725,7 @@ const ChemistDashboard = () => {
                       <label>Stock Quantity</label>
                       <input 
                         type="number" 
-                        value={newProduct.quantity}
+                        value={(editingProduct || newProduct).quantity}
                         onChange={(e) => handleProductInputChange('quantity', e.target.value)}
                         placeholder="Available stock" 
                       />
@@ -2288,56 +2735,577 @@ const ChemistDashboard = () => {
                       <label>Offer / Promotion Tag</label>
                       <input 
                         type="text" 
-                        value={newProduct.offerTag}
+                        value={(editingProduct || newProduct).offerTag}
                         onChange={(e) => handleProductInputChange('offerTag', e.target.value)}
                         placeholder="e.g., Buy 1 Get 1, 20% Off" 
                       />
                     </div>
+
+                    {/* Product Images */}
+                    <div className="form-group full-width">
+                      <h4 style={{ fontSize: '16px', marginBottom: '15px', marginTop: '20px', color: '#234f83' }}>Product Images</h4>
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Main Product Image</label>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) handleProductImageUpload(file, 'mainImage');
+                        }}
+                        disabled={uploading}
+                      />
+                      {(editingProduct || newProduct).mainImage && (
+                        <div style={{ marginTop: '10px' }}>
+                          <img 
+                            src={(editingProduct || newProduct).mainImage} 
+                            alt="Main product" 
+                            style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '4px', border: '1px solid #ddd' }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Additional Images (up to 6)</label>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const currentImages = (editingProduct || newProduct).additionalImages || [];
+                            if (currentImages.length >= 6) {
+                              alert('Maximum 6 additional images allowed');
+                              return;
+                            }
+                            handleProductImageUpload(file, 'additionalImage');
+                          }
+                        }}
+                        disabled={uploading || ((editingProduct || newProduct).additionalImages || []).length >= 6}
+                      />
+                      {((editingProduct || newProduct).additionalImages || []).length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+                          {((editingProduct || newProduct).additionalImages || []).map((img, idx) => (
+                            <div key={idx} style={{ position: 'relative' }}>
+                              <img 
+                                src={img} 
+                                alt={`Additional ${idx + 1}`} 
+                                style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} 
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => handleRemoveAdditionalImage(idx)}
+                                style={{ 
+                                  position: 'absolute', 
+                                  top: '-8px', 
+                                  right: '-8px', 
+                                  background: 'red', 
+                                  color: 'white', 
+                                  border: 'none', 
+                                  borderRadius: '50%', 
+                                  width: '24px', 
+                                  height: '24px', 
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  lineHeight: '1'
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <small>Current: {((editingProduct || newProduct).additionalImages || []).length} / 6 images</small>
+                    </div>
+
+                    {/* Usage & Safety Information */}
+                    <div className="form-group full-width">
+                      <h4 style={{ fontSize: '16px', marginBottom: '15px', marginTop: '20px', color: '#234f83' }}>Usage & Safety Information</h4>
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>How to Use / Directions</label>
+                      <textarea 
+                        rows="3"
+                        value={(editingProduct || newProduct).howToUse}
+                        onChange={(e) => handleProductInputChange('howToUse', e.target.value)}
+                        placeholder="Describe how to use this medicine..."
+                        style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Dosage Information</label>
+                      <textarea 
+                        rows="3"
+                        value={(editingProduct || newProduct).dosageInformation}
+                        onChange={(e) => handleProductInputChange('dosageInformation', e.target.value)}
+                        placeholder="Recommended dosage and frequency..."
+                        style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>Safety Information / Warnings</label>
+                      <textarea 
+                        rows="4"
+                        value={(editingProduct || newProduct).safetyInformation}
+                        onChange={(e) => handleProductInputChange('safetyInformation', e.target.value)}
+                        placeholder="Side effects, contraindications, precautions..."
+                        style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                    </div>
                   </div>
 
+                  {uploading && (
+                    <div style={{ textAlign: 'center', padding: '10px', color: '#234f83' }}>
+                      Uploading file...
+                    </div>
+                  )}
+
                   <div className="form-actions">
-                    <button className="btn-primary" onClick={handleAddProduct}>Add Product</button>
-                    <button className="btn-secondary" onClick={() => setShowAddProduct(false)}>Cancel</button>
+                    <button className="btn-primary" onClick={handleAddProduct} disabled={uploading}>
+                      {editingProductIndex !== null ? 'Update Product' : 'Add Product'}
+                    </button>
+                    <button className="btn-secondary" onClick={() => {
+                      resetProductForm();
+                      setShowAddProduct(false);
+                    }} disabled={uploading}>
+                      Cancel
+                    </button>
                   </div>
                 </>
               )}
 
               {showProductList && (
                 <>
+                  {/* Search and Filter Section */}
+                  <div style={{ 
+                    marginBottom: '25px', 
+                    padding: '20px', 
+                    backgroundColor: '#f8f9fa', 
+                    borderRadius: '8px',
+                    border: '1px solid #ddd'
+                  }}>
+                    <h4 style={{ marginBottom: '15px', color: '#234f83', fontSize: '16px' }}>
+                      🔍 Search & Filter Products
+                    </h4>
+                    
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                      gap: '15px',
+                      marginBottom: '15px'
+                    }}>
+                      {/* Search Input */}
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                          Search
+                        </label>
+                        <input 
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Medicine name, category, manufacturer..."
+                          style={{ 
+                            width: '100%', 
+                            padding: '10px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #ddd',
+                            fontSize: '14px'
+                          }}
+                        />
+                      </div>
+
+                      {/* Category Filter */}
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                          Category
+                        </label>
+                        <select 
+                          value={filterCategory}
+                          onChange={(e) => setFilterCategory(e.target.value)}
+                          style={{ 
+                            width: '100%', 
+                            padding: '10px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #ddd',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">All Categories</option>
+                          <option value="tablets">Tablets</option>
+                          <option value="syrup">Syrup</option>
+                          <option value="drops">Drops</option>
+                          <option value="ointment">Ointment</option>
+                          <option value="injection">Injection</option>
+                          <option value="supplement">Supplement</option>
+                          <option value="device">Device</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                          Status
+                        </label>
+                        <select 
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value)}
+                          style={{ 
+                            width: '100%', 
+                            padding: '10px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #ddd',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">All Status</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </div>
+
+                      {/* Prescription Filter */}
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                          Prescription
+                        </label>
+                        <select 
+                          value={filterPrescription}
+                          onChange={(e) => setFilterPrescription(e.target.value)}
+                          style={{ 
+                            width: '100%', 
+                            padding: '10px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #ddd',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">All</option>
+                          <option value="yes">Prescription Required</option>
+                          <option value="no">No Prescription</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Clear Filters Button */}
+                    {(searchQuery || filterCategory || filterStatus || filterPrescription) && (
+                      <button 
+                        onClick={() => {
+                          setSearchQuery('');
+                          setFilterCategory('');
+                          setFilterStatus('');
+                          setFilterPrescription('');
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#6c757d',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
+
+                    <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+                      Showing <strong>{getFilteredInventory().length}</strong> of <strong>{chemistData?.inventory?.length || 0}</strong> products
+                    </div>
+                  </div>
+
                   <div className="product-list" style={{ marginBottom: '20px' }}>
-                    {chemistData?.inventory && chemistData.inventory.length > 0 ? (
-                      <div className="inventory-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                        {chemistData.inventory.map((product, index) => (
-                          <div key={index} className="product-card" style={{ 
+                    {getFilteredInventory().length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {getFilteredInventory().map((product, index) => {
+                          // Find original index for edit/delete operations
+                          const originalIndex = chemistData.inventory.findIndex(p => 
+                            p.medicineName === product.medicineName && 
+                            p.manufacturer === product.manufacturer &&
+                            p.productId === product.productId
+                          );
+                          
+                          return (
+                          <div key={index} style={{ 
                             border: '1px solid #ddd', 
                             borderRadius: '8px', 
-                            padding: '15px',
-                            backgroundColor: '#f9f9f9'
+                            padding: '20px',
+                            backgroundColor: product.productStatus === 'inactive' ? '#f5f5f5' : '#fff',
+                            opacity: product.productStatus === 'inactive' ? 0.7 : 1
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
-                              <h4 style={{ margin: 0, color: '#234f83' }}>{product.medicineName}</h4>
-                              <button 
-                                className="btn-link" 
-                                style={{ color: 'red', padding: '5px 10px' }}
-                                onClick={() => handleDeleteProduct(index)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#666' }}>
-                              <p style={{ margin: '5px 0' }}><strong>Generic:</strong> {product.genericName || 'N/A'}</p>
-                              <p style={{ margin: '5px 0' }}><strong>Manufacturer:</strong> {product.manufacturer}</p>
-                              <p style={{ margin: '5px 0' }}><strong>Formulation:</strong> {product.formulation || 'N/A'}</p>
-                              <p style={{ margin: '5px 0' }}><strong>Strength:</strong> {product.strength || 'N/A'}</p>
-                              <p style={{ margin: '5px 0' }}><strong>Pack:</strong> {product.packDescription || 'N/A'}</p>
-                              <p style={{ margin: '5px 0' }}><strong>MRP:</strong> ₹{product.mrp}</p>
-                              <p style={{ margin: '5px 0' }}><strong>Selling Price:</strong> ₹{product.price}</p>
-                              {product.discount && <p style={{ margin: '5px 0' }}><strong>Discount:</strong> {product.discount}%</p>}
-                              {product.quantity && <p style={{ margin: '5px 0' }}><strong>Stock:</strong> {product.quantity}</p>}
-                              {product.offerTag && <p style={{ margin: '5px 0', color: '#28a745' }}><strong>Offer:</strong> {product.offerTag}</p>}
+                            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                              {/* Product Image */}
+                              <div style={{ flexShrink: 0 }}>
+                                {product.mainImage ? (
+                                  <img 
+                                    src={product.mainImage} 
+                                    alt={product.medicineName}
+                                    style={{ 
+                                      width: '120px', 
+                                      height: '120px', 
+                                      objectFit: 'cover', 
+                                      borderRadius: '8px',
+                                      border: '1px solid #ddd'
+                                    }}
+                                  />
+                                ) : (
+                                  <div style={{ 
+                                    width: '120px', 
+                                    height: '120px', 
+                                    backgroundColor: '#e9ecef',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '48px'
+                                  }}>
+                                    💊
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Product Details */}
+                              <div style={{ flex: 1, minWidth: '300px' }}>
+                                <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                  <div>
+                                    <h4 style={{ margin: '0 0 5px 0', color: '#234f83', fontSize: '18px' }}>
+                                      {product.medicineName}
+                                    </h4>
+                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                      <span style={{ 
+                                        padding: '4px 8px', 
+                                        borderRadius: '4px', 
+                                        fontSize: '12px',
+                                        backgroundColor: product.productStatus === 'active' ? '#28a745' : '#6c757d',
+                                        color: 'white'
+                                      }}>
+                                        {product.productStatus === 'active' ? 'Active' : 'Inactive'}
+                                      </span>
+                                      {product.prescriptionRequired && (
+                                        <span style={{ 
+                                          padding: '4px 8px', 
+                                          borderRadius: '4px', 
+                                          fontSize: '12px',
+                                          backgroundColor: '#ffc107',
+                                          color: '#000'
+                                        }}>
+                                          Rx Required
+                                        </span>
+                                      )}
+                                      {product.category && (
+                                        <span style={{ 
+                                          padding: '4px 8px', 
+                                          borderRadius: '4px', 
+                                          fontSize: '12px',
+                                          backgroundColor: '#17a2b8',
+                                          color: 'white'
+                                        }}>
+                                          {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div style={{ 
+                                  display: 'grid', 
+                                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                                  gap: '10px',
+                                  fontSize: '14px', 
+                                  color: '#666',
+                                  marginBottom: '15px'
+                                }}>
+                                  {product.genericName && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Generic:</strong> {product.genericName}
+                                    </p>
+                                  )}
+                                  {product.manufacturer && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Manufacturer:</strong> {product.manufacturer}
+                                    </p>
+                                  )}
+                                  {product.formulation && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Formulation:</strong> {product.formulation}
+                                    </p>
+                                  )}
+                                  {product.strength && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Strength:</strong> {product.strength}
+                                    </p>
+                                  )}
+                                  {product.packDescription && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Pack:</strong> {product.packDescription}
+                                    </p>
+                                  )}
+                                  {product.subCategory && (
+                                    <p style={{ margin: '5px 0' }}>
+                                      <strong>Sub-Category:</strong> {product.subCategory}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Pricing Row */}
+                                <div style={{ 
+                                  display: 'flex', 
+                                  gap: '20px', 
+                                  flexWrap: 'wrap',
+                                  padding: '10px',
+                                  backgroundColor: '#f8f9fa',
+                                  borderRadius: '4px',
+                                  marginBottom: '10px'
+                                }}>
+                                  <div>
+                                    <strong style={{ color: '#234f83' }}>MRP:</strong> 
+                                    <span style={{ marginLeft: '5px', fontSize: '16px' }}>₹{product.mrp}</span>
+                                  </div>
+                                  <div>
+                                    <strong style={{ color: '#28a745' }}>Selling Price:</strong> 
+                                    <span style={{ marginLeft: '5px', fontSize: '16px', fontWeight: 'bold' }}>₹{product.price}</span>
+                                  </div>
+                                  {product.discount > 0 && (
+                                    <div>
+                                      <strong style={{ color: '#dc3545' }}>Discount:</strong> 
+                                      <span style={{ marginLeft: '5px', fontSize: '16px' }}>{product.discount}%</span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <strong style={{ color: product.quantity <= 10 ? '#dc3545' : '#234f83' }}>Stock:</strong> 
+                                    <span style={{ marginLeft: '5px', fontSize: '16px', fontWeight: 'bold' }}>
+                                      {product.quantity || 0} units
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Additional Images */}
+                                {product.additionalImages && product.additionalImages.length > 0 && (
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <small style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
+                                      Additional Images:
+                                    </small>
+                                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                      {product.additionalImages.map((img, idx) => (
+                                        <img 
+                                          key={idx}
+                                          src={img} 
+                                          alt={`Additional ${idx + 1}`}
+                                          style={{ 
+                                            width: '50px', 
+                                            height: '50px', 
+                                            objectFit: 'cover', 
+                                            borderRadius: '4px',
+                                            border: '1px solid #ddd'
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Additional Info */}
+                                {(product.howToUse || product.dosageInformation || product.safetyInformation) && (
+                                  <details style={{ marginTop: '10px', fontSize: '14px' }}>
+                                    <summary style={{ cursor: 'pointer', color: '#234f83', fontWeight: 'bold' }}>
+                                      View Usage & Safety Information
+                                    </summary>
+                                    <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                      {product.howToUse && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                          <strong>How to Use:</strong>
+                                          <p style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>{product.howToUse}</p>
+                                        </div>
+                                      )}
+                                      {product.dosageInformation && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                          <strong>Dosage:</strong>
+                                          <p style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>{product.dosageInformation}</p>
+                                        </div>
+                                      )}
+                                      {product.safetyInformation && (
+                                        <div>
+                                          <strong>Safety Information:</strong>
+                                          <p style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>{product.safetyInformation}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </details>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div style={{ 
+                                  display: 'flex', 
+                                  gap: '10px', 
+                                  flexWrap: 'wrap',
+                                  marginTop: '15px'
+                                }}>
+                                  <button 
+                                    className="btn-primary" 
+                                    style={{ padding: '8px 16px', fontSize: '14px' }}
+                                    onClick={() => handleEditProduct(originalIndex)}
+                                  >
+                                    ✏️ Edit
+                                  </button>
+                                  <button 
+                                    className="btn-secondary" 
+                                    style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#28a745', color: 'white' }}
+                                    onClick={() => openStockModal(originalIndex, 'in')}
+                                  >
+                                    📥 Stock In
+                                  </button>
+                                  <button 
+                                    className="btn-secondary" 
+                                    style={{ padding: '8px 16px', fontSize: '14px', backgroundColor: '#ffc107', color: '#000' }}
+                                    onClick={() => openStockModal(originalIndex, 'out')}
+                                  >
+                                    📤 Stock Out
+                                  </button>
+                                  <button 
+                                    className="btn-link" 
+                                    style={{ color: 'red', padding: '8px 16px', fontSize: '14px' }}
+                                    onClick={() => handleDeleteProduct(originalIndex)}
+                                  >
+                                    🗑️ Delete
+                                  </button>
+                                </div>
+
+                                {/* Stock History Preview */}
+                                {product.stockHistory && product.stockHistory.length > 0 && (
+                                  <details style={{ marginTop: '10px', fontSize: '13px' }}>
+                                    <summary style={{ cursor: 'pointer', color: '#6c757d' }}>
+                                      Stock History ({product.stockHistory.length} entries)
+                                    </summary>
+                                    <div style={{ marginTop: '10px', maxHeight: '150px', overflowY: 'auto' }}>
+                                      {product.stockHistory.slice(-5).reverse().map((entry, idx) => (
+                                        <div key={idx} style={{ 
+                                          padding: '5px 10px', 
+                                          borderLeft: `3px solid ${entry.type === 'in' ? '#28a745' : '#ffc107'}`,
+                                          marginBottom: '5px',
+                                          backgroundColor: '#f8f9fa'
+                                        }}>
+                                          <strong>{entry.type === 'in' ? '📥 Stock In' : '📤 Stock Out'}:</strong> {entry.quantity} units
+                                          {entry.reason && ` - ${entry.reason}`}
+                                          <br/>
+                                          <small>{new Date(entry.date).toLocaleString()}</small>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
@@ -2347,9 +3315,112 @@ const ChemistDashboard = () => {
                   </div>
 
                   <div className="form-actions">
+                    <button className="btn-primary" onClick={() => {
+                      setShowProductList(false);
+                      setShowAddProduct(true);
+                    }}>
+                      Add New Product
+                    </button>
                     <button className="btn-secondary" onClick={() => setShowProductList(false)}>Close</button>
                   </div>
                 </>
+              )}
+
+              {/* Stock Management Modal */}
+              {showStockModal && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000
+                }}>
+                  <div style={{
+                    backgroundColor: 'white',
+                    padding: '30px',
+                    borderRadius: '8px',
+                    maxWidth: '500px',
+                    width: '90%',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}>
+                    <h3 style={{ marginBottom: '20px', color: '#234f83' }}>
+                      {stockAction.type === 'in' ? '📥 Add Stock' : '📤 Remove Stock'}
+                    </h3>
+                    
+                    {stockAction.productIndex !== null && chemistData?.inventory[stockAction.productIndex] && (
+                      <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                        <strong>{chemistData.inventory[stockAction.productIndex].medicineName}</strong>
+                        <br/>
+                        <small>Current Stock: {chemistData.inventory[stockAction.productIndex].quantity || 0} units</small>
+                      </div>
+                    )}
+
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Quantity *
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={stockAction.quantity}
+                        onChange={(e) => setStockAction(prev => ({ ...prev, quantity: e.target.value }))}
+                        placeholder="Enter quantity"
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          fontSize: '16px'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Reason / Notes
+                      </label>
+                      <textarea
+                        rows="3"
+                        value={stockAction.reason}
+                        onChange={(e) => setStockAction(prev => ({ ...prev, reason: e.target.value }))}
+                        placeholder={stockAction.type === 'in' ? 'e.g., New purchase, Return from customer' : 'e.g., Sale, Damaged, Expired'}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          fontSize: '14px',
+                          resize: 'vertical'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => {
+                          setShowStockModal(false);
+                          setStockAction({ type: 'in', productIndex: null, quantity: '', reason: '' });
+                        }}
+                        style={{ padding: '10px 20px' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={handleStockUpdate}
+                        style={{ padding: '10px 20px' }}
+                      >
+                        {stockAction.type === 'in' ? 'Add Stock' : 'Remove Stock'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </section>
           )}

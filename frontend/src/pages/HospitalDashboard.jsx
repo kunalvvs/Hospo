@@ -110,10 +110,8 @@ const HospitalDashboard = () => {
         // Update local storage
         localStorage.setItem('hospitalData', JSON.stringify(response.hospital));
         
-        // Check if registration is complete
-        if (!response.hospital.registrationComplete) {
-          navigate('/hospital-registration');
-        }
+        // Note: Allow access to dashboard even if registration incomplete
+        // Users can complete registration from dashboard settings
       }
     } catch (error) {
       console.error('Error fetching hospital data:', error);
