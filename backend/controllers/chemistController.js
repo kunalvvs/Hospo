@@ -169,7 +169,7 @@ const updateSection = async (req, res) => {
       case 'paymentSettings':
         updateFields = {
           paymentSettings: updateData.paymentSettings,
-          'accountDetails.upiId': updateData.upiId
+          accountDetails: updateData.accountDetails
         };
         break;
 
