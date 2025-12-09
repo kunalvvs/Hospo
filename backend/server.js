@@ -43,6 +43,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/hospitals', require('./routes/hospitalRoutes'));
 app.use('/api/chemists', require('./routes/chemistRoutes'));
+app.use('/api/pathlabs', require('./routes/pathlabRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pathlabAPI } from '../services/api';
 import './PathlabRegistration.css';
 
 const PathlabRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Account/Business Details
     labName: '',
@@ -27,10 +29,18 @@ const PathlabRegistration = () => {
   });
 
   useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'pathlab') {
-      navigate('/');
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'pathlab') {
+      navigate('/login');
+      return;
     }
+    
+    // Pre-fill email and phone from registration
+    setFormData(prev => ({
+      ...prev,
+      primaryEmail: user.email || '',
+      primaryMobile: user.phone || ''
+    }));
   }, [navigate]);
 
   const handleInputChange = (e) => {
@@ -67,38 +77,113 @@ const PathlabRegistration = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateStep2()) {
+    if (!validateStep2()) return;
+
+    setLoading(true);
+    try {
       const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const registrationData = {
-        ...currentUser,
-        ...formData,
+      
+      // Prepare data for backend - mapping all registration form fields to backend model
+      const profileData = {
+        // Identity fields
+        name: formData.labName,
+        labName: formData.labName,
+        businessType: formData.businessType,
+        authorizedPerson: formData.authorizedPerson,
+        directorName: formData.authorizedPerson,
+        
+        // Contact fields
+        primaryEmail: formData.primaryEmail,
+        primaryMobile: formData.primaryMobile,
+        alternatePhone: formData.phoneNumber,
+        phoneNumber: formData.phoneNumber,
+        landline: formData.landline,
+        
+        // Address fields (both flat and nested for compatibility)
+        doorNo: formData.doorNo,
+        street: formData.street,
+        locality: formData.locality,
+        landmark: formData.landmark,
+        city: formData.city,
+        pincode: formData.pincode,
+        address: {
+          street: `${formData.doorNo}, ${formData.street}`,
+          landmark: formData.locality || formData.landmark,
+          city: formData.city,
+          state: formData.city, // Can be updated later
+          pincode: formData.pincode
+        },
+        
+        // Working hours
+        workingHours: formData.workingHours,
+        sampleCollectionHours: formData.sampleCollectionHours,
+        
+        // Status
         registrationComplete: true
       };
-      localStorage.setItem('currentUser', JSON.stringify(registrationData));
-      localStorage.setItem('pathlabData', JSON.stringify(formData));
-      
-      alert('Pathlab registration completed successfully!');
-      navigate('/pathlab-dashboard');
+
+      // Update pathlab profile via API
+      const response = await pathlabAPI.updateProfile(profileData);
+
+      if (response.success) {
+        // Update localStorage
+        const updatedUser = {
+          ...currentUser,
+          registrationComplete: true
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        localStorage.setItem('pathlabData', JSON.stringify(response.pathlab));
+        
+        alert('Pathlab registration completed successfully!');
+        navigate('/pathlab-dashboard');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert(error.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSkip = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const minimalData = {
-      labName: formData.labName || 'Pathlab',
-      businessType: formData.businessType || 'Not specified',
-      city: formData.city || 'Not specified',
-      primaryMobile: formData.primaryMobile || currentUser.phone || '',
-      primaryEmail: formData.primaryEmail || currentUser.email || '',
-      registrationComplete: false,
-      skipped: true
-    };
-    
-    localStorage.setItem('pathlabData', JSON.stringify(minimalData));
-    alert('Registration skipped. You can complete your profile later from the dashboard.');
-    navigate('/pathlab-dashboard');
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      
+      // Prepare minimal data for skip
+      const minimalData = {
+        name: formData.labName || 'My Pathlab',
+        registrationComplete: false
+      };
+
+      // Update pathlab profile via API
+      const response = await pathlabAPI.updateProfile(minimalData);
+
+      if (response.success) {
+        localStorage.setItem('pathlabData', JSON.stringify(response.pathlab));
+        alert('Registration skipped. You can complete your profile later from the dashboard.');
+        navigate('/pathlab-dashboard');
+      }
+    } catch (error) {
+      console.error('Skip error:', error);
+      // If API fails, fallback to local storage
+      const minimalData = {
+        labName: formData.labName || 'Pathlab',
+        businessType: formData.businessType || 'Not specified',
+        city: formData.city || 'Not specified',
+        primaryMobile: formData.primaryMobile,
+        primaryEmail: formData.primaryEmail,
+        registrationComplete: false,
+        skipped: true
+      };
+      localStorage.setItem('pathlabData', JSON.stringify(minimalData));
+      alert('Registration skipped. You can complete your profile later from the dashboard.');
+      navigate('/pathlab-dashboard');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -352,8 +437,8 @@ const PathlabRegistration = () => {
                 Next →
               </button>
             ) : (
-              <button type="submit" className="pathlab-btn-primary">
-                Complete Registration
+              <button type="submit" className="pathlab-btn-primary" disabled={loading}>
+                {loading ? 'Processing...' : 'Complete Registration'}
               </button>
             )}
           </div>

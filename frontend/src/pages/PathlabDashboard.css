@@ -426,6 +426,44 @@ body {
   margin-top: 15px;
 }
 
+.pathlab-order-status-update {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  border: 2px solid #234f83;
+}
+
+.pathlab-order-status-update label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #234f83;
+}
+
+.pathlab-status-dropdown {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pathlab-status-dropdown:focus {
+  outline: none;
+  border-color: #234f83;
+  box-shadow: 0 0 0 3px rgba(35, 79, 131, 0.1);
+}
+
+.pathlab-status-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .pathlab-btn-small {
   padding: 8px 15px;
   border-radius: 6px;
@@ -612,6 +650,41 @@ body {
 
 .pathlab-upload-btn:hover {
   background: #1a3d66;
+}
+
+.pathlab-license-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pathlab-view-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.pathlab-view-btn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.pathlab-uploaded-status {
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* Tests Table */

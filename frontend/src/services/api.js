@@ -291,4 +291,95 @@ export const chemistAPI = {
   }
 };
 
+// ==================== PATHLAB APIs ====================
+export const pathlabAPI = {
+  // Get pathlab profile
+  getProfile: async () => {
+    const response = await API.get('/pathlabs/profile');
+    return response.data;
+  },
+
+  // Update complete profile
+  updateProfile: async (data) => {
+    const response = await API.put('/pathlabs/profile', data);
+    return response.data;
+  },
+
+  // Update specific section
+  updateSection: async (section, data) => {
+    const response = await API.put(`/pathlabs/profile/${section}`, data);
+    return response.data;
+  },
+
+  // Upload file
+  uploadFile: async (file, fieldName, docType = null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (fieldName) {
+      formData.append('fieldName', fieldName);
+    }
+    if (docType) {
+      formData.append('docType', docType);
+    }
+
+    const response = await API.post('/pathlabs/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  // Get profile completion percentage
+  getProfileCompletion: async () => {
+    const response = await API.get('/pathlabs/profile-completion');
+    return response.data;
+  },
+
+  // Get all pathlabs (public)
+  getAllPathlabs: async () => {
+    const response = await API.get('/pathlabs');
+    return response.data;
+  },
+
+  // Get pathlab by ID (public)
+  getPathlabById: async (id) => {
+    const response = await API.get(`/pathlabs/${id}`);
+    return response.data;
+  },
+
+  // Delete profile
+  deleteProfile: async () => {
+    const response = await API.delete('/pathlabs/profile');
+    return response.data;
+  },
+
+  // Test CRUD operations
+  addTest: async (testData) => {
+    const response = await API.post('/pathlabs/tests', testData);
+    return response.data;
+  },
+
+  updateTest: async (testId, testData) => {
+    const response = await API.put(`/pathlabs/tests/${testId}`, testData);
+    return response.data;
+  },
+
+  deleteTest: async (testId) => {
+    const response = await API.delete(`/pathlabs/tests/${testId}`);
+    return response.data;
+  },
+
+  // Document management
+  getDocuments: async () => {
+    const response = await API.get('/pathlabs/documents');
+    return response.data;
+  },
+
+  deleteDocument: async (docId) => {
+    const response = await API.delete(`/pathlabs/documents/${docId}`);
+    return response.data;
+  }
+};
+
 export default API;

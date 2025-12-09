@@ -1,25 +1,25 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const pathlabSchema = new mongoose.Schema({
-  // Basic Information
+const PathlabSchema = new mongoose.Schema({
+  // Authentication fields (from registration)
   name: {
     type: String,
-    required: [true, 'Please provide lab name'],
+    required: [true, 'Please provide a lab name'],
     trim: true
   },
   email: {
     type: String,
-    required: [true, 'Please provide email'],
+    required: [true, 'Please provide an email'],
     unique: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    trim: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
   phone: {
     type: String,
-    required: [true, 'Please provide phone number'],
-    unique: true,
-    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
+    required: [true, 'Please provide a phone number'],
+    trim: true
   },
   password: {
     type: String,
@@ -32,171 +32,202 @@ const pathlabSchema = new mongoose.Schema({
     default: 'pathlab',
     enum: ['pathlab']
   },
-  
-  // Registration & License
-  registrationNumber: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  registrationCertificate: String,
-  licenseNumber: String,
-  licenseDocument: String,
-  nabLAccreditation: {
-    type: Boolean,
-    default: false
-  },
-  nabLCertificate: String,
-  
-  // Lab Details
+
+  // Identity fields (Lab Identity section from Dashboard)
+  labName: String, // Alias for name field
+  businessType: String, // proprietorship, partnership, pvt-ltd, llp
+  authorizedPerson: String, // Contact person name
+  description: String, // Additional description
+  photo: String, // Lab photo URL
   labType: {
     type: String,
-    enum: ['Diagnostic Center', 'Pathology Lab', 'Radiology Center', 'Multi-Specialty Lab', 'Collection Center']
+    enum: ['diagnostic', 'pathology', 'clinical', 'reference', 'mobile', 'full-service']
   },
-  labPhoto: String,
   establishedYear: Number,
-  
-  // Owner/Director Information
+
+  // Registration & License fields (Legal Licenses section)
+  registrationNumber: String,
+  licenseNumber: String,
+  clinicalEstablishmentCert: String, // URL
+  drugsDiagnosticLicense: String, // URL
+  labRegistrationCert: String, // URL
+  NABLAccreditation: String,
+  NABLCertificate: String, // URL
+  ISOCertificate: String, // URL
+  otherCertifications: [String], // Array of URLs
+  accreditationExpiryDate: Date,
+  gstNumber: String,
+  panNumber: String,
+  gstDocument: String, // URL
+  panDocument: String, // URL
+
+  // Director/Owner Information
   directorName: String,
   directorQualification: String,
-  directorPhoto: String,
-  directorIdType: {
-    type: String,
-    enum: ['Aadhaar', 'PAN', 'Voter ID', 'Driving License', 'Passport']
-  },
+  directorExperience: Number,
+  directorIdType: String, // Aadhar, Passport, etc.
   directorIdNumber: String,
-  directorIdDocument: String,
-  
-  // Address
-  address: {
-    street: {
-      type: String,
-      required: [true, 'Please provide street address']
-    },
-    landmark: String,
-    city: {
-      type: String,
-      required: [true, 'Please provide city']
-    },
-    state: {
-      type: String,
-      required: [true, 'Please provide state']
-    },
-    pincode: {
-      type: String,
-      required: [true, 'Please provide pincode'],
-      match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
-    },
-    country: {
-      type: String,
-      default: 'India'
-    }
+  directorIdProof: String, // URL
+  directorPhoto: String, // URL
+  ownerIdProof: String, // URL
+
+  // Address fields (Address Details section)
+  doorNo: String, // Building/House number
+  street: String, // Street name
+  locality: String, // Area/Locality
+  landmark: String, // Nearby landmark
+  city: String,
+  state: String,
+  pincode: String,
+  country: {
+    type: String,
+    default: 'India'
   },
-  
-  // Contact Details
-  alternatePhone: String,
-  whatsappNumber: String,
+  // Nested address object for compatibility
+  address: {
+    street: String,
+    landmark: String,
+    city: String,
+    state: String,
+    pincode: String,
+    country: String
+  },
+
+  // Contact fields (Contact Info section)
+  primaryEmail: String, // For display (same as email)
+  primaryMobile: String, // For display (same as phone)
+  phoneNumber: String, // Alternate phone for bookings
+  alternatePhone: String, // Another alternate
+  landline: String, // Landline number
+  whatsappNumber: String, // WhatsApp contact
   emergencyContact: String,
   website: String,
-  
-  // Operating Hours
-  operatingHours: {
-    monday: { open: String, close: String, closed: Boolean },
-    tuesday: { open: String, close: String, closed: Boolean },
-    wednesday: { open: String, close: String, closed: Boolean },
-    thursday: { open: String, close: String, closed: Boolean },
-    friday: { open: String, close: String, closed: Boolean },
-    saturday: { open: String, close: String, closed: Boolean },
-    sunday: { open: String, close: String, closed: Boolean }
+  socialMedia: {
+    facebook: String,
+    instagram: String,
+    twitter: String
   },
+
+  // Working Hours (Contact Info section)
+  workingHours: String, // e.g., "Mon-Sat: 8:00 AM - 6:00 PM"
+  sampleCollectionHours: String, // e.g., "Morning/Evening shifts"
+  operatingHours: [{
+    day: {
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    },
+    openTime: String,
+    closeTime: String,
+    closed: {
+      type: Boolean,
+      default: false
+    }
+  }],
   is24x7: {
     type: Boolean,
     default: false
   },
-  
-  // Services & Tests
+
+  // Tests Catalog (Tests Catalog section)
+  testsCatalog: [{
+    testCode: String,
+    testName: String,
+    category: String, // Hematology, Biochemistry, etc.
+    specimen: String, // Blood, Urine, etc.
+    homeCollection: {
+      type: Boolean,
+      default: true
+    },
+    price: Number,
+    description: String,
+    duration: String, // Report delivery time
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+
+  // Services Offered
   services: [{
     type: String,
     enum: [
-      'Blood Test',
-      'Urine Test',
-      'X-Ray',
-      'CT Scan',
-      'MRI',
-      'Ultrasound',
-      'ECG',
-      'Echo',
-      'Endoscopy',
-      'Biopsy',
-      'COVID-19 Test',
-      'Thyroid Profile',
-      'Diabetes Panel',
-      'Liver Function Test',
-      'Kidney Function Test',
-      'Lipid Profile',
-      'Complete Blood Count',
-      'Vitamin Profile',
-      'Hormone Tests',
-      'Cancer Markers',
-      'Allergy Tests',
-      'Genetic Tests',
-      'Home Collection',
-      'Online Reports'
+      'Blood Tests', 'Urine Tests', 'Stool Tests', 'X-Ray', 'Ultrasound', 'ECG', 'CT Scan', 'MRI',
+      'Biopsy', 'Pathology', 'Microbiology', 'Biochemistry', 'Hematology', 'Serology',
+      'Immunology', 'Molecular Diagnostics', 'Cytology', 'Histopathology', 'Clinical Pathology',
+      'Home Sample Collection', 'Health Checkup Packages', 'COVID-19 Testing', 'Genetic Testing', 'Other'
     ]
   }],
-  
+
   // Test Categories
   testCategories: [{
-    category: String,
+    categoryName: String,
     tests: [{
       testName: String,
       price: Number,
       duration: String,
-      sampleType: String
+      description: String
     }]
   }],
-  
+
   // Facilities
   facilities: [{
     type: String,
     enum: [
-      'Home Sample Collection',
-      'Online Reports',
-      'Digital X-Ray',
-      'Color Doppler',
-      'Advanced Machines',
-      'NABL Certified',
-      'CAP Certified',
-      'ISO Certified',
-      'Emergency Services',
-      'Parking Available',
-      'Wheelchair Accessible',
-      'AC Waiting Room',
-      'Separate Collection Rooms'
+      'NABL Accredited', 'CAP Accredited', 'ISO Certified', 'Home Collection', 'Online Reports',
+      'Emergency Services', 'Parking Available', 'Wheelchair Accessible', 'Air Conditioned',
+      'WiFi', 'Waiting Room', 'Pharmacy', 'Other'
     ]
   }],
-  
+
   // Equipment
   equipment: [{
     name: String,
     manufacturer: String,
-    yearOfPurchase: Number
+    model: String,
+    quantity: Number
   }],
-  
-  // Staff
+
+  // Staff Details
   totalStaff: Number,
   pathologists: [{
     name: String,
     qualification: String,
-    registrationNumber: String,
-    specialization: String
+    experience: Number,
+    specialization: String,
+    registrationNumber: String
   }],
   technicians: Number,
-  
-  // Payment Options
+  supportStaff: Number,
+
+  // Payment & Billing (Payments section)
+  paymentModes: {
+    cash: { type: Boolean, default: true },
+    card: { type: Boolean, default: true },
+    upi: { type: Boolean, default: true },
+    netBanking: { type: Boolean, default: true },
+    wallet: { type: Boolean, default: true }
+  },
+  paymentOptions: {
+    prepaid: { type: Boolean, default: true },
+    cod: { type: Boolean, default: true },
+    emi: { type: Boolean, default: false }
+  },
+  reportDelivery: {
+    email: { type: Boolean, default: true },
+    whatsapp: { type: Boolean, default: true },
+    sms: { type: Boolean, default: false },
+    physical: { type: Boolean, default: false }
+  },
+  invoicePrefix: String, // e.g., "PL/2024/"
+  gstEnabled: {
+    type: Boolean,
+    default: false
+  },
+
+  // Payment Methods (Legacy)
   paymentMethods: [{
     type: String,
-    enum: ['Cash', 'Card', 'UPI', 'Net Banking', 'Wallet', 'Insurance', 'Corporate Tie-ups']
+    enum: ['Cash', 'Card', 'UPI', 'Net Banking', 'Wallet', 'Insurance']
   }],
   
   // Bank Details
@@ -206,19 +237,57 @@ const pathlabSchema = new mongoose.Schema({
     ifscCode: String,
     bankName: String,
     branchName: String,
-    upiId: String
+    accountType: {
+      type: String,
+      enum: ['Savings', 'Current']
+    }
   },
-  
-  // Pricing
+  upiId: String,
+
+  // Sample Collection (Collection section)
+  homeCollectionAvailable: {
+    type: Boolean,
+    default: true
+  },
+  serviceRadius: Number, // in km
+  coveredPinCodes: [String], // Array of PIN codes
   homeCollectionCharges: Number,
+  freeCollectionMinOrder: Number, // Minimum order value for free collection
+  collectionTimeSlots: {
+    morning: { type: Boolean, default: true }, // 6 AM - 12 PM
+    afternoon: { type: Boolean, default: true }, // 12 PM - 4 PM
+    evening: { type: Boolean, default: true } // 4 PM - 8 PM
+  },
+
+  // Pricing Details
   urgentReportCharges: Number,
   discounts: {
-    seniorCitizen: Number,
-    packages: Boolean,
-    corporateDiscount: Number
+    senior: Number,
+    student: Number,
+    bulk: Number
   },
-  
-  // Performance Metrics
+
+  // Health Packages
+  healthPackages: [{
+    packageName: String,
+    description: String,
+    testsIncluded: [String],
+    price: Number,
+    duration: String
+  }],
+
+  // Tie-ups & Partnerships
+  hospitalTieups: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hospital'
+  }],
+  doctorReferrals: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor'
+  }],
+  insuranceAccepted: [String],
+
+  // Statistics & Metrics
   totalTests: {
     type: Number,
     default: 0
@@ -227,8 +296,6 @@ const pathlabSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  
-  // Ratings & Reviews
   rating: {
     type: Number,
     default: 0,
@@ -239,18 +306,20 @@ const pathlabSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  
-  // Partnerships
-  hospitalTieups: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Hospital'
+  reviews: [{
+    patient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rating: Number,
+    comment: String,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
-  doctorReferrals: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Doctor'
-  }],
-  
-  // Account Status
+
+  // Verification & Status
   isVerified: {
     type: Boolean,
     default: false
@@ -263,33 +332,113 @@ const pathlabSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  phoneVerified: {
+    type: Boolean,
+    default: false
+  },
   registrationComplete: {
     type: Boolean,
     default: false
   },
-  
-  // Additional Info
-  description: String,
-  specializations: [String],
-  
-  // Timestamps
-  lastLogin: Date
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  verificationNotes: String,
+
+  // Additional Documents
+  documents: [{
+    docType: String, // Type of document
+    docName: String, // Name of document
+    url: String, // Cloudinary URL
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });
 
-// Encrypt password before saving
-pathlabSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    next();
+// Pre-save middleware to sync fields
+PathlabSchema.pre('save', async function(next) {
+  // Sync name fields
+  if (this.isModified('name') && !this.labName) {
+    this.labName = this.name;
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  if (this.isModified('labName') && !this.name) {
+    this.name = this.labName;
+  }
+
+  // Sync email/phone fields
+  if (this.isModified('email') && !this.primaryEmail) {
+    this.primaryEmail = this.email;
+  }
+  if (this.isModified('phone') && !this.primaryMobile) {
+    this.primaryMobile = this.phone;
+  }
+
+  // Sync address fields - flat to nested
+  if (this.isModified('doorNo') || this.isModified('street') || this.isModified('city')) {
+    if (!this.address) {
+      this.address = {};
+    }
+    if (this.doorNo || this.street) {
+      this.address.street = `${this.doorNo || ''}, ${this.street || ''}`.trim();
+    }
+    if (this.locality) {
+      this.address.landmark = this.locality;
+    }
+    if (this.city) {
+      this.address.city = this.city;
+    }
+    if (this.state) {
+      this.address.state = this.state;
+    }
+    if (this.pincode) {
+      this.address.pincode = this.pincode;
+    }
+  }
+
+  // Sync address fields - nested to flat
+  if (this.isModified('address')) {
+    if (this.address.street && !this.street) {
+      const parts = this.address.street.split(',');
+      this.doorNo = parts[0]?.trim() || '';
+      this.street = parts.slice(1).join(',').trim() || this.address.street;
+    }
+    if (this.address.landmark && !this.locality) {
+      this.locality = this.address.landmark;
+      this.landmark = this.address.landmark;
+    }
+    if (this.address.city && !this.city) {
+      this.city = this.address.city;
+    }
+    if (this.address.state && !this.state) {
+      this.state = this.address.state;
+    }
+    if (this.address.pincode && !this.pincode) {
+      this.pincode = this.address.pincode;
+    }
+  }
+
+  // Hash password before saving
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  
+  next();
 });
 
 // Compare password method
-pathlabSchema.methods.comparePassword = async function(enteredPassword) {
+PathlabSchema.methods.comparePassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('Pathlab', pathlabSchema);
+module.exports = mongoose.model('Pathlab', PathlabSchema);
