@@ -214,7 +214,7 @@ const Register = () => {
               <input
                 type="text"
                 name="name"
-                placeholder="Enter your full name"
+                placeholder={userRole === 'ambulance' ? "Enter service name" : "Enter your full name"}
                 value={formData.name}
                 onChange={handleChange}
                 className={errors.name ? 'error' : ''}

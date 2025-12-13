@@ -1,0 +1,31 @@
+MERGED VEHICLE SECTION TEMPLATE - For reference during implementation
+
+This file contains the structure for the merged Vehicle Management section that combines:
+1. Vehicle Basic Details (registration, make, model, etc.)
+2. Vehicle Documents (RC, insurance, PUC, permits, etc.)
+3. Equipment & Medical Supplies (stretcher, oxygen, monitoring equipment, etc.)
+
+Key Features:
+- Multiple vehicle profiles support with Add/Edit/Delete
+- Card-based list view showing all vehicles
+- Comprehensive edit form with all merged fields
+- File upload support for documents
+- Equipment checkboxes with conditional fields
+- Wired to handleAddNewVehicle, handleEditVehicle, handleSaveVehicle, handleDeleteVehicle
+
+Structure:
+- Section Header with "Add New Vehicle" button
+- Empty state message (if no vehicles)
+- Vehicle profile cards with:
+  * Vehicle type, registration number, make/model
+  * Quick info: Insurance expiry, PUC validity, equipment count
+  * Edit and Delete buttons
+- Edit Form (when isEditingVehicle === true):
+  * Basic Details subsection (12 fields)
+  * Documents subsection (14 file uploads + insurance/PUC details)
+  * Equipment subsection (40+ checkboxes and conditional fields)
+- Save and Cancel buttons
+
+Implementation Note:
+Due to the size (~1200 lines of merged code), this template serves as a guide.
+The actual implementation will be done directly in AmbulanceDashboard.jsx

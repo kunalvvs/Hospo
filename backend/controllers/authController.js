@@ -32,11 +32,12 @@ exports.register = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
 
-    // Validation
+    // Validation - for ambulance, name is serviceName
+    const nameField = role === 'ambulance' ? 'serviceName' : 'name';
     if (!name || !email || !phone || !password || !role) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, email, phone, password, and role'
+        message: `Please provide ${nameField}, email, phone, password, and role`
       });
     }
 
@@ -72,13 +73,21 @@ exports.register = async (req, res) => {
     }
 
     // Create user with appropriate model
-    const newUser = await Model.create({
-      name,
+    // For ambulance, use serviceName instead of name
+    const userData = {
       email,
       phone,
       password,
       role
-    });
+    };
+    
+    if (role === 'ambulance') {
+      userData.serviceName = name;
+    } else {
+      userData.name = name;
+    }
+
+    const newUser = await Model.create(userData);
 
     // Generate token
     const token = generateToken(newUser._id, role);
@@ -89,7 +98,7 @@ exports.register = async (req, res) => {
       token,
       user: {
         id: newUser._id,
-        name: newUser.name,
+        name: role === 'ambulance' ? newUser.serviceName : newUser.name,
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
@@ -183,9 +192,9 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        name: user.name || user.serviceName || user.contactPerson || 'User',
         email: user.email,
-        phone: user.phone,
+        phone: user.phone || user.mobile,
         role: userRole,
         isVerified: user.isVerified,
         registrationComplete: user.registrationComplete || false

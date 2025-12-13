@@ -54,7 +54,7 @@ const Login = () => {
           navigate('/hospital-dashboard');
         }
       } else if (response.user.role === 'ambulance') {
-        alert(`Welcome ${response.user.name}!`);
+        alert(`Welcome ${response.user.name || response.user.serviceName || 'Ambulance Provider'}!`);
         navigate('/ambulance-dashboard');
       } else if (response.user.role === 'chemist') {
         alert(`Welcome ${response.user.name}!`);

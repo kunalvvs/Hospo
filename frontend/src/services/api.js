@@ -382,4 +382,160 @@ export const pathlabAPI = {
   }
 };
 
+// ==================== AMBULANCE APIs ====================
+export const ambulanceAPI = {
+  // Get ambulance profile
+  getProfile: async () => {
+    const response = await API.get('/ambulances/profile');
+    return response.data;
+  },
+
+  // Update complete profile
+  updateProfile: async (data) => {
+    const response = await API.put('/ambulances/profile', data);
+    return response.data;
+  },
+
+  // Update specific section
+  updateSection: async (section, data) => {
+    const response = await API.put(`/ambulances/profile/${section}`, data);
+    return response.data;
+  },
+
+  // Upload file
+  uploadFile: async (file, fieldName, docType = null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (fieldName) {
+      formData.append('fieldName', fieldName);
+    }
+    if (docType) {
+      formData.append('docType', docType);
+    }
+
+    const response = await API.post('/ambulances/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  // Get profile completion percentage
+  getProfileCompletion: async () => {
+    const response = await API.get('/ambulances/profile-completion');
+    return response.data;
+  },
+
+  // Equipment management
+  addEquipment: async (equipmentData) => {
+    const response = await API.post('/ambulances/equipment', equipmentData);
+    return response.data;
+  },
+
+  updateEquipment: async (equipmentId, equipmentData) => {
+    const response = await API.put(`/ambulances/equipment/${equipmentId}`, equipmentData);
+    return response.data;
+  },
+
+  deleteEquipment: async (equipmentId) => {
+    const response = await API.delete(`/ambulances/equipment/${equipmentId}`);
+    return response.data;
+  },
+
+  // Document management
+  getDocuments: async () => {
+    const response = await API.get('/ambulances/documents');
+    return response.data;
+  },
+
+  // ==================== DRIVER PROFILES CRUD ====================
+  getDrivers: async () => {
+    const response = await API.get('/ambulances/drivers');
+    return response.data;
+  },
+
+  addDriver: async (driverData) => {
+    const response = await API.post('/ambulances/drivers', driverData);
+    return response.data;
+  },
+
+  updateDriver: async (driverId, driverData) => {
+    const response = await API.put(`/ambulances/drivers/${driverId}`, driverData);
+    return response.data;
+  },
+
+  deleteDriver: async (driverId) => {
+    const response = await API.delete(`/ambulances/drivers/${driverId}`);
+    return response.data;
+  },
+
+  // ==================== VEHICLE PROFILES CRUD ====================
+  getVehicles: async () => {
+    const response = await API.get('/ambulances/vehicles');
+    return response.data;
+  },
+
+  addVehicle: async (vehicleData) => {
+    const response = await API.post('/ambulances/vehicles', vehicleData);
+    return response.data;
+  },
+
+  updateVehicle: async (vehicleId, vehicleData) => {
+    const response = await API.put(`/ambulances/vehicles/${vehicleId}`, vehicleData);
+    return response.data;
+  },
+
+  deleteVehicle: async (vehicleId) => {
+    const response = await API.delete(`/ambulances/vehicles/${vehicleId}`);
+    return response.data;
+  },
+
+  // ==================== MIGRATION ====================
+  migrateLegacyDriver: async () => {
+    const response = await API.post('/ambulances/migrate-driver');
+    return response.data;
+  },
+
+  migrateLegacyVehicle: async () => {
+    const response = await API.post('/ambulances/migrate-vehicle');
+    return response.data;
+  },
+
+  deleteDocument: async (docId) => {
+    const response = await API.delete(`/ambulances/documents/${docId}`);
+    return response.data;
+  },
+
+  // Location updates
+  updateLocation: async (locationData) => {
+    const response = await API.put('/ambulances/location', locationData);
+    return response.data;
+  },
+
+  // Status updates
+  updateStatus: async (status) => {
+    const response = await API.put('/ambulances/status', { status });
+    return response.data;
+  },
+
+  // Get all ambulances (public)
+  getAllAmbulances: async (filters = {}) => {
+    const response = await API.get('/ambulances', { params: filters });
+    return response.data;
+  },
+
+  // Get ambulance by ID (public)
+  getAmbulanceById: async (id) => {
+    const response = await API.get(`/ambulances/${id}`);
+    return response.data;
+  },
+
+  // Delete profile
+  deleteProfile: async () => {
+    const response = await API.delete('/ambulances/profile');
+    return response.data;
+  }
+};
+
 export default API;
