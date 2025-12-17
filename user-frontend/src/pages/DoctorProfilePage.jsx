@@ -197,9 +197,13 @@ const DoctorProfilePage = () => {
                 {doctor.clinicHospitalName || 'Private Practice'}
               </p>
               <p className="text-xs text-gray-600">
-                {doctor.clinicLocation?.address || doctor.clinicAddress || 'Address not provided'}
-                {doctor.clinicLocation?.city && `, ${doctor.clinicLocation.city}`}
-                {doctor.clinicLocation?.state && `, ${doctor.clinicLocation.state}`}
+                {doctor.clinicLocation && typeof doctor.clinicLocation === 'object' ? (
+                  // If clinicLocation is an object with address, city, state
+                  `${doctor.clinicLocation.address || ''}${doctor.clinicLocation.city ? `, ${doctor.clinicLocation.city}` : ''}${doctor.clinicLocation.state ? `, ${doctor.clinicLocation.state}` : ''}`
+                ) : (
+                  // Fallback to older structure
+                  doctor.clinicAddress ? `${doctor.clinicAddress}${doctor.city ? `, ${doctor.city}` : ''}` : 'Address not provided'
+                )}
               </p>
             </div>
           </div>

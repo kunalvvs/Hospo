@@ -154,7 +154,7 @@ const BookAppointmentPage = () => {
       
       const appointmentData = {
         doctorId: id, // Backend expects 'doctorId', not 'doctor'
-        appointmentDate: selectedDate.toISOString().split('T')[0],
+        appointmentDate: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`, // Format without timezone conversion
         appointmentTime: selectedTime,
         consultationType: consultationType === 'in-person' ? 'In-Person' : 'Video',
         bookingFor: booking === 'myself' ? 'Self' : 'Someone Else',

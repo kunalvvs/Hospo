@@ -189,7 +189,7 @@ const MyAppointmentsPage = () => {
       <div className="bg-[#234f83] text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center text-white hover:text-blue-100 transition-colors mb-4"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />

@@ -2081,7 +2081,15 @@ const DoctorDashboard = () => {
                       </div>
                       <p className="enquiry-message">{enquiry.message}</p>
                       <div className="enquiry-footer">
-                        <span className="enquiry-date">📅 {enquiry.date}</span>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <span className="enquiry-date">📅 {enquiry.date}</span>
+                          {enquiry.appointmentTime && (
+                            <span className="enquiry-time">⏰ {enquiry.appointmentTime}</span>
+                          )}
+                          {enquiry.consultationFee && (
+                            <span className="enquiry-fee">💰 ₹{enquiry.consultationFee}</span>
+                          )}
+                        </div>
                         <div className="enquiry-actions">
                           <button className="btn-secondary" onClick={() => alert('Reply feature coming soon!')}>Reply</button>
                           <button className="btn-primary" onClick={() => alert('Mark as completed!')}>Mark Complete</button>

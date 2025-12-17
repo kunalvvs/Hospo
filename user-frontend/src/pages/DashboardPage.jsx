@@ -258,6 +258,8 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [realTopDoctors, setRealTopDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
 
   const promoImages = ["/cola.jpg", "/cola.jpg", "/cola.jpg"];
 
@@ -299,6 +301,27 @@ const DashboardPage = () => {
 
     fetchAppointments();
   }, [userData]);
+
+  // Fetch real top doctors
+  useEffect(() => {
+    const fetchTopDoctors = async () => {
+      setLoadingDoctors(true);
+      try {
+        const { doctorAPI } = await import('../services/api');
+        const response = await doctorAPI.getAllDoctors({ limit: 3 });
+        if (response.success && response.doctors) {
+          setRealTopDoctors(response.doctors);
+          console.log('✅ Top doctors loaded:', response.doctors);
+        }
+      } catch (error) {
+        console.error('Failed to fetch doctors:', error);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+
+    fetchTopDoctors();
+  }, []);
 
   // Auto-slide effect
   useEffect(() => {
@@ -577,13 +600,108 @@ const DashboardPage = () => {
 
         {/* Scrollable Cards */}
         <div className="flex flex-row overflow-x-auto no-scrollbar gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2">
-          {topDoctors.map((doctor) => (
-            <Link
-              key={doctor.id}
-              to={`/doctors${doctor.link}`}
-              className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[35vw] lg:w-[30vw] xl:w-[25vw]"
-            >
-              <div className="bg-white p-4 hover:bg-gray-100 transition-colors shadow-md rounded-2xl">
+          {loadingDoctors ? (
+            <div className="flex-shrink-0 w-full text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600 text-sm">Loading doctors...</p>
+            </div>
+          ) : realTopDoctors.length > 0 ? (
+            realTopDoctors.map((doctor) => (
+              <Link
+                key={doctor._id}
+                to={`/doctors/${doctor._id}`}
+                className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[35vw] lg:w-[30vw] xl:w-[25vw]"
+              >
+                <div className="bg-white p-4 hover:bg-gray-100 transition-colors shadow-md rounded-2xl">
+                  {/* Doctor Card */}
+                  <div className="flex flex-row gap-4">
+                    {/* Doctor Image */}
+                    {doctor.profilePhoto ? (
+                      <img
+                        src={doctor.profilePhoto}
+                        alt={doctor.name}
+                        className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FaStethoscope className="w-14 h-14 text-white" />
+                      </div>
+                    )}
+
+                    {/* Doctor Info */}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base sm:text-lg text-black mb-1">
+                        {doctor.name}
+                      </h3>
+
+                      <p className="flex items-center text-xs font-bold sm:text-sm text-black mb-1 gap-1">
+                        <FaBriefcaseMedical /> {doctor.primarySpecialization || 'General'}
+                      </p>
+
+                      <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-400 mb-2">
+                        <span className="flex items-center gap-1 text-pink-500">
+                          <Briefcase className="w-3 h-3" />
+                          {doctor.experience || 0} yrs
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-blue-400 font-semibold text-sm sm:text-base">
+                          ₹{doctor.consultationFee || 500}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-full border border-gray-300 mt-2" />
+
+                  {/* Location & Rating */}
+                  <div className="flex flex-wrap justify-between items-center mt-2 text-black">
+                    {/* Location */}
+                    <div className="flex items-center text-xs sm:text-sm">
+                      <FaLocationDot className="text-black mr-1" />
+                      <span>{doctor.city || 'India'}</span>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex items-center text-yellow-400 mt-1 sm:mt-0">
+                      <div className="flex mr-1">
+                        <IoStarSharp />
+                        <IoStarSharp />
+                        <IoStarSharp />
+                        <IoStarSharp />
+                        <IoStarSharp />
+                      </div>
+                      <div className="text-gray-600 text-xs">(4.8)</div>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap justify-between items-center gap-0.5 mt-5">
+                    <span className="bg-green-500/20 text-green-600 text-sm px-2 py-1 rounded-sm">
+                      Available
+                    </span>
+                    <span className="bg-teal-500/20 text-teal-600 text-sm px-2 py-1 rounded-sm">
+                      Top Choice
+                    </span>
+                    <span className="bg-blue-500/20 text-blue-600 text-sm px-2 py-1 rounded-sm">
+                      Video
+                    </span>
+                    <span className="bg-yellow-500/20 text-yellow-600 text-sm px-2 py-1 rounded-sm">
+                      In-Person
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            topDoctors.map((doctor) => (
+              <Link
+                key={doctor.id}
+                to={`/doctors${doctor.link}`}
+                className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[35vw] lg:w-[30vw] xl:w-[25vw]"
+              >
+                <div className="bg-white p-4 hover:bg-gray-100 transition-colors shadow-md rounded-2xl">
                 {/* Doctor Card */}
                 <div className="flex flex-row gap-4">
                   {/* Doctor Image */}
@@ -655,8 +773,9 @@ const DashboardPage = () => {
                   </span>
                 </div>
               </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
       </div>
 
