@@ -2,6 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 const connectDB = require('./config/database');
 
 // Load environment variables
@@ -11,11 +13,48 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      process.env.USER_FRONTEND_URL || 'http://localhost:5173'
+    ],
+    credentials: true
+  }
+});
+
+// Make io accessible in routes
+app.set('io', io);
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('🔌 User connected:', socket.id);
+
+  // Join room based on user role and ID
+  socket.on('join', (data) => {
+    const { userId, role } = data;
+    const room = `${role}_${userId}`;
+    socket.join(room);
+    console.log(`👤 ${role} ${userId} joined room: ${room}`);
+  });
+
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    console.log('❌ User disconnected:', socket.id);
+  });
+});
 
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000',
-  process.env.FRONTEND_URL || 'http://localhost:3000'
+  'http://localhost:5173',
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  process.env.USER_FRONTEND_URL || 'http://localhost:5173'
 ];
 
 app.use(cors({
@@ -45,6 +84,7 @@ app.use('/api/hospitals', require('./routes/hospitalRoutes'));
 app.use('/api/chemists', require('./routes/chemistRoutes'));
 app.use('/api/pathlabs', require('./routes/pathlabRoutes'));
 app.use('/api/ambulances', require('./routes/ambulanceRoutes'));
+app.use('/api/appointments', require('./routes/appointmentRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -76,9 +116,10 @@ const PORT = process.env.PORT || 5000;
 
 // Only start server if not in Vercel (Vercel handles this automatically)
 if (process.env.VERCEL !== '1') {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📡 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🔌 Socket.io enabled for real-time notifications`);
   });
 }
 

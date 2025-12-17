@@ -1,88 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, User, Phone, Video, X, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { appointmentAPI } from '../services/api';
 
 const MyAppointmentsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-
-  const appointments = {
-    upcoming: [
-      {
-        id: 1,
-        doctorName: 'Dr. Priya Sharma',
-        specialty: 'Cardiologist',
-        date: 'Mon, 24 Jun 2025',
-        time: '10:30 AM',
-        type: 'Video Consultation',
-        hospital: 'Apollo Hospital, Delhi',
-        status: 'confirmed',
-        fee: 800
-      },
-      {
-        id: 2,
-        doctorName: 'Dr. Rajesh Kumar',
-        specialty: 'Orthopedic',
-        date: 'Wed, 26 Jun 2025',
-        time: '02:00 PM',
-        type: 'In-Person',
-        hospital: 'Max Hospital, Delhi',
-        status: 'confirmed',
-        fee: 900
-      },
-      {
-        id: 3,
-        doctorName: 'Dr. Amit Verma',
-        specialty: 'Dermatologist',
-        date: 'Fri, 28 Jun 2025',
-        time: '11:00 AM',
-        type: 'Video Consultation',
-        hospital: 'Fortis Hospital, Delhi',
-        status: 'confirmed',
-        fee: 700
+  const [appointments, setAppointments] = useState({
+    upcoming: [],
+    completed: [],
+    cancelled: []
+  });
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+  
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await appointmentAPI.getMyAppointments();
+      
+      if (response.success && response.appointments) {
+        // Categorize appointments by status
+        const categorized = {
+          upcoming: response.appointments.filter(apt => 
+            apt.status === 'pending' || apt.status === 'confirmed'
+          ),
+          completed: response.appointments.filter(apt => 
+            apt.status === 'completed'
+          ),
+          cancelled: response.appointments.filter(apt => 
+            apt.status === 'cancelled'
+          )
+        };
+        
+        setAppointments(categorized);
+        console.log('✅ Fetched appointments:', categorized);
       }
-    ],
-    completed: [
-      {
-        id: 4,
-        doctorName: 'Dr. Sneha Patel',
-        specialty: 'General Physician',
-        date: 'Mon, 10 Jun 2025',
-        time: '03:30 PM',
-        type: 'In-Person',
-        hospital: 'AIIMS, Delhi',
-        status: 'completed',
-        fee: 600
-      },
-      {
-        id: 5,
-        doctorName: 'Dr. Anil Gupta',
-        specialty: 'Pediatrician',
-        date: 'Thu, 6 Jun 2025',
-        time: '09:00 AM',
-        type: 'Video Consultation',
-        hospital: 'BLK Hospital, Delhi',
-        status: 'completed',
-        fee: 750
-      }
-    ],
-    cancelled: [
-      {
-        id: 6,
-        doctorName: 'Dr. Meera Singh',
-        specialty: 'ENT Specialist',
-        date: 'Tue, 4 Jun 2025',
-        time: '04:00 PM',
-        type: 'In-Person',
-        hospital: 'Medanta Hospital, Gurugram',
-        status: 'cancelled',
-        fee: 850
-      }
-    ]
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancelAppointment = (appointment) => {
@@ -90,67 +55,99 @@ const MyAppointmentsPage = () => {
     setShowCancelModal(true);
   };
 
-  const confirmCancellation = () => {
-    // API call to cancel appointment
-    console.log('Cancelling appointment:', selectedAppointment.id);
-    setShowCancelModal(false);
-    setSelectedAppointment(null);
+  const confirmCancellation = async () => {
+    try {
+      const response = await appointmentAPI.cancelAppointment(selectedAppointment._id);
+      if (response.success) {
+        // Refresh appointments
+        await fetchAppointments();
+        setShowCancelModal(false);
+        setSelectedAppointment(null);
+        alert('Appointment cancelled successfully');
+      }
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      alert('Failed to cancel appointment. Please try again.');
+    }
   };
 
-  const AppointmentCard = ({ appointment }) => (
-    <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-3 md:mb-4 hover:shadow-md transition-shadow">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left Section */}
-        <div className="flex-1">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1">
-                {appointment.doctorName}
-              </h3>
-              <p className="text-sm md:text-base text-gray-600">{appointment.specialty}</p>
+  const AppointmentCard = ({ appointment }) => {
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+    };
+    
+    return (
+      <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-3 md:mb-4 hover:shadow-md transition-shadow">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left Section */}
+          <div className="flex-1">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1">
+                  {appointment.doctor?.name || 'Doctor Not Available'}
+                </h3>
+                <p className="text-sm md:text-base text-gray-600">
+                  {appointment.doctor?.primarySpecialization || 'General Physician'}
+                </p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
+                appointment.status === 'confirmed' || appointment.status === 'pending' ? 'bg-green-100 text-green-700' :
+                appointment.status === 'completed' ? 'bg-blue-100 text-blue-500' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+              </span>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
-              appointment.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-              appointment.status === 'completed' ? 'bg-blue-100 text-blue-500' :
-              'bg-red-100 text-red-700'
-            }`}>
-              {appointment.status === 'confirmed' ? 'Confirmed' :
-               appointment.status === 'completed' ? 'Completed' : 'Cancelled'}
-            </span>
+
+            <div className="space-y-2">
+              <div className="flex items-center text-sm md:text-base text-gray-700">
+                <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                <span>{formatDate(appointment.appointmentDate)}</span>
+                <Clock className="w-4 h-4 ml-4 mr-2 text-blue-600" />
+                <span>{appointment.appointmentTime}</span>
+              </div>
+
+              <div className="flex items-center text-sm md:text-base text-gray-700">
+                <MapPin className="w-4 h-4 mr-2 text-red-500" />
+                <span>{appointment.doctor?.clinicHospitalName || 'Clinic'}</span>
+              </div>
+
+              <div className="flex items-center text-sm md:text-base text-gray-700">
+                {appointment.consultationType === 'video' ? (
+                  <Video className="w-4 h-4 mr-2 text-purple-600" />
+                ) : (
+                  <User className="w-4 h-4 mr-2 text-green-600" />
+                )}
+                <span>{appointment.consultationType === 'video' ? 'Video Consultation' : 'In-Person'}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center text-sm md:text-base text-gray-700">
-              <Calendar className="w-4 h-4 mr-2 text-blue-600" />
-              <span>{appointment.date}</span>
-              <Clock className="w-4 h-4 ml-4 mr-2 text-blue-600" />
-              <span>{appointment.time}</span>
+          {/* Right Section - Actions */}
+          <div className="flex flex-col gap-2 md:min-w-[180px]">
+            <div className="text-right mb-2">
+              <span className="text-lg md:text-xl font-bold text-blue-600">
+                ₹{appointment.amount || appointment.doctor?.consultationFee || 500}
+              </span>
             </div>
-
-            <div className="flex items-center text-sm md:text-base text-gray-700">
-              <MapPin className="w-4 h-4 mr-2 text-red-500" />
-              <span>{appointment.hospital}</span>
-            </div>
-
-            <div className="flex items-center text-sm md:text-base text-gray-700">
-              {appointment.type === 'Video Consultation' ? (
-                <Video className="w-4 h-4 mr-2 text-purple-600" />
-              ) : (
-                <User className="w-4 h-4 mr-2 text-green-600" />
-              )}
-              <span>{appointment.type}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Section - Actions */}
-        <div className="flex flex-col gap-2 md:min-w-[180px]">
-          <div className="text-right mb-2">
-            <span className="text-lg md:text-xl font-bold text-blue-600">₹{appointment.fee}</span>
-          </div>
 
           {appointment.status === 'confirmed' && (
             <>
+              {appointment.consultationType === 'video' && (
+                <button 
+                  onClick={() => navigate(`/video-consult/${appointment._id}`)}
+                  className="w-full bg-green-600 text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Video className="w-4 h-4" />
+                  Join Video Call
+                </button>
+              )}
               <button className="w-full bg-[#234f83] text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors">
                 Reschedule
               </button>
@@ -184,7 +181,9 @@ const MyAppointmentsPage = () => {
     </div>
   );
 
-  return (
+      };
+
+      return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-[#234f83] text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
@@ -238,27 +237,33 @@ const MyAppointmentsPage = () => {
         </div>
 
         {/* Appointments List */}
-        <div>
-          {appointments[activeTab].length > 0 ? (
-            appointments[activeTab].map((appointment) => (
-              <AppointmentCard key={appointment.id} appointment={appointment} />
-            ))
-          ) : (
-            <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
-                <Calendar className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div>
+            {appointments[activeTab].length > 0 ? (
+              appointments[activeTab].map((appointment) => (
+                <AppointmentCard key={appointment._id} appointment={appointment} />
+              ))
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                  <Calendar className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">No Appointments</h3>
+                <p className="text-sm md:text-base text-gray-600 mb-6">You don't have any {activeTab} appointments</p>
+                <button
+                  onClick={() => navigate('/doctors')}
+                  className="bg-[#234f83] text-white py-3 px-6 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors"
+                >
+                  Book Appointment
+                </button>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">No Appointments</h3>
-              <p className="text-sm md:text-base text-gray-600 mb-6">You don't have any {activeTab} appointments</p>
-              <button
-                onClick={() => navigate('/doctors')}
-                className="bg-[#234f83] text-white py-3 px-6 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors"
-              >
-                Book Appointment
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Cancel Confirmation Modal */}
@@ -277,8 +282,8 @@ const MyAppointmentsPage = () => {
 
             <p className="text-sm md:text-base text-gray-600 mb-6">
               Are you sure you want to cancel your appointment with{' '}
-              <strong>{selectedAppointment?.doctorName}</strong> on{' '}
-              <strong>{selectedAppointment?.date}</strong>?
+              <strong>{selectedAppointment?.doctor?.name}</strong> on{' '}
+              <strong>{selectedAppointment?.appointmentDate ? new Date(selectedAppointment.appointmentDate).toLocaleDateString() : ''}</strong>?
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
@@ -303,5 +308,6 @@ const MyAppointmentsPage = () => {
     </div>
   );
 };
+
 
 export default MyAppointmentsPage;

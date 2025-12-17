@@ -538,4 +538,34 @@ export const ambulanceAPI = {
   }
 };
 
+// ==================== APPOINTMENT APIs ====================
+export const appointmentAPI = {
+  // Get doctor's appointments
+  getDoctorAppointments: async (status = '', date = '') => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (date) params.append('date', date);
+    const response = await API.get(`/appointments/doctor?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get appointment by ID
+  getAppointmentById: async (id) => {
+    const response = await API.get(`/appointments/${id}`);
+    return response.data;
+  },
+
+  // Update appointment status
+  updateAppointmentStatus: async (id, status) => {
+    const response = await API.put(`/appointments/${id}/status`, { status });
+    return response.data;
+  },
+
+  // Cancel appointment
+  cancelAppointment: async (id) => {
+    const response = await API.delete(`/appointments/${id}`);
+    return response.data;
+  }
+};
+
 export default API;

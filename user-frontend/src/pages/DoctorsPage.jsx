@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Calendar,
@@ -13,6 +13,7 @@ import BottomNav from "@/components/BottomNav";
 import { Link } from "react-router-dom";
 import { IoStarSharp, IoStar } from "react-icons/io5";
 import Header from "@/components/Header";
+import { doctorAPI } from "../services/api";
 
 const specializations = [
   { name: "Cardiology", icon: "❤️", doctors: 12, color: "bg-red-500" },
@@ -23,84 +24,62 @@ const specializations = [
   { name: "Pediatrics", icon: "👶", doctors: 11, color: "bg-pink-500" },
 ];
 
-const topDoctors = [
-  {
-    id: 1,
-    name: "Dr. Amit Sharma",
-    specialization: "Cardiologist",
-    experience: "15 years",
-    rating: 4.8,
-    reviews: 892,
-    fee: 800,
-    image: "/doctor1.jpg",
-    available: true,
-    link: "/profile",
-  },
-  {
-    id: 2,
-    name: "Dr. Priya Mehta",
-    specialization: "Dermatologist",
-    experience: "12 years",
-    rating: 4.9,
-    reviews: 1024,
-    fee: 700,
-    image: "/doctor2.jpg",
-    available: true,
-  },
-  {
-    id: 3,
-    name: "Dr. Rajesh Kumar",
-    specialization: "Orthopedic",
-    experience: "18 years",
-    rating: 4.7,
-    reviews: 756,
-    fee: 900,
-    image: "/doctor3.jpg",
-    available: false,
-  },
-];
-
-const nearbyDocs = [
-  {
-    id: 1,
-    name: "Dr. Amit Sharma",
-    specialization: "Cardiologist",
-    status: "available",
-    degree: "MBBS",
-    address: "Fortis Hospital, Mumbai",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-  {
-    id: 2,
-    name: "Dr. Amit Sharma",
-    specialization: "Cardiologist",
-    status: "available",
-    degree: "MBBS",
-    address: "Fortis Hospital, Mumbai",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-  {
-    id: 3,
-    name: "Dr. Amit Sharma",
-    specialization: "Cardiologist",
-    status: "available",
-    degree: "MBBS",
-    address: "Fortis Hospital, Mumbai",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-];
-
 const DoctorsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [topDoctors, setTopDoctors] = useState([]);
+  const [nearbyDocs, setNearbyDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch doctors on component mount
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+  
+  // Fetch doctors when search query changes
+  useEffect(() => {
+    if (searchQuery) {
+      const timer = setTimeout(() => {
+        fetchDoctors(searchQuery);
+      }, 500); // Debounce search
+      return () => clearTimeout(timer);
+    } else {
+      fetchDoctors();
+    }
+  }, [searchQuery]);
+  
+  const fetchDoctors = async (search = '') => {
+    try {
+      setLoading(true);
+      const params = search ? { search } : { limit: 10 };
+      const response = await doctorAPI.getAllDoctors(params);
+      
+      if (response.success && response.doctors) {
+        // Format doctors for display
+        const formattedDoctors = response.doctors.map(doc => ({
+          id: doc._id,
+          name: doc.name,
+          specialization: doc.primarySpecialization || 'General',
+          experience: doc.experience ? `${doc.experience} years` : 'N/A',
+          fee: doc.consultationFee || 500,
+          clinic: doc.clinicHospitalName || 'Private Practice',
+          city: doc.city || 'India',
+          address: doc.clinicAddress || 'Not specified',
+          available: true,
+          link: `/doctors/${doc._id}`,
+          rating: 4.5, // Default rating (can be enhanced later)
+          distance: '2.5' // Default distance (can be enhanced with geolocation)
+        }));
+        
+        setTopDoctors(formattedDoctors.slice(0, 5));
+        setNearbyDocs(formattedDoctors);
+        console.log('✅ Fetched doctors:', formattedDoctors.length);
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 text-white pb-28">
@@ -183,86 +162,96 @@ const DoctorsPage = () => {
               View All
             </Link>
           </div>
-          <div className="space-y-4">
-            {topDoctors.map((doctor) => (
-              <Link key={doctor.id} to={`/doctors${doctor.link}`}>
-                <div className="bg-white shadow-md rounded-xl p-4 hover:bg-gray-200 mb-2 transition-colors">
-                  <div className="flex flex-col">
-                    <div className="flex gap-4">
-                      {/* Doctor Image */}
-                      <div className="w-40 h-25 bg-dblue rounded-xl flex items-center justify-center flex-shrink-0">
-                        <FaStethoscope className="w-10 h-10 text-white" />
-                      </div>
+          
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : topDoctors.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No doctors found. Try adjusting your search.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {topDoctors.map((doctor) => (
+                <Link key={doctor.id} to={doctor.link}>
+                  <div className="bg-white shadow-md rounded-xl p-4 hover:bg-gray-200 mb-2 transition-colors">
+                    <div className="flex flex-col">
+                      <div className="flex gap-4">
+                        {/* Doctor Image */}
+                        <div className="w-40 h-25 bg-dblue rounded-xl flex items-center justify-center flex-shrink-0">
+                          <FaStethoscope className="w-10 h-10 text-white" />
+                        </div>
 
-                      {/* Doctor Info */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-1">
-                          <h3 className="font-semibold text-base text-black">
-                            {doctor.name}
-                          </h3>
-                        </div>
-                        <p className="flex flex-row text-xs text-gray-400 mb-1 gap-1">
-                          <FaBriefcaseMedical /> MBBS, MD (
-                          {doctor.specialization})
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
-                          <span className="flex items-center gap-1 text-pink-500">
-                            <Briefcase className="w-3 h-3" />
-                            {doctor.experience} Experience
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-blue-400 font-semibold">
-                            ₹{doctor.fee}
-                          </span>
+                        {/* Doctor Info */}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="font-semibold text-base text-black">
+                              {doctor.name}
+                            </h3>
+                          </div>
+                          <p className="flex flex-row text-xs text-gray-400 mb-1 gap-1">
+                            <FaBriefcaseMedical /> {doctor.specialization}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
+                            <span className="flex items-center gap-1 text-pink-500">
+                              <Briefcase className="w-3 h-3" />
+                              {doctor.experience} Experience
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-blue-400 font-semibold">
+                              ₹{doctor.fee}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-row mt-4 justify-between items-center w-full">
-                    {/* Left side - Location */}
-                    <div className="flex flex-row items-center">
-                      <div className="text-black text-sm mr-1">
-                        <FaLocationDot />
+                    <div className="flex flex-row mt-4 justify-between items-center w-full">
+                      {/* Left side - Location */}
+                      <div className="flex flex-row items-center">
+                        <div className="text-black text-sm mr-1">
+                          <FaLocationDot />
+                        </div>
+                        <div className="text-xs text-black">
+                          {doctor.clinic}, {doctor.city}
+                        </div>
                       </div>
-                      <div className="text-xs text-black">
-                        Appllo Hospital , Delhi
+
+                      {/* Right side - Rating */}
+                      <div className="flex flex-row items-center text-yellow-400">
+                        <div className="flex flex-row mr-1">
+                          <IoStarSharp />
+                          <IoStarSharp />
+                          <IoStarSharp />
+                          <IoStarSharp />
+                          <IoStarSharp />
+                        </div>
+                        <div className="text-white text-xs">({doctor.rating})</div>
                       </div>
                     </div>
 
-                    {/* Right side - Rating */}
-                    <div className="flex flex-row items-center text-yellow-400">
-                      <div className="flex flex-row mr-1">
-                        <IoStarSharp />
-                        <IoStarSharp />
-                        <IoStarSharp />
-                        <IoStarSharp />
-                        <IoStarSharp />
-                      </div>
-                      <div className="text-white text-xs">(4.8)</div>
+                    <div className="flex flex-row gap-3 mt-3">
+                      <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
+                        Available
+                      </span>
+                      <span className="bg-teal-500/20 text-teal-400 text-xs px-2 py-1 rounded-full">
+                        Top Choice
+                      </span>
+                      <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">
+                        Video
+                      </span>
+                      <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">
+                        In-Person
+                      </span>
                     </div>
                   </div>
-
-                  <div className="flex flex-row gap-3 mt-3">
-                    <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
-                      Available
-                    </span>
-                    <span className="bg-teal-500/20 text-teal-400 text-xs px-2 py-1 rounded-full">
-                      Top Choice
-                    </span>
-                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">
-                      Video
-                    </span>
-                    <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">
-                      In-Person
-                    </span>
-                  </div>
-                </div>
-                <div></div>
-              </Link>
-            ))}
-          </div>
+                  <div></div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -273,60 +262,69 @@ const DoctorsPage = () => {
         </div>
 
         {/* Scrollable Doctors List */}
-        <div className="flex flex-col gap-3 pb-3 scrollbar-hide">
-          {nearbyDocs.map((items) => (
-            <div
-              key={items.id}
-              className="flex flex-row bg-white shadow-md rounded-2xl p-4 min-w-[80vw] sm:min-w-[60vw] md:min-w-[40vw] lg:min-w-[30vw] flex-shrink-0 hover:shadow-blue-400/20 hover:scale-105 transition-transform duration-300"
-            >
-              {/* Doctor Icon */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 mr-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                <FaStethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-              </div>
-
-              {/* Doctor Info */}
-              <div className="flex flex-col w-full">
-                {/* Name + Status */}
-                <div className="flex justify-between items-center mb-1">
-                  <div className="text-sm sm:text-base font-semibold text-black">
-                    {items.name}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : nearbyDocs.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No doctors available at the moment.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 pb-3 scrollbar-hide">
+            {nearbyDocs.map((items) => (
+              <Link key={items.id} to={items.link}>
+                <div className="flex flex-row bg-white shadow-md rounded-2xl p-4 min-w-[80vw] sm:min-w-[60vw] md:min-w-[40vw] lg:min-w-[30vw] flex-shrink-0 hover:shadow-blue-400/20 hover:scale-105 transition-transform duration-300">
+                  {/* Doctor Icon */}
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mr-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FaStethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
-                  <div className="flex justify-center items-center text-[10px] sm:text-xs text-green-600 rounded-md bg-green-500/20 px-2 py-[2px]">
-                    {items.status}
-                  </div>
-                </div>
 
-                {/* Degree */}
-                <div className="text-blue-500 text-xs sm:text-sm font-medium">
-                  {items.degree}
-                </div>
-
-                {/* Address */}
-                <div className="flex items-center text-[10px] sm:text-xs text-gray-700 mt-1">
-                  <FaLocationDot className="mr-1 text-black text-[11px]" />
-                  <span className="truncate">{items.address}</span>
-                </div>
-
-                {/* Fee */}
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex flex-row">
-                    <div className="text-yellow-400 flex justify-center items-center mr-1">
-                      <IoStar />
+                  {/* Doctor Info */}
+                  <div className="flex flex-col w-full">
+                    {/* Name + Status */}
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-sm sm:text-base font-semibold text-black">
+                        {items.name}
+                      </div>
+                      <div className="flex justify-center items-center text-[10px] sm:text-xs text-green-600 rounded-md bg-green-500/20 px-2 py-[2px]">
+                        {items.available ? 'Available' : 'Unavailable'}
+                      </div>
                     </div>
-                    <div className="text-black text-xs mr-4">{items.rating}</div>
-                    <div className="text-black text-sm justify-center items-center mr-1">
-                      <FaRunning />
+
+                    {/* Specialization */}
+                    <div className="text-blue-500 text-xs sm:text-sm font-medium">
+                      {items.specialization}
                     </div>
-                    <div className="text-black text-xs">{items.distance} km</div>
-                  </div>
-                  <div className="font-medium text-blue-500 bg-blue-500/10 px-2 py-[2px] rounded text-xs sm:text-sm">
-                    ₹{items.fee}
+
+                    {/* Address */}
+                    <div className="flex items-center text-[10px] sm:text-xs text-gray-700 mt-1">
+                      <FaLocationDot className="mr-1 text-black text-[11px]" />
+                      <span className="truncate">{items.address}</span>
+                    </div>
+
+                    {/* Fee */}
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex flex-row">
+                        <div className="text-yellow-400 flex justify-center items-center mr-1">
+                          <IoStar />
+                        </div>
+                        <div className="text-black text-xs mr-4">{items.rating}</div>
+                        <div className="text-black text-sm justify-center items-center mr-1">
+                          <FaRunning />
+                        </div>
+                        <div className="text-black text-xs">{items.distance} km</div>
+                      </div>
+                      <div className="font-medium text-blue-500 bg-blue-500/10 px-2 py-[2px] rounded text-xs sm:text-sm">
+                        ₹{items.fee}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}

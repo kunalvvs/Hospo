@@ -18,9 +18,10 @@ import {
 import BottomNav from "@/components/BottomNav";
 import { GiHamburgerMenu } from "react-icons/gi";
 import UserSidebar from "@/components/UserSidebar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaStethoscope, FaBriefcaseMedical, FaLocationDot } from "react-icons/fa6";
 import { IoStarSharp } from "react-icons/io5";
+import { getUserData, isAuthenticated, appointmentAPI } from "../services/api";
 
 const featureCards = [
   {
@@ -250,10 +251,54 @@ const topHospitals = [
 ];
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [showsidebar, setShowsidebar] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
 
   const promoImages = ["/cola.jpg", "/cola.jpg", "/cola.jpg"];
+
+  // Check authentication and get user data
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+    
+    const user = getUserData();
+    if (user) {
+      setUserData(user);
+      console.log('✅ User data loaded:', user);
+    } else {
+      navigate('/login');
+    }
+    setLoading(false);
+  }, [navigate]);
+
+  // Fetch user appointments
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!userData) return;
+      
+      setLoadingAppointments(true);
+      try {
+        const response = await appointmentAPI.getMyAppointments('pending,confirmed');
+        if (response.success && response.appointments) {
+          setAppointments(response.appointments);
+          console.log('✅ Appointments loaded:', response.appointments);
+        }
+      } catch (error) {
+        console.error('Failed to fetch appointments:', error);
+      } finally {
+        setLoadingAppointments(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [userData]);
 
   // Auto-slide effect
   useEffect(() => {
@@ -263,6 +308,17 @@ const DashboardPage = () => {
 
     return () => clearInterval(slideInterval);
   }, [promoImages.length]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 text-white pb-28">
@@ -278,7 +334,7 @@ const DashboardPage = () => {
               <GiHamburgerMenu />
             </div>
             <h1 className="text-lg sm:text-xl font-semibold truncate">
-              Hi, Ashutosh 👋
+              Hi, {userData?.name || 'User'} 👋
             </h1>
           </div>
           
@@ -296,38 +352,63 @@ const DashboardPage = () => {
         {/* Upcoming Appointment */}
         <div className="px-4">
           <h2 className="text-lg font-semibold mb-3">Upcoming Appointment</h2>
-          <div className="bg-gradient-to-r from-blue-400 to-gray-800 rounded-2xl overflow-hidden flex flex-row">
-            <div className="w-48 h-35 bg-blue-200 flex items-center justify-center shadow-xl overflow-hidden mx-auto">
-              <img
-                src="/doctor1.png"
-                alt="Doctor"
-                className="object-cover w-full h-full"
-              />
+          {loadingAppointments ? (
+            <div className="bg-white rounded-2xl p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600 text-sm">Loading appointments...</p>
             </div>
-
-            <div className="flex-1 p-4 bg-white">
-              <div className="flex items-start justify-between mb-1 gap-2">
-                <h3 className="text-base text-black sm:text-lg font-semibold truncate">
-                  Dr. Priya Sharma
-                </h3>
-                <span className="text-blue-400 text-[8px] rounded-xl p-1 bg-blue-400/10 font-medium whitespace-nowrap">
-                  Confirmed
-                </span>
-              </div>
-              <p className="text-gray-400 text-sm mb-2">Cardiologist</p>
-              <div className="flex items-center gap-2 text-xs sm:text-sm mb-1 text-black">
-                <Clock className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate ">Mon, 24 Jun • 10:30 AM</span>
+          ) : appointments.length > 0 ? (
+            <div className="bg-gradient-to-r from-blue-400 to-gray-800 rounded-2xl overflow-hidden flex flex-row">
+              <div className="w-48 h-35 bg-blue-200 flex items-center justify-center shadow-xl overflow-hidden mx-auto">
+                <img
+                  src={appointments[0].doctor?.profilePhoto || "/doctor1.png"}
+                  alt="Doctor"
+                  className="object-cover w-full h-full"
+                />
               </div>
 
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <MapPin className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span className="truncate text-black">
-                  Apollo Hospital, Delhi
-                </span>
+              <div className="flex-1 p-4 bg-white">
+                <div className="flex items-start justify-between mb-1 gap-2">
+                  <h3 className="text-base text-black sm:text-lg font-semibold truncate">
+                    {appointments[0].doctor?.name || 'Dr. Name'}
+                  </h3>
+                  <span className={`text-xs rounded-xl p-1 font-medium whitespace-nowrap ${
+                    appointments[0].status === 'confirmed' ? 'text-green-600 bg-green-100' :
+                    appointments[0].status === 'pending' ? 'text-yellow-600 bg-yellow-100' :
+                    'text-blue-600 bg-blue-100'
+                  }`}>
+                    {appointments[0].status.charAt(0).toUpperCase() + appointments[0].status.slice(1)}
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm mb-2">
+                  {appointments[0].doctor?.primarySpecialization || 'Specialist'}
+                </p>
+                <div className="flex items-center gap-2 text-xs sm:text-sm mb-1 text-black">
+                  <Clock className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">
+                    {new Date(appointments[0].appointmentDate).toLocaleDateString('en-US', { 
+                      weekday: 'short', day: 'numeric', month: 'short' 
+                    })} • {appointments[0].appointmentTime}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
+                  <MapPin className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <span className="truncate text-black">
+                    {appointments[0].location?.hospital || appointments[0].doctor?.clinicName || 'Hospital'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-8 text-center">
+              <div className="text-gray-400 mb-2">📅</div>
+              <p className="text-gray-600 text-sm">No upcoming appointments</p>
+              <Link to="/doctors" className="mt-3 inline-block text-blue-600 text-sm font-medium hover:underline">
+                Book an appointment
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Search Bar */}

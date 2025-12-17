@@ -26,7 +26,7 @@ const StepIndicator = ({ currentStep }) => (
 const Step1Welcome = () => (
   <div className="text-left">
     <h2 className="text-2xl font-bold text-dblue mb-4">
-      Welcome to DoctorSoap
+      Welcome to Hospo
     </h2>
     <p className="text-gray-700 mb-8">
       Let's get started with your health journey. We'll guide you through a few

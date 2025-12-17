@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doctorAPI } from '../services/api';
+import { io } from 'socket.io-client';
 import './DoctorDashboard.css';
 
 // Comprehensive Medical Degrees List
@@ -165,13 +166,10 @@ const DoctorDashboard = () => {
     bankProof: ''
   });
   
-  // Mock data for enquiries
-  const [enquiries] = useState([
-    { id: 1, patient: 'Rajesh Kumar', phone: '9876543210', message: 'Need appointment for knee pain', status: 'new', date: '2025-11-13' },
-    { id: 2, patient: 'Priya Sharma', phone: '9876543211', message: 'Follow-up consultation needed', status: 'pending', date: '2025-11-12' },
-    { id: 3, patient: 'Amit Patel', phone: '9876543212', message: 'Emergency consultation request', status: 'new', date: '2025-11-13' },
-    { id: 4, patient: 'Sunita Singh', phone: '9876543213', message: 'General checkup inquiry', status: 'completed', date: '2025-11-11' },
-  ]);
+  // Real appointments data from backend
+  const [enquiries, setEnquiries] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   
   // Mock data for reviews
   const [reviews, setReviews] = useState([
@@ -189,6 +187,41 @@ const DoctorDashboard = () => {
     comment: ''
   });
   const [hoverRating, setHoverRating] = useState(0);
+
+  // Fetch appointments from backend
+  const fetchAppointments = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:5000/api/appointments/doctor', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.appointments) {
+          // Transform appointments to match enquiry format
+          const transformedAppointments = data.appointments.map(apt => ({
+            id: apt._id,
+            patient: apt.patient?.name || 'Unknown Patient',
+            phone: apt.patient?.phone || 'N/A',
+            message: `${apt.consultationType} - ${apt.symptoms || 'No symptoms specified'}`,
+            status: apt.status === 'pending' ? 'new' : apt.status,
+            date: new Date(apt.appointmentDate).toISOString().split('T')[0],
+            appointmentTime: apt.appointmentTime,
+            consultationFee: apt.consultationFee,
+            appointmentType: apt.consultationType
+          }));
+          setEnquiries(transformedAppointments);
+          console.log('\u2705 Loaded', transformedAppointments.length, 'appointments');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+    }
+  };
 
   useEffect(() => {
     const userString = localStorage.getItem('currentUser');
@@ -212,6 +245,34 @@ const DoctorDashboard = () => {
       }
       
       setCurrentUser(userData);
+      
+      // Connect Socket.io for real-time notifications
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const newSocket = io(socketUrl);
+      setSocket(newSocket);
+      
+      // Join doctor room for notifications
+      newSocket.emit('join', { userId: userData.id, role: 'doctor' });
+      
+      // Listen for new appointment notifications
+      newSocket.on('new_appointment', (data) => {
+        console.log('🔔 New appointment received:', data);
+        setNotificationCount(prev => prev + 1);
+        // Show browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('New Appointment!', {
+            body: `New appointment from ${data.patientName} on ${new Date(data.appointmentDate).toLocaleDateString()}`,
+            icon: '/cosco.png'
+          });
+        }
+        // Refresh appointments
+        fetchAppointments();
+      });
+      
+      // Request notification permission
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
       
       // Load doctor profile from backend
       const loadProfile = async () => {
@@ -249,11 +310,20 @@ const DoctorDashboard = () => {
       };
       
       loadProfile();
+      
+      // Fetch appointments\n      fetchAppointments();
     } catch (error) {
       console.error('Error parsing user data:', error);
       setLoading(false);
       navigate('/login');
     }
+    
+    // Cleanup function
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
   }, [navigate]);
 
   // Calculate profile completion in real-time

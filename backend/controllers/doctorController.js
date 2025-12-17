@@ -2,6 +2,84 @@ const Doctor = require('../models/Doctor');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
+// @desc    Get all doctors (public endpoint for user frontend)
+// @route   GET /api/doctors
+// @access  Public
+exports.getAllDoctors = async (req, res) => {
+  try {
+    const { specialization, search, limit = 20, page = 1 } = req.query;
+
+    const query = {};
+
+    // Filter by specialization
+    if (specialization) {
+      query.primarySpecialization = { $regex: specialization, $options: 'i' };
+    }
+
+    // Search by name or specialization
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { primarySpecialization: { $regex: search, $options: 'i' } },
+        { secondarySpecialization: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const doctors = await Doctor.find(query)
+      .select('name email phone profilePhoto primarySpecialization secondarySpecialization experience consultationFee clinicHospitalName clinicAddress city languages servicesOffered')
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Doctor.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: doctors.length,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
+      doctors
+    });
+  } catch (error) {
+    console.error('Get All Doctors Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching doctors',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get doctor by ID (public endpoint)
+// @route   GET /api/doctors/:id
+// @access  Public
+exports.getDoctorById = async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.params.id)
+      .select('-password');
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      doctor
+    });
+  } catch (error) {
+    console.error('Get Doctor By ID Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching doctor',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get doctor profile
 // @route   GET /api/doctors/profile
 // @access  Private

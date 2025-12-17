@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, User, Bell, Lock, Eye, EyeOff, Shield, Smartphone, 
@@ -7,22 +7,26 @@ import {
 } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { getUserData, authAPI } from '../services/api';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('profile');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userData, setUserData] = useState(null);
   
   // Settings State
   const [settings, setSettings] = useState({
     // Profile
-    name: 'Ashutosh Kumar',
-    email: 'user@gmail.com',
-    phone: '+91 9876543210',
-    dateOfBirth: '15/05/1990',
-    gender: 'male',
-    bloodGroup: 'O+',
+    name: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    bloodGroup: '',
     
     // Notifications
     emailNotifications: true,
@@ -42,6 +46,23 @@ const SettingsPage = () => {
     language: 'english',
     theme: 'light'
   });
+  
+  // Load user data on mount
+  useEffect(() => {
+    const user = getUserData();
+    if (user) {
+      setUserData(user);
+      setSettings(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        dateOfBirth: user.dateOfBirth || '',
+        gender: user.gender || '',
+        bloodGroup: user.bloodGroup || ''
+      }));
+    }
+  }, []);
 
   const handleToggle = (key) => {
     setSettings(prev => ({
@@ -49,11 +70,37 @@ const SettingsPage = () => {
       [key]: !prev[key]
     }));
   };
+  
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      // Update localStorage user data
+      const updatedUser = {
+        ...userData,
+        name: settings.name,
+        email: settings.email,
+        phone: settings.phone,
+        dateOfBirth: settings.dateOfBirth,
+        gender: settings.gender,
+        bloodGroup: settings.bloodGroup
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+      setIsEditingProfile(false);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      console.log('Logging out...');
-      navigate('/');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
     }
   };
 
@@ -85,23 +132,62 @@ const SettingsPage = () => {
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-800">Personal Information</h3>
-          <button className="text-[#234f83] hover:text-blue-700 flex items-center text-sm font-medium">
-            <Edit2 className="w-4 h-4 mr-1" />
-            Edit
-          </button>
+          {!isEditingProfile ? (
+            <button 
+              onClick={() => setIsEditingProfile(true)}
+              className="text-[#234f83] hover:text-blue-700 flex items-center text-sm font-medium"
+            >
+              <Edit2 className="w-4 h-4 mr-1" />
+              Edit
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setIsEditingProfile(false)}
+                className="text-gray-600 hover:text-gray-800 text-sm font-medium px-3 py-1 border border-gray-300 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="text-white bg-[#234f83] hover:bg-blue-700 text-sm font-medium px-3 py-1 rounded-lg disabled:opacity-50"
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          )}
         </div>
         
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Full Name</label>
-            <p className="text-base font-medium text-gray-800">{settings.name}</p>
+            {isEditingProfile ? (
+              <input
+                type="text"
+                value={settings.name}
+                onChange={(e) => setSettings(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            ) : (
+              <p className="text-base font-medium text-gray-800">{settings.name || 'Not provided'}</p>
+            )}
           </div>
           
           <div>
             <label className="block text-sm text-gray-600 mb-1">Email Address</label>
             <div className="flex items-center">
               <Mail className="w-4 h-4 text-gray-400 mr-2" />
-              <p className="text-base font-medium text-gray-800">{settings.email}</p>
+              {isEditingProfile ? (
+                <input
+                  type="email"
+                  value={settings.email}
+                  onChange={(e) => setSettings(prev => ({ ...prev, email: e.target.value }))}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-base font-medium text-gray-800">{settings.email || 'Not provided'}</p>
+              )}
             </div>
           </div>
           
@@ -109,24 +195,73 @@ const SettingsPage = () => {
             <label className="block text-sm text-gray-600 mb-1">Phone Number</label>
             <div className="flex items-center">
               <Phone className="w-4 h-4 text-gray-400 mr-2" />
-              <p className="text-base font-medium text-gray-800">{settings.phone}</p>
+              {isEditingProfile ? (
+                <input
+                  type="tel"
+                  value={settings.phone}
+                  onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-base font-medium text-gray-800">{settings.phone || 'Not provided'}</p>
+              )}
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-600 mb-1">Date of Birth</label>
-              <p className="text-base font-medium text-gray-800">{settings.dateOfBirth}</p>
+              {isEditingProfile ? (
+                <input
+                  type="date"
+                  value={settings.dateOfBirth}
+                  onChange={(e) => setSettings(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-base font-medium text-gray-800">{settings.dateOfBirth || 'Not provided'}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">Gender</label>
-              <p className="text-base font-medium text-gray-800 capitalize">{settings.gender}</p>
+              {isEditingProfile ? (
+                <select
+                  value={settings.gender}
+                  onChange={(e) => setSettings(prev => ({ ...prev, gender: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              ) : (
+                <p className="text-base font-medium text-gray-800 capitalize">{settings.gender || 'Not provided'}</p>
+              )}
             </div>
           </div>
           
           <div>
             <label className="block text-sm text-gray-600 mb-1">Blood Group</label>
-            <p className="text-base font-medium text-gray-800">{settings.bloodGroup}</p>
+            {isEditingProfile ? (
+              <select
+                value={settings.bloodGroup}
+                onChange={(e) => setSettings(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            ) : (
+              <p className="text-base font-medium text-gray-800">{settings.bloodGroup || 'Not provided'}</p>
+            )}
           </div>
         </div>
       </div>

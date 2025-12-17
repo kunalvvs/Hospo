@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import SplashScreen from './components/SplashScreen';
-import HomePage from './pages/HomePage';
 import SignupPage from './pages/SignupPage';
+import SignupPageNew from './pages/SignupPageNew';
+import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import DoctorsPage from './pages/DoctorsPage';
 import ChemistPage from './pages/ChemistPage';
@@ -37,10 +38,14 @@ import MyReportsPage from './pages/MyReportsPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import SavedAddressesPage from './pages/SavedAddressesPage';
 import SettingsPage from './pages/SettingsPage';
+import VideoConsultPage from './pages/VideoConsultPage';
 import {
   AdminPage,
   AgentPage,
 } from './pages/PlaceholderPages';
+import socketService from './services/socket';
+import { getUserData } from './services/api';
+import LoginPageOld from './pages/LoginPageOld';
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
@@ -54,12 +59,33 @@ function App() {
     sessionStorage.setItem('splashShown', 'true');
   };
 
+  // Connect Socket.io when user is authenticated
+  useEffect(() => {
+    const user = getUserData();
+    if (user && user.id) {
+      // Connect socket for real-time notifications
+      socketService.connect(user.id, 'patient');
+
+      // Listen for appointment status updates
+      socketService.onAppointmentStatusUpdated((data) => {
+        console.log('🔔 Appointment status updated:', data);
+        // You can show a toast notification here
+      });
+
+      return () => {
+        socketService.disconnect();
+      };
+    }
+  }, []);
+
   return (
     <>
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
       <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/" element={<DashboardPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPageNew />} />
+      <Route path="/signup-old" element={<SignupPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       
       {/* Admin Routes */}
@@ -80,8 +106,14 @@ function App() {
       
       {/* Doctor Routes */}
       <Route path="/doctors" element={<DoctorsPage />} />
-      <Route path="/doctors/profile" element={<DoctorProfilePage />} />
-      <Route path="/doctors/bookapointment" element={<BookAppointmentPage />} />
+      <Route path="/doctors/:id" element={<DoctorProfilePage />} />
+      <Route path="/book-appointment/:id" element={<BookAppointmentPage />} />
+      
+      {/* My Appointments Route */}
+      <Route path="/my-appointments" element={<MyAppointmentsPage />} />
+      
+      {/* Video Consultation Route */}
+      <Route path="/video-consult/:appointmentId" element={<VideoConsultPage />} />
       
       {/* Chemist Routes */}
       <Route path="/chemist" element={<ChemistPage />} />

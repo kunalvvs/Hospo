@@ -40,7 +40,7 @@ const SplashScreen = ({ onFinish }) => {
 
         {/* App Name with Fade In Animation */}
         <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 animate-fade-in-up">
-          DoctorSoap
+          Hospo
         </h1>
         
         {/* Tagline */}

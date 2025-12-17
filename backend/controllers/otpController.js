@@ -21,8 +21,17 @@ const roleModelMap = {
 // In-memory OTP storage (use Redis in production)
 const otpStore = new Map();
 
+// Fixed OTP for development/testing (will be replaced with Renflair SMS API)
+const FIXED_OTP = process.env.FIXED_OTP || '123456';
+const USE_FIXED_OTP = process.env.USE_FIXED_OTP === 'true' || process.env.NODE_ENV === 'development';
+
 // Generate 6-digit OTP
 const generateOTP = () => {
+  // If in development mode or USE_FIXED_OTP is enabled, return fixed OTP
+  if (USE_FIXED_OTP) {
+    return FIXED_OTP;
+  }
+  // Otherwise generate random OTP (for production with Renflair SMS API)
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
@@ -154,6 +163,7 @@ exports.verifyOTP = async (req, res) => {
 
     // Mark user as verified in the correct model
     let updatedUser = null;
+    let userRole = null;
     for (const [roleName, Model] of Object.entries(roleModelMap)) {
       if (email) {
         updatedUser = await Model.findOneAndUpdate(
@@ -170,13 +180,42 @@ exports.verifyOTP = async (req, res) => {
       }
       if (updatedUser) {
         console.log(`✅ User verified in ${roleName} collection`);
+        userRole = roleName;
         break;
       }
     }
 
+    // Check if user exists
+    if (!updatedUser) {
+      // OTP is valid but user doesn't exist - this is for signup flow
+      return res.status(200).json({
+        success: true,
+        message: 'OTP verified successfully. Please complete registration.',
+        token: null,
+        user: null,
+        phoneVerified: true
+      });
+    }
+
+    // Generate token for auto-login after OTP verification (for existing users)
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ id: updatedUser._id, role: userRole }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRE
+    });
+
     res.status(200).json({
       success: true,
-      message: 'OTP verified successfully'
+      message: 'OTP verified successfully. Login successful.',
+      token,
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name || updatedUser.serviceName || updatedUser.contactPerson || 'User',
+        email: updatedUser.email,
+        phone: updatedUser.phone || updatedUser.mobile,
+        role: userRole,
+        isVerified: updatedUser.isVerified,
+        registrationComplete: updatedUser.registrationComplete || false
+      }
     });
   } catch (error) {
     console.error('Verify OTP Error:', error);

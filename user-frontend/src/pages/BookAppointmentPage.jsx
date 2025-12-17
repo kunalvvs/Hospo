@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   MapPin,
@@ -14,23 +14,43 @@ import { FaStethoscope, FaRegUser, FaUserAlt, FaUserSecret } from "react-icons/f
 import { CiCreditCard1 } from "react-icons/ci";
 import { MdOutlineCreditCard } from "react-icons/md";
 import { BsCash } from "react-icons/bs";
+import { doctorAPI, appointmentAPI, getUserData } from "../services/api";
 
 const BookAppointmentPage = () => {
   const navigate = useNavigate();
-  const [consultationType, setConsultationType] = useState("In-Person");
+  const { id } = useParams();
+  const [doctor, setDoctor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [consultationType, setConsultationType] = useState("in-person");
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
   const [selectedTime, setSelectedTime] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [booking, setBooking] = useState("");
-  const [paymentMode, setPaymentMode] = useState("");
-
-  const doctor = {
-    name: "Dr. Rajesh Mehta",
-    qualifications: "BAMS, MD (Dermatologist)",
-    experience: 8,
-    fee: 500,
-    hospital: "City Clinic, Noida",
+  const [booking, setBooking] = useState("myself");
+  const [paymentMode, setPaymentMode] = useState("cod");
+  const [couponCode, setCouponCode] = useState("");
+  
+  useEffect(() => {
+    fetchDoctorDetails();
+  }, [id]);
+  
+  const fetchDoctorDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await doctorAPI.getDoctorById(id);
+      
+      if (response.success && response.doctor) {
+        setDoctor(response.doctor);
+        console.log('✅ Fetched doctor for booking:', response.doctor);
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctor details:', error);
+      alert('Failed to load doctor details. Please try again.');
+      navigate('/doctors');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const timeSlots = {
@@ -115,6 +135,85 @@ const BookAppointmentPage = () => {
     newMonth.setMonth(currentMonth.getMonth() + direction);
     setCurrentMonth(newMonth);
   };
+  
+  const handleConfirmBooking = async () => {
+    if (!selectedDate || !selectedTime) {
+      alert('Please select date and time');
+      return;
+    }
+    
+    try {
+      setSubmitting(true);
+      const userData = getUserData();
+      
+      if (!userData) {
+        alert('Please login to book appointment');
+        navigate('/login');
+        return;
+      }
+      
+      const appointmentData = {
+        doctor: id,
+        appointmentDate: selectedDate.toISOString().split('T')[0],
+        appointmentTime: selectedTime,
+        consultationType: consultationType,
+        amount: calculateTotal(),
+        paymentMode: paymentMode,
+        paymentStatus: paymentMode === 'cod' ? 'pending' : 'completed',
+        notes: ''
+      };
+      
+      const response = await appointmentAPI.bookAppointment(appointmentData);
+      
+      if (response.success) {
+        alert('Appointment booked successfully!');
+        navigate('/my-appointments');
+      } else {
+        alert('Failed to book appointment. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to book appointment:', error);
+      alert('Failed to book appointment. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+  const calculateFees = () => {
+    return doctor?.consultationFee || 500;
+  };
+  
+  const calculateGST = () => {
+    return Math.round(calculateFees() * 0.18);
+  };
+  
+  const calculateTotal = () => {
+    return calculateFees() + calculateGST();
+  };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  if (!doctor) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Doctor not found</p>
+          <button
+            onClick={() => navigate('/doctors')}
+            className="text-blue-600 hover:underline"
+          >
+            Back to Doctors List
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 text-black pb-6 px-4">
@@ -140,12 +239,12 @@ const BookAppointmentPage = () => {
           <div className="flex-1">
             <h2 className="text-lg font-semibold mb-1 text-black">{doctor.name}</h2>
             <p className="text-gray-400 text-sm mb-1 flex items-center gap-1">
-              <span>🏥</span> {doctor.qualifications}
+              <span>🏥</span> {doctor.primarySpecialization || 'General Physician'}
             </p>
             <p className="text-pink-400 text-sm font-medium mb-2">
-              {doctor.experience} Year Experience
+              {doctor.experience || 0} Year Experience
             </p>
-            <p className="text-teal-400 text-lg font-semibold">₹{doctor.fee}</p>
+            <p className="text-teal-400 text-lg font-semibold">₹{doctor.consultationFee || 500}</p>
           </div>
         </div>
       </div>
@@ -159,7 +258,7 @@ const BookAppointmentPage = () => {
             </div>
             <div>
               <h3 className="text-gray-700 text-sm">Hospital/Clinic</h3>
-              <p className="text-black font-medium ">{doctor.hospital}</p>
+              <p className="text-black font-medium ">{doctor.clinicHospitalName || 'Private Practice'}</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -171,9 +270,9 @@ const BookAppointmentPage = () => {
         <h3 className="text-base font-semibold mb-3">Consultation Type</h3>
         <div className="flex gap-3">
           <button
-            onClick={() => setConsultationType("In-Person")}
+            onClick={() => setConsultationType("in-person")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
-              consultationType === "In-Person"
+              consultationType === "in-person"
                 ? "bg-dblue text-white"
                 : "bg-white text-black shadow-md"
             }`}
@@ -182,9 +281,9 @@ const BookAppointmentPage = () => {
             In-Person
           </button>
           <button
-            onClick={() => setConsultationType("Video")}
+            onClick={() => setConsultationType("video")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-colors ${
-              consultationType === "Video"
+              consultationType === "video"
                 ? "bg-dblue text-white"
                 : "bg-white text-black shadow-md"
             }`}
@@ -419,6 +518,8 @@ const BookAppointmentPage = () => {
             <input
               type="text"
               placeholder="You have a coupon?"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
               className="w-full h-full rounded-xl p-2 border border-gray-300 focus:ring-0 outline-none transition-colors duration-300"
             />
           </div>
@@ -430,30 +531,33 @@ const BookAppointmentPage = () => {
         <div className="text-xl font-bold">Pricing Breakdown</div>
         <div className="flex flex-row justify-between">
           <div>Fees</div>
-          <div>500$</div>
+          <div>₹{calculateFees()}</div>
         </div>
         <div className="flex flex-row justify-between">
-          <div>GST</div>
-          <div>45$</div>
+          <div>GST (18%)</div>
+          <div>₹{calculateGST()}</div>
         </div>
         <div className="border border-gray-300" />
         <div className="flex flex-row justify-between">
           <div>Payable Amount</div>
-          <div>545$</div>
+          <div>₹{calculateTotal()}</div>
         </div>
       </div>
 
       {/* Confirm Button */}
-      <div className="px-4 mt-8">
+      <div className="px-4 mt-8 pb-8">
         <button
-          disabled={!selectedDate || !selectedTime}
+          onClick={handleConfirmBooking}
+          disabled={!selectedDate || !selectedTime || submitting}
           className={`w-full font-semibold py-4 rounded-xl transition-all ${
-            selectedDate && selectedTime
-              ? "bg-dblue text-white shadow-lg shadow-blue-500/30"
+            selectedDate && selectedTime && !submitting
+              ? "bg-dblue text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700"
               : "bg-gray-300 text-gray-600 cursor-not-allowed"
           }`}
         >
-          {selectedDate && selectedTime
+          {submitting 
+            ? "Booking..." 
+            : selectedDate && selectedTime
             ? "Confirm Appointment"
             : "Please select date and time"}
         </button>

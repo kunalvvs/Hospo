@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Phone, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-const HomePage = () => {
+const LoginPageOld = () => {
   const navigate = useNavigate();
   const [mobileNumber, setMobileNumber] = useState("");
   const [showOTP, setShowOTP] = useState(false);
@@ -168,4 +168,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default LoginPageOld;
