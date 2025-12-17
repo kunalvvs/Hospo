@@ -98,9 +98,14 @@ const SettingsPage = () => {
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
+      // Clear all localStorage data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/login');
+      localStorage.removeItem('role');
+      localStorage.clear(); // Clear any other data
+      
+      // Navigate to login page
+      navigate('/login', { replace: true });
     }
   };
 

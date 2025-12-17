@@ -11,6 +11,8 @@ import {
   Award,
   Languages,
   Briefcase,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { doctorAPI } from "../services/api";
 
@@ -194,7 +196,11 @@ const DoctorProfilePage = () => {
               <p className="text-sm font-semibold text-gray-800">
                 {doctor.clinicHospitalName || 'Private Practice'}
               </p>
-              <p className="text-xs text-gray-600">{doctor.clinicAddress || 'Address not provided'}, {doctor.city || ''}</p>
+              <p className="text-xs text-gray-600">
+                {doctor.clinicLocation?.address || doctor.clinicAddress || 'Address not provided'}
+                {doctor.clinicLocation?.city && `, ${doctor.clinicLocation.city}`}
+                {doctor.clinicLocation?.state && `, ${doctor.clinicLocation.state}`}
+              </p>
             </div>
           </div>
           <div className="flex items-start space-x-3">
@@ -253,6 +259,35 @@ const DoctorProfilePage = () => {
             <p className="text-sm text-gray-600 leading-relaxed">{doctor.bio}</p>
           </div>
         )}
+
+        {/* Contact Details */}
+        <div className="bg-white p-4 rounded-lg shadow mb-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Contact Details</h3>
+          <div className="space-y-3">
+            {doctor.email && (
+              <div className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 text-dblue" />
+                <div>
+                  <p className="text-xs text-gray-500">Email</p>
+                  <a href={`mailto:${doctor.email}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                    {doctor.email}
+                  </a>
+                </div>
+              </div>
+            )}
+            {doctor.phone && (
+              <div className="flex items-center space-x-3">
+                <Phone className="w-5 h-5 text-dblue" />
+                <div>
+                  <p className="text-xs text-gray-500">Phone</p>
+                  <a href={`tel:${doctor.phone}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                    {doctor.phone}
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Professional Info */}
         <div className="bg-white p-4 rounded-lg shadow mb-4">

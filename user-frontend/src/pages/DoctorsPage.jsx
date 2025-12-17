@@ -105,8 +105,8 @@ const DoctorsPage = () => {
         <div>
           <h2 className="text-lg font-semibold mb-4 text-black">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-4 ">
-            <Link to="/book-appointment">
-              <div className="bg-white shadow-md rounded-xl px-1.5 py-6 flex flex-col items-center justify-center hover:bg-gray-200 transition-colors">
+            <div onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
+              <div className="bg-white shadow-md rounded-xl px-1.5 py-6 flex flex-col items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
                 <div className="bg-blue-500/20 p-4 rounded-full mb-3">
                   <Calendar className="w-8 h-8 text-blue-400" />
                 </div>
@@ -114,10 +114,10 @@ const DoctorsPage = () => {
                   Book Appointment
                 </h3>
                 <p className="text-xs text-black text-center">
-                  Schedule consultation
+                  Select doctor below
                 </p>
               </div>
-            </Link>
+            </div>
             <Link to="/video-consult">
               <div className="bg-white shadow-md rounded-xl p-6 flex flex-col items-center justify-center hover:bg-gray-200 transition-colors">
                 <div className="bg-teal-500/20 p-4 rounded-full mb-3">

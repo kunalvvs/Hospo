@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, ShoppingCart, FileText, BookOpen, MapPin, Settings, Lock, LogOut, ChevronRight, User, Bell } from 'lucide-react';
+import { getUserData } from '../services/api';
 
-const UserSidebar = ({ user, onClose }) => {
+const UserSidebar = ({ user: propUser, onClose }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(propUser);
+  
+  // Load user data from localStorage on mount
+  useEffect(() => {
+    const userData = getUserData();
+    if (userData) {
+      setUser(userData);
+    }
+  }, [propUser]);
   
   const handleNavigation = (href) => {
     console.log('Navigating to:', href);
@@ -99,7 +109,15 @@ const UserSidebar = ({ user, onClose }) => {
           {/* Logout */}
           <div className="px-6 pb-8">
             <button 
-              onClick={() => handleNavigation('/')}
+              onClick={() => {
+                // Clear all localStorage data
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('role');
+                // Navigate to login page
+                navigate('/login');
+                onClose();
+              }}
               className="flex items-center justify-between w-full px-6 py-4 bg-gray-200 hover:bg-gray-100 rounded-lg transition-colors border border-gray-700"
             >
               <div className="flex items-center gap-4">

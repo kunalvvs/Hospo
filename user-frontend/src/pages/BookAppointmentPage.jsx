@@ -153,15 +153,17 @@ const BookAppointmentPage = () => {
       }
       
       const appointmentData = {
-        doctor: id,
+        doctorId: id, // Backend expects 'doctorId', not 'doctor'
         appointmentDate: selectedDate.toISOString().split('T')[0],
         appointmentTime: selectedTime,
-        consultationType: consultationType,
-        amount: calculateTotal(),
-        paymentMode: paymentMode,
-        paymentStatus: paymentMode === 'cod' ? 'pending' : 'completed',
+        consultationType: consultationType === 'in-person' ? 'In-Person' : 'Video',
+        bookingFor: booking === 'myself' ? 'Self' : 'Someone Else',
+        paymentMode: paymentMode === 'cod' ? 'Cash' : paymentMode === 'online' ? 'Online' : 'Card',
+        symptoms: '',
         notes: ''
       };
+      
+      console.log('📤 Booking appointment with data:', appointmentData);
       
       const response = await appointmentAPI.bookAppointment(appointmentData);
       

@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Clock, MapPin, User, Phone, Video, X, CheckCircle 
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { appointmentAPI } from '../services/api';
+import DashboardPage from './DashboardPage';
 
 const MyAppointmentsPage = () => {
   const navigate = useNavigate();
