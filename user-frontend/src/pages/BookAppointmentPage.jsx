@@ -261,7 +261,7 @@ const BookAppointmentPage = () => {
             </div>
             <div>
               <h3 className="text-gray-700 text-sm">Hospital/Clinic</h3>
-              <p className="text-black font-medium ">{doctor.clinicHospitalName || 'Private Practice'}</p>
+              <p className="text-black font-medium ">{doctor.clinicHospitalName || doctor.clinicStreet || 'Private Practice'}</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />

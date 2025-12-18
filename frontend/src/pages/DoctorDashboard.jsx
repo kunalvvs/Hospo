@@ -900,11 +900,11 @@ const DoctorDashboard = () => {
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${profileCompletion}%` }}></div>
           </div>
-          <div className="completion-tips">
+          {/* <div className="completion-tips">
             <p>📝 Add profile photo and bio</p>
             <p>🎓 Upload credentials</p>
             <p>🏥 Complete clinic details</p>
-          </div>
+          </div> */}
         </div>
 
         <div className="content-body">

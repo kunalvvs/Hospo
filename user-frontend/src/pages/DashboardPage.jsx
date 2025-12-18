@@ -677,7 +677,7 @@ const DashboardPage = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="group bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center min-h-[100px] sm:min-h-[110px] hover:from-blue-500 hover:to-blue-600 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg hover:shadow-blue-500/25 border border-blue-500/20 hover:border-blue-400/50 relative overflow-hidden">
+         <Link to="/doctors"> <div className="group bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center min-h-[100px] sm:min-h-[110px] hover:from-blue-500 hover:to-blue-600 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg hover:shadow-blue-500/25 border border-blue-500/20 hover:border-blue-400/50 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center mb-2 ring-2 ring-white/30 group-hover:ring-white/50 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
               <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -688,7 +688,7 @@ const DashboardPage = () => {
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
               <ChevronRight className="w-3 h-3 text-white" />
             </div>
-          </div>
+          </div> </Link>
 
           <div className="group bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center text-center min-h-[100px] sm:min-h-[110px] hover:from-purple-500 hover:to-purple-600 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg hover:shadow-purple-500/25 border border-purple-500/20 hover:border-purple-400/50 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
