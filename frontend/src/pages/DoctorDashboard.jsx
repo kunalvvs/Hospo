@@ -208,7 +208,7 @@ const DoctorDashboard = () => {
             patient: apt.patient?.name || 'Unknown Patient',
             phone: apt.patient?.phone || 'N/A',
             message: `${apt.consultationType} - ${apt.symptoms || 'No symptoms specified'}`,
-            status: apt.status === 'pending' ? 'new' : apt.status,
+            status: apt.status === 'pending' ? 'pending' : apt.status,
             date: new Date(apt.appointmentDate).toISOString().split('T')[0],
             appointmentTime: apt.appointmentTime,
             consultationFee: apt.consultationFee,
@@ -220,6 +220,37 @@ const DoctorDashboard = () => {
       }
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
+    }
+  };
+  
+  // Handle appointment status update (Approve/Reject/Complete)
+  const handleUpdateAppointmentStatus = async (appointmentId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert(`Appointment ${newStatus === 'confirmed' ? 'approved' : newStatus === 'cancelled' ? 'rejected' : 'updated'} successfully!`);
+          // Refresh appointments list
+          await fetchAppointments();
+        } else {
+          alert(data.message || 'Failed to update appointment status');
+        }
+      } else {
+        alert('Failed to update appointment status');
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert('An error occurred while updating appointment status');
     }
   };
 
@@ -311,7 +342,8 @@ const DoctorDashboard = () => {
       
       loadProfile();
       
-      // Fetch appointments\n      fetchAppointments();
+      // Fetch appointments
+      fetchAppointments();
     } catch (error) {
       console.error('Error parsing user data:', error);
       setLoading(false);
@@ -2091,8 +2123,30 @@ const DoctorDashboard = () => {
                           )}
                         </div>
                         <div className="enquiry-actions">
-                          <button className="btn-secondary" onClick={() => alert('Reply feature coming soon!')}>Reply</button>
-                          <button className="btn-primary" onClick={() => alert('Mark as completed!')}>Mark Complete</button>
+                          {enquiry.status === 'new' || enquiry.status === 'pending' ? (
+                            <>
+                              <button 
+                                className="btn-primary" 
+                                onClick={() => handleUpdateAppointmentStatus(enquiry.id, 'confirmed')}
+                                style={{ backgroundColor: '#10b981', borderColor: '#10b981' }}
+                              >
+                                ✓ Approve
+                              </button>
+                              <button 
+                                className="btn-secondary" 
+                                onClick={() => handleUpdateAppointmentStatus(enquiry.id, 'cancelled')}
+                                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                              >
+                                ✗ Reject
+                              </button>
+                            </>
+                          ) : enquiry.status === 'confirmed' ? (
+                            <button className="btn-primary" onClick={() => handleUpdateAppointmentStatus(enquiry.id, 'completed')}>Mark Complete</button>
+                          ) : (
+                            <span style={{ color: enquiry.status === 'cancelled' ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
+                              {enquiry.status.toUpperCase()}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

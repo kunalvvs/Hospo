@@ -23,7 +23,12 @@ const DoctorProfilePage = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetchDoctorProfile();
+    if (id) {
+      fetchDoctorProfile();
+    } else {
+      setLoading(false);
+      console.error('No doctor ID provided');
+    }
   }, [id]);
   
   const fetchDoctorProfile = async () => {
@@ -194,16 +199,16 @@ const DoctorProfilePage = () => {
             <Briefcase className="w-5 h-5 text-dblue mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-gray-800">
-                {doctor.clinicHospitalName || 'Private Practice'}
+                {doctor.clinicName || doctor.clinicHospitalName || 'Private Practice'}
               </p>
               <p className="text-xs text-gray-600">
-                {doctor.clinicLocation && typeof doctor.clinicLocation === 'object' ? (
-                  // If clinicLocation is an object with address, city, state
-                  `${doctor.clinicLocation.address || ''}${doctor.clinicLocation.city ? `, ${doctor.clinicLocation.city}` : ''}${doctor.clinicLocation.state ? `, ${doctor.clinicLocation.state}` : ''}`
-                ) : (
-                  // Fallback to older structure
-                  doctor.clinicAddress ? `${doctor.clinicAddress}${doctor.city ? `, ${doctor.city}` : ''}` : 'Address not provided'
-                )}
+                {[
+                  doctor.clinicStreet,
+                  doctor.clinicLandmark,
+                  doctor.clinicCity,
+                  doctor.clinicState,
+                  doctor.clinicPincode
+                ].filter(Boolean).join(', ') || 'Address not provided'}
               </p>
             </div>
           </div>

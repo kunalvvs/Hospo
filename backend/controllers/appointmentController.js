@@ -114,7 +114,7 @@ exports.getPatientAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate('doctor', 'name specialization profilePhoto consultationFee')
+      .populate('doctor', 'name primarySpecialization profilePhoto consultationFee clinicName clinicHospitalName clinicStreet clinicCity clinicState')
       .sort({ appointmentDate: -1 });
 
     res.status(200).json({

@@ -221,11 +221,12 @@ const BookAppointmentPage = () => {
     <div className="min-h-screen bg-gray-100 text-black pb-6 px-4">
       {/* Header */}
       <div className="bg-gray-100 p-4 pt-8 flex items-center gap-4">
-        <Link to="/doctors/profile">
-          <button className="text-black">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-        </Link>
+        <button 
+          onClick={() => navigate(`/doctors/${id}`)}
+          className="text-black"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
         <h1 className="text-xl font-semibold">Book Appointment</h1>
       </div>
 

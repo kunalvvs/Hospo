@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Activity,
   Briefcase,
+  Calendar,
 } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -260,6 +261,9 @@ const DashboardPage = () => {
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [realTopDoctors, setRealTopDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const promoImages = ["/cola.jpg", "/cola.jpg", "/cola.jpg"];
 
@@ -280,17 +284,24 @@ const DashboardPage = () => {
     setLoading(false);
   }, [navigate]);
 
-  // Fetch user appointments
+  // Fetch user appointments (only confirmed/approved ones)
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!userData) return;
       
       setLoadingAppointments(true);
       try {
-        const response = await appointmentAPI.getMyAppointments('pending,confirmed');
+        const response = await appointmentAPI.getMyAppointments();
         if (response.success && response.appointments) {
-          setAppointments(response.appointments);
-          console.log('✅ Appointments loaded:', response.appointments);
+          // Filter to show only confirmed appointments in dashboard
+          const confirmedAppointments = response.appointments.filter(
+            apt => apt.status === 'confirmed'
+          );
+          setAppointments(confirmedAppointments);
+          console.log('✅ Confirmed appointments loaded:', confirmedAppointments.length);
+          
+          // Generate notifications from appointments
+          generateNotifications(response.appointments);
         }
       } catch (error) {
         console.error('Failed to fetch appointments:', error);
@@ -301,6 +312,81 @@ const DashboardPage = () => {
 
     fetchAppointments();
   }, [userData]);
+
+  // Generate notifications from real appointment data
+  const generateNotifications = (allAppointments) => {
+    const notifs = [];
+    const now = new Date();
+    
+    allAppointments.forEach((apt, index) => {
+      const aptDate = new Date(apt.appointmentDate);
+      const timeDiff = aptDate - now;
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+      
+      // Appointment confirmed notification
+      if (apt.status === 'confirmed') {
+        notifs.push({
+          id: `confirmed-${apt._id}`,
+          type: 'appointment',
+          title: 'Appointment Confirmed',
+          message: `Your appointment with Dr. ${apt.doctor?.name || 'Doctor'} has been confirmed for ${aptDate.toLocaleDateString()} at ${apt.appointmentTime}`,
+          time: getTimeAgo(apt.updatedAt || apt.createdAt),
+          read: false,
+          appointmentId: apt._id
+        });
+      }
+      
+      // Reminder for upcoming appointments (within 24 hours)
+      if (apt.status === 'confirmed' && hoursDiff > 0 && hoursDiff <= 24) {
+        notifs.push({
+          id: `reminder-${apt._id}`,
+          type: 'reminder',
+          title: 'Appointment Reminder',
+          message: `You have an appointment with Dr. ${apt.doctor?.name || 'Doctor'} ${daysDiff < 1 ? 'today' : 'tomorrow'} at ${apt.appointmentTime}`,
+          time: 'Just now',
+          read: false,
+          appointmentId: apt._id
+        });
+      }
+      
+      // Cancelled appointment notification
+      if (apt.status === 'cancelled') {
+        notifs.push({
+          id: `cancelled-${apt._id}`,
+          type: 'cancelled',
+          title: 'Appointment Cancelled',
+          message: `Your appointment with Dr. ${apt.doctor?.name || 'Doctor'} on ${aptDate.toLocaleDateString()} has been cancelled`,
+          time: getTimeAgo(apt.updatedAt || apt.createdAt),
+          read: false,
+          appointmentId: apt._id
+        });
+      }
+    });
+    
+    // Sort by most recent first and limit to 10
+    const sortedNotifs = notifs.slice(0, 10);
+    setNotifications(sortedNotifs);
+    console.log('✅ Generated notifications:', sortedNotifs.length);
+  };
+
+  // Helper function to calculate time ago
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+  };
 
   // Fetch real top doctors
   useEffect(() => {
@@ -332,6 +418,18 @@ const DashboardPage = () => {
     return () => clearInterval(slideInterval);
   }, [promoImages.length]);
 
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && !event.target.closest('.notification-panel') && !event.target.closest('.notification-bell')) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -361,17 +459,94 @@ const DashboardPage = () => {
             </h1>
           </div>
           
-          <div className="relative flex-shrink-0">
+          <div 
+            className="relative flex-shrink-0 cursor-pointer notification-bell"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
             <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
-              2
-            </span>
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                {notifications.filter(n => !n.read).length}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="px-4">
           <hr className="mb-4 mt-2 mx-auto w-[99%] " />
         </div>
+
+        {/* Notification Panel */}
+        {showNotifications && (
+          <div className="absolute top-20 right-4 w-80 bg-white rounded-2xl shadow-2xl z-50 max-h-96 overflow-y-auto notification-panel">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+              <h3 className="text-lg font-bold text-gray-800">Notifications</h3>
+              <button 
+                onClick={() => {
+                  setNotifications(notifications.map(n => ({...n, read: true})));
+                }}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Mark all read
+              </button>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <div 
+                    key={notification.id}
+                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                      !notification.read ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => {
+                      // Mark as read
+                      setNotifications(notifications.map(n => 
+                        n.id === notification.id ? {...n, read: true} : n
+                      ));
+                      // Navigate to appointments page
+                      if (notification.appointmentId) {
+                        navigate('/my-appointments');
+                      }
+                    }}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        notification.type === 'appointment' ? 'bg-blue-100' : 
+                        notification.type === 'reminder' ? 'bg-yellow-100' : 'bg-red-100'
+                      }`}>
+                        {notification.type === 'appointment' ? (
+                          <Calendar className="w-5 h-5 text-blue-600" />
+                        ) : notification.type === 'reminder' ? (
+                          <Bell className="w-5 h-5 text-yellow-600" />
+                        ) : (
+                          <Calendar className="w-5 h-5 text-red-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 mb-1">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-gray-600 mb-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-gray-400">{notification.time}</p>
+                      </div>
+                      {!notification.read && (
+                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-gray-500">
+                  <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">No notifications</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Upcoming Appointment */}
         <div className="px-4">
           <h2 className="text-lg font-semibold mb-3">Upcoming Appointment</h2>

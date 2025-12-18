@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, User, Phone, Video, X, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
-import { appointmentAPI } from '../services/api';
+import { appointmentAPI, getUserData } from '../services/api';
 import DashboardPage from './DashboardPage';
 
 const MyAppointmentsPage = () => {
@@ -54,6 +54,50 @@ const MyAppointmentsPage = () => {
   const handleCancelAppointment = (appointment) => {
     setSelectedAppointment(appointment);
     setShowCancelModal(true);
+  };
+
+  const handleDownloadReport = (appointment) => {
+    // Generate a simple medical report
+    const reportContent = `
+MEDICAL APPOINTMENT REPORT
+==========================
+
+Patient Information:
+-------------------
+Name: ${getUserData()?.name || 'N/A'}
+Email: ${getUserData()?.email || 'N/A'}
+
+Doctor Information:
+-------------------
+Doctor: ${appointment.doctor?.name || appointment.doctorName || 'N/A'}
+Specialization: ${appointment.doctor?.primarySpecialization || 'N/A'}
+Clinic: ${appointment.doctor?.clinicName || appointment.location?.hospital || 'N/A'}
+
+Appointment Details:
+--------------------
+Date: ${new Date(appointment.appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Time: ${appointment.appointmentTime}
+Type: ${appointment.consultationType}
+Fee: ₹${appointment.amount || appointment.consultationFee || 'N/A'}
+Status: ${appointment.status.toUpperCase()}
+
+Notes:
+------
+${appointment.notes || 'No additional notes'}
+
+Generated on: ${new Date().toLocaleString()}
+    `;
+    
+    // Create blob and download
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Appointment_Report_${new Date(appointment.appointmentDate).toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const confirmCancellation = async () => {
@@ -149,7 +193,10 @@ const MyAppointmentsPage = () => {
                   Join Video Call
                 </button>
               )}
-              <button className="w-full bg-[#234f83] text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => navigate(`/book-appointment/${appointment.doctor?._id || appointment.doctor}`)}
+                className="w-full bg-[#234f83] text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors"
+              >
                 Reschedule
               </button>
               <button
@@ -163,17 +210,26 @@ const MyAppointmentsPage = () => {
 
           {appointment.status === 'completed' && (
             <>
-              <button className="w-full bg-green-600 text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-green-700 transition-colors">
+              <button 
+                onClick={() => handleDownloadReport(appointment)}
+                className="w-full bg-green-600 text-white py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-green-700 transition-colors"
+              >
                 Download Report
               </button>
-              <button className="w-full bg-blue-100 text-blue-600 py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-blue-200 transition-colors">
+              <button 
+                onClick={() => navigate(`/book-appointment/${appointment.doctor?._id || appointment.doctor}`)}
+                className="w-full bg-blue-100 text-blue-600 py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-blue-200 transition-colors"
+              >
                 Book Again
               </button>
             </>
           )}
 
           {appointment.status === 'cancelled' && (
-            <button className="w-full bg-gray-200 text-gray-600 py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-gray-300 transition-colors">
+            <button 
+              onClick={() => navigate('/doctors')}
+              className="w-full bg-gray-200 text-gray-600 py-2 md:py-2.5 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-gray-300 transition-colors"
+            >
               Book New
             </button>
           )}
