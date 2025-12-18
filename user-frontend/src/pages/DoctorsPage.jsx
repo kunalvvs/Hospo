@@ -61,9 +61,9 @@ const DoctorsPage = () => {
           specialization: doc.primarySpecialization || 'General',
           experience: doc.experience ? `${doc.experience} years` : 'N/A',
           fee: doc.consultationFee || 500,
-          clinic: doc.clinicHospitalName || 'Private Practice',
-          city: doc.city || 'India',
-          address: doc.clinicAddress || 'Not specified',
+          clinic: doc.clinicHospitalName || doc.clinicName || 'Private Practice',
+          city: doc.city || `${doc.clinicStreet} India`,
+          address: doc.clinicAddress || doc.clinicStreet || 'Not specified',
           available: true,
           link: `/doctors/${doc._id}`,
           rating: 4.5, // Default rating (can be enhanced later)

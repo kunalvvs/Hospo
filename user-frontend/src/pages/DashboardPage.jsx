@@ -548,7 +548,7 @@ const DashboardPage = () => {
         )}
 
         {/* Upcoming Appointment */}
-        <div className="px-4">
+        <div className="px-4 ">
           <h2 className="text-lg font-semibold mb-3">Upcoming Appointment</h2>
           {loadingAppointments ? (
             <div className="bg-white rounded-2xl p-8 text-center">
@@ -561,7 +561,7 @@ const DashboardPage = () => {
                 <img
                   src={appointments[0].doctor?.profilePhoto || "/doctor1.png"}
                   alt="Doctor"
-                  className="object-cover w-full h-full"
+                  className="object-cover w-full max-h-40"
                 />
               </div>
 
