@@ -1,105 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, MapPin, Phone } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { chemistAPI } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const MyOrdersPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
+  const [orders, setOrders] = useState({ active: [], completed: [], cancelled: [] });
+  const [loading, setLoading] = useState(true);
 
-  const orders = {
-    active: [
-      {
-        id: 'ORD001',
-        items: [
-          { name: 'Paracetamol 500mg', quantity: 2, price: 30 },
-          { name: 'Vitamin D3 Tablets', quantity: 1, price: 450 }
-        ],
-        totalAmount: 510,
-        orderDate: '22 Jun 2025',
-        expectedDelivery: '24 Jun 2025',
-        status: 'in_transit',
-        deliveryAddress: 'House No. 123, Sector 45, Delhi - 110001',
-        trackingSteps: [
-          { label: 'Order Placed', completed: true, time: '22 Jun, 10:30 AM' },
-          { label: 'Order Confirmed', completed: true, time: '22 Jun, 11:00 AM' },
-          { label: 'Shipped', completed: true, time: '23 Jun, 09:15 AM' },
-          { label: 'Out for Delivery', completed: false, time: '' },
-          { label: 'Delivered', completed: false, time: '' }
-        ]
-      },
-      {
-        id: 'ORD002',
-        items: [
-          { name: 'Crocin Advance', quantity: 1, price: 25 }
-        ],
-        totalAmount: 25,
-        orderDate: '23 Jun 2025',
-        expectedDelivery: '25 Jun 2025',
-        status: 'processing',
-        deliveryAddress: 'House No. 123, Sector 45, Delhi - 110001',
-        trackingSteps: [
-          { label: 'Order Placed', completed: true, time: '23 Jun, 03:20 PM' },
-          { label: 'Order Confirmed', completed: true, time: '23 Jun, 03:45 PM' },
-          { label: 'Shipped', completed: false, time: '' },
-          { label: 'Out for Delivery', completed: false, time: '' },
-          { label: 'Delivered', completed: false, time: '' }
-        ]
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await chemistAPI.getMyOrders();
+      if (response.success) {
+        // Categorize orders by status
+        const active = [];
+        const completed = [];
+        const cancelled = [];
+
+        response.data.forEach(order => {
+          if (order.status === 'delivered') {
+            completed.push(order);
+          } else if (order.status === 'cancelled' || order.status === 'rejected') {
+            cancelled.push(order);
+          } else {
+            active.push(order);
+          }
+        });
+
+        setOrders({ active, completed, cancelled });
       }
-    ],
-    completed: [
-      {
-        id: 'ORD003',
-        items: [
-          { name: 'Dolo 650', quantity: 2, price: 60 },
-          { name: 'Cough Syrup', quantity: 1, price: 120 }
-        ],
-        totalAmount: 180,
-        orderDate: '15 Jun 2025',
-        deliveredDate: '17 Jun 2025',
-        status: 'delivered',
-        deliveryAddress: 'House No. 123, Sector 45, Delhi - 110001'
-      },
-      {
-        id: 'ORD004',
-        items: [
-          { name: 'Calcium Tablets', quantity: 1, price: 350 }
-        ],
-        totalAmount: 350,
-        orderDate: '10 Jun 2025',
-        deliveredDate: '12 Jun 2025',
-        status: 'delivered',
-        deliveryAddress: 'House No. 123, Sector 45, Delhi - 110001'
-      }
-    ],
-    cancelled: [
-      {
-        id: 'ORD005',
-        items: [
-          { name: 'Multivitamin Pack', quantity: 1, price: 600 }
-        ],
-        totalAmount: 600,
-        orderDate: '08 Jun 2025',
-        cancelledDate: '09 Jun 2025',
-        status: 'cancelled',
-        cancelReason: 'Ordered by mistake'
-      }
-    ]
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'in_transit':
+      case 'out-for-delivery':
         return 'bg-blue-100 text-blue-700';
+      case 'pending':
+      case 'accepted':
       case 'processing':
+      case 'ready':
         return 'bg-yellow-100 text-yellow-700';
       case 'delivered':
         return 'bg-green-100 text-green-700';
       case 'cancelled':
+      case 'rejected':
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Pending';
+      case 'accepted':
+        return 'Accepted';
+      case 'processing':
+        return 'Processing';
+      case 'ready':
+        return 'Ready for Pickup';
+      case 'out-for-delivery':
+        return 'Out for Delivery';
+      case 'delivered':
+        return 'Delivered';
+      case 'rejected':
+        return 'Rejected';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
     }
   };
 
@@ -124,26 +109,26 @@ const MyOrdersPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b">
         <div>
           <h3 className="text-base md:text-lg font-bold text-gray-800 mb-1">
-            Order #{order.id}
+            Order #{order.orderNumber}
           </h3>
           <p className="text-xs md:text-sm text-gray-600">
-            Placed on {order.orderDate}
+            Placed on {new Date(order.orderDate).toLocaleDateString()}
           </p>
         </div>
         <span className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium w-fit ${getStatusColor(order.status)}`}>
-          {getStatusText(order.status)}
+          {getStatusLabel(order.status)}
         </span>
       </div>
 
       {/* Order Items */}
       <div className="mb-4">
-        {order.items.map((item, index) => (
+        {order.medicines.map((item, index) => (
           <div key={index} className="flex justify-between items-center py-2">
             <div className="flex-1">
-              <p className="text-sm md:text-base text-gray-800 font-medium">{item.name}</p>
+              <p className="text-sm md:text-base text-gray-800 font-medium">{item.medicineName}</p>
               <p className="text-xs md:text-sm text-gray-600">Qty: {item.quantity}</p>
             </div>
-            <p className="text-sm md:text-base font-semibold text-gray-800">₹{item.price}</p>
+            <p className="text-sm md:text-base font-semibold text-gray-800">₹{item.price * item.quantity}</p>
           </div>
         ))}
       </div>
@@ -154,60 +139,40 @@ const MyOrdersPage = () => {
         <span className="text-lg md:text-xl font-bold text-blue-600">₹{order.totalAmount}</span>
       </div>
 
+      {/* Chemist Info */}
+      {order.chemist && (
+        <div className="mb-4">
+          <div className="flex items-start text-sm md:text-base text-gray-700">
+            <Package className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0 mt-1" />
+            <div>
+              <p className="font-semibold">{order.chemist.pharmacyName}</p>
+              <p className="text-xs text-gray-600">{order.chemist.locality}, {order.chemist.city}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delivery Address */}
       {order.deliveryAddress && (
         <div className="mb-4">
           <div className="flex items-start text-sm md:text-base text-gray-700">
             <MapPin className="w-4 h-4 mr-2 text-red-500 flex-shrink-0 mt-1" />
-            <span>{order.deliveryAddress}</span>
+            <span>
+              {order.deliveryAddress.street}, {order.deliveryAddress.city}, {order.deliveryAddress.state} - {order.deliveryAddress.pincode}
+            </span>
           </div>
         </div>
       )}
 
-      {/* Tracking Steps for Active Orders */}
-      {order.status === 'in_transit' && order.trackingSteps && (
-        <div className="mb-4 bg-blue-50 rounded-xl p-4">
-          <h4 className="text-sm md:text-base font-semibold text-gray-800 mb-3">Order Tracking</h4>
-          <div className="space-y-3">
-            {order.trackingSteps.map((step, index) => (
-              <div key={index} className="flex items-start">
-                <div className="flex flex-col items-center mr-3">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    step.completed ? 'bg-green-500' : 'bg-gray-300'
-                  }`}>
-                    {step.completed && <CheckCircle className="w-4 h-4 text-white" />}
-                  </div>
-                  {index < order.trackingSteps.length - 1 && (
-                    <div className={`w-0.5 h-8 ${step.completed ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className={`text-sm md:text-base font-medium ${
-                    step.completed ? 'text-gray-800' : 'text-gray-500'
-                  }`}>
-                    {step.label}
-                  </p>
-                  {step.time && (
-                    <p className="text-xs md:text-sm text-gray-600">{step.time}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Expected/Delivered Date */}
-      {order.expectedDelivery && order.status !== 'cancelled' && (
-        <div className="flex items-center text-sm md:text-base text-gray-700 mb-4">
-          <Clock className="w-4 h-4 mr-2 text-blue-600" />
-          <span>
-            {order.status === 'delivered' 
-              ? `Delivered on ${order.deliveredDate}`
-              : `Expected delivery: ${order.expectedDelivery}`}
-          </span>
-        </div>
-      )}
+      {/* Order Date */}
+      <div className="flex items-center text-sm md:text-base text-gray-700 mb-4">
+        <Clock className="w-4 h-4 mr-2 text-blue-600" />
+        <span>
+          {order.status === 'delivered' && order.deliveredAt
+            ? `Delivered on ${new Date(order.deliveredAt).toLocaleDateString()}`
+            : `Ordered on ${new Date(order.orderDate).toLocaleDateString()}`}
+        </span>
+      </div>
 
       {/* Cancel Reason */}
       {order.status === 'cancelled' && order.cancelReason && (
@@ -274,64 +239,72 @@ const MyOrdersPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8 pb-24 md:pb-8">
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm p-2 mb-6 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            <button
-              onClick={() => setActiveTab('active')}
-              className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
-                activeTab === 'active'
-                  ? 'bg-[#234f83] text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Active ({orders.active.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('completed')}
-              className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
-                activeTab === 'completed'
-                  ? 'bg-[#234f83] text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Completed ({orders.completed.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('cancelled')}
-              className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
-                activeTab === 'cancelled'
-                  ? 'bg-[#234f83] text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Cancelled ({orders.cancelled.length})
-            </button>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dblue"></div>
           </div>
-        </div>
-
-        {/* Orders List */}
-        <div>
-          {orders[activeTab].length > 0 ? (
-            orders[activeTab].map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))
-          ) : (
-            <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
-                <Package className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
+        ) : (
+          <>
+            {/* Tabs */}
+            <div className="bg-white rounded-2xl shadow-sm p-2 mb-6 overflow-x-auto">
+              <div className="flex gap-2 min-w-max">
+                <button
+                  onClick={() => setActiveTab('active')}
+                  className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
+                    activeTab === 'active'
+                      ? 'bg-[#234f83] text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Active ({orders.active.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('completed')}
+                  className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
+                    activeTab === 'completed'
+                      ? 'bg-[#234f83] text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Completed ({orders.completed.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('cancelled')}
+                  className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl font-medium text-sm md:text-base transition-colors ${
+                    activeTab === 'cancelled'
+                      ? 'bg-[#234f83] text-white'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Cancelled ({orders.cancelled.length})
+                </button>
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">No Orders</h3>
-              <p className="text-sm md:text-base text-gray-600 mb-6">You don't have any {activeTab} orders</p>
-              <button
-                onClick={() => navigate('/chemist')}
-                className="bg-[#234f83] text-white py-3 px-6 rounded-lg font-medium text-sm md:text-base hover:bg-purple-700 transition-colors"
-              >
-                Order Medicines
-              </button>
             </div>
-          )}
-        </div>
+
+            {/* Orders List */}
+            <div>
+              {orders[activeTab].length > 0 ? (
+                orders[activeTab].map((order) => (
+                  <OrderCard key={order._id} order={order} />
+                ))
+              ) : (
+                <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
+                  <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                    <Package className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">No Orders</h3>
+                  <p className="text-sm md:text-base text-gray-600 mb-6">You don't have any {activeTab} orders</p>
+                  <button
+                    onClick={() => navigate('/chemist')}
+                    className="bg-[#234f83] text-white py-3 px-6 rounded-lg font-medium text-sm md:text-base hover:bg-purple-700 transition-colors"
+                  >
+                    Order Medicines
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <BottomNav />

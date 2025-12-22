@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { chemistAPI } from '../services/api';
+import socketService from '../services/socket';
 import './ChemistDashboard.css';
 
 const ChemistDashboard = () => {
@@ -74,12 +75,25 @@ const ChemistDashboard = () => {
     }
   }, [chemistData?.inventory]);
 
-  // Mock orders data
-  const [orders] = useState([
-    { id: 1, customer: 'Rajesh Kumar', items: 'Paracetamol 500mg, Cough Syrup', status: 'pending', date: '2025-11-14', time: '10:30 AM', amount: '₹350' },
-    { id: 2, customer: 'Priya Sharma', items: 'Antibiotics, Vitamin D3', status: 'processing', date: '2025-11-14', time: '11:15 AM', amount: '₹850' },
-    { id: 3, customer: 'Amit Patel', items: 'Blood Pressure Medicines', status: 'completed', date: '2025-11-13', time: '03:45 PM', amount: '₹1,250' },
-  ]);
+  // Orders state
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  // Fetch chemist orders
+  const fetchChemistOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      const response = await chemistAPI.getChemistOrders();
+      
+      if (response.success) {
+        setOrders(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching chemist orders:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
   // Fetch chemist profile from backend
   const fetchChemistData = async () => {
@@ -147,14 +161,41 @@ const ChemistDashboard = () => {
 
   useEffect(() => {
     fetchChemistData();
+    fetchChemistOrders();
     
     // Check if there's a state with activeSection
     if (location.state?.activeSection) {
       setActiveSection(location.state.activeSection);
     }
-  }, [navigate, location]);
+
+    // Setup Socket.IO for real-time order notifications
+    if (chemistData?._id) {
+      console.log('🔌 Connecting to Socket.IO for chemist:', chemistData._id);
+      socketService.connect(chemistData._id, 'chemist');
+
+      // Listen for new orders
+      socketService.onNewOrder((orderData) => {
+        console.log('🆕 New order received:', orderData);
+        
+        // Show notification
+        alert(`New Order! Order #${orderData.orderNumber} - ₹${orderData.totalAmount}`);
+        
+        // Refresh orders
+        fetchChemistOrders();
+      });
+
+      // Cleanup on unmount
+      return () => {
+        socketService.offNewOrder();
+        socketService.disconnect();
+      };
+    }
+  }, [navigate, location, chemistData?._id]);
 
   const handleLogout = () => {
+    // Disconnect socket before logout
+    socketService.disconnect();
+    
     localStorage.removeItem('currentUser');
     localStorage.removeItem('chemistData');
     localStorage.removeItem('token');
@@ -758,28 +799,28 @@ const ChemistDashboard = () => {
                   <div className="stat-icon">📊</div>
                   <div className="stat-info">
                     <h3>Total Orders</h3>
-                    <p className="stat-number">{orders.length}</p>
+                    <p className="stat-number">{ordersLoading ? '...' : orders.length}</p>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">🕐</div>
                   <div className="stat-info">
                     <h3>Pending</h3>
-                    <p className="stat-number">{orders.filter(o => o.status === 'pending').length}</p>
+                    <p className="stat-number">{ordersLoading ? '...' : orders.filter(o => o.status === 'pending').length}</p>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">⏳</div>
                   <div className="stat-info">
                     <h3>Processing</h3>
-                    <p className="stat-number">{orders.filter(o => o.status === 'processing').length}</p>
+                    <p className="stat-number">{ordersLoading ? '...' : orders.filter(o => ['accepted', 'processing', 'ready', 'out-for-delivery'].includes(o.status)).length}</p>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">✅</div>
                   <div className="stat-info">
                     <h3>Completed</h3>
-                    <p className="stat-number">{orders.filter(o => o.status === 'completed').length}</p>
+                    <p className="stat-number">{ordersLoading ? '...' : orders.filter(o => o.status === 'delivered').length}</p>
                   </div>
                 </div>
               </div>
@@ -787,32 +828,47 @@ const ChemistDashboard = () => {
               {/* Recent Orders */}
               <div className="recent-orders">
                 <h3>Recent Orders</h3>
-                <div className="orders-list">
-                  {orders.map((order) => (
-                    <div key={order.id} className="order-card">
-                      <div className="order-header">
-                        <h4>{order.customer}</h4>
-                        <span className={`status-badge ${order.status}`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
+                {ordersLoading ? (
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <div className="spinner"></div>
+                    <p>Loading orders...</p>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                    <p>No orders yet</p>
+                  </div>
+                ) : (
+                  <div className="orders-list">
+                    {orders.slice(0, 10).map((order) => (
+                      <div key={order._id} className="order-card">
+                        <div className="order-header">
+                          <h4>{order.user?.name || 'Customer'}</h4>
+                          <span className={`status-badge ${order.status}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('-', ' ')}
+                          </span>
+                        </div>
+                        <div className="order-details">
+                          <p>💊 <strong>Order #:</strong> {order.orderNumber}</p>
+                          <p>💊 <strong>Items:</strong> {order.medicines.map(m => m.medicineName).join(', ')}</p>
+                          <p>💰 <strong>Amount:</strong> ₹{order.totalAmount}</p>
+                          <p>📅 {new Date(order.createdAt).toLocaleDateString('en-IN')} • ⏰ {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+                          {order.deliveryAddress && (
+                            <p>📍 <strong>Address:</strong> {order.deliveryAddress.street}, {order.deliveryAddress.city}</p>
+                          )}
+                        </div>
+                        <div className="order-actions">
+                          <button className="btn-secondary">View Details</button>
+                          {order.status === 'pending' && (
+                            <button className="btn-primary">Accept Order</button>
+                          )}
+                          {['accepted', 'processing'].includes(order.status) && (
+                            <button className="btn-primary">Update Status</button>
+                          )}
+                        </div>
                       </div>
-                      <div className="order-details">
-                        <p>💊 <strong>Items:</strong> {order.items}</p>
-                        <p>💰 <strong>Amount:</strong> {order.amount}</p>
-                        <p>📅 {order.date} • ⏰ {order.time}</p>
-                      </div>
-                      <div className="order-actions">
-                        <button className="btn-secondary">View Details</button>
-                        {order.status === 'pending' && (
-                          <button className="btn-primary">Accept Order</button>
-                        )}
-                        {order.status === 'processing' && (
-                          <button className="btn-primary">Mark Ready</button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           )}

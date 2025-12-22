@@ -127,6 +127,59 @@ export const appointmentAPI = {
   }
 };
 
+// ==================== CHEMIST APIs ====================
+
+export const chemistAPI = {
+  // Get all chemists (public)
+  getAllChemists: async () => {
+    return api.get('/chemists');
+  },
+
+  // Get nearby chemists based on location
+  getNearbyChemists: async (latitude, longitude, radius = 10) => {
+    const params = { latitude, longitude, radius };
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/chemists/nearby?${queryString}`);
+  },
+
+  // Search medicines across all chemists
+  searchMedicines: async (query, filters = {}) => {
+    const params = { query, ...filters };
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/chemists/medicines/search?${queryString}`);
+  },
+
+  // Get chemist by ID
+  getChemistById: async (chemistId) => {
+    return api.get(`/chemists/${chemistId}`);
+  },
+
+  // Check chemist availability (working hours)
+  checkAvailability: async (chemistId) => {
+    return api.get(`/chemists/${chemistId}/availability`);
+  },
+
+  // Place medicine order
+  placeOrder: async (orderData) => {
+    return api.post('/chemists/orders', orderData);
+  },
+
+  // Get user's medicine orders
+  getMyOrders: async () => {
+    return api.get('/chemists/orders/my-orders');
+  },
+
+  // Add rating and review to chemist
+  addRating: async (chemistId, rating, review = '') => {
+    return api.post(`/chemists/${chemistId}/rating`, { rating, review });
+  },
+
+  // Get chemist ratings
+  getRatings: async (chemistId) => {
+    return api.get(`/chemists/${chemistId}/ratings`);
+  }
+};
+
 // ==================== HELPER FUNCTIONS ====================
 
 // Store auth token

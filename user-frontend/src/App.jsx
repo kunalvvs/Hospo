@@ -7,6 +7,9 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import DoctorsPage from './pages/DoctorsPage';
 import ChemistPage from './pages/ChemistPage';
+import ChemistDetail from './pages/ChemistDetail';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 import HospitalPage from './pages/HospitalPage';
 import PathlabPage from './pages/PathlabPage';
 import AmbulancePage from './pages/AmbulancePage';
@@ -117,6 +120,9 @@ function App() {
       
       {/* Chemist Routes */}
       <Route path="/chemist" element={<ChemistPage />} />
+      <Route path="/chemist/:id" element={<ChemistDetail />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/chemist/medicine" element={<MedicineDetailsPage />} />
       
       {/* Hospital Routes */}

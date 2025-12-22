@@ -288,6 +288,12 @@ export const chemistAPI = {
   deleteProfile: async () => {
     const response = await API.delete('/chemists/profile');
     return response.data;
+  },
+
+  // Get chemist's orders (for chemist dashboard)
+  getChemistOrders: async () => {
+    const response = await API.get('/chemists/orders/chemist-orders');
+    return response.data;
   }
 };
 
