@@ -55,7 +55,7 @@ const DoctorsPage = () => {
       
       if (response.success && response.doctors) {
         // Format doctors for display
-        const formattedDoctors = response.doctors.map(doc => ({
+        let formattedDoctors = response.doctors.map(doc => ({
           id: doc._id,
           name: doc.name,
           specialization: doc.primarySpecialization || 'General',
@@ -66,9 +66,25 @@ const DoctorsPage = () => {
           address: doc.clinicAddress || doc.clinicStreet || 'Not specified',
           available: true,
           link: `/doctors/${doc._id}`,
-          rating: 4.5, // Default rating (can be enhanced later)
-          distance: '2.5' // Default distance (can be enhanced with geolocation)
+          rating: 4.5,
+          distance: '2.5',
+          // Add raw data for client-side filtering
+          rawData: doc
         }));
+        
+        // If search query exists, do additional client-side filtering for comprehensive search
+        if (search) {
+          const searchLower = search.toLowerCase();
+          formattedDoctors = formattedDoctors.filter(doc => 
+            doc.name.toLowerCase().includes(searchLower) ||
+            doc.specialization.toLowerCase().includes(searchLower) ||
+            doc.clinic.toLowerCase().includes(searchLower) ||
+            doc.city.toLowerCase().includes(searchLower) ||
+            doc.address.toLowerCase().includes(searchLower) ||
+            (doc.rawData.qualifications || '').toLowerCase().includes(searchLower) ||
+            (doc.rawData.about || '').toLowerCase().includes(searchLower)
+          );
+        }
         
         setTopDoctors(formattedDoctors.slice(0, 5));
         setNearbyDocs(formattedDoctors);

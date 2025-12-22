@@ -17,6 +17,8 @@ const SettingsPage = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
   
   // Settings State
   const [settings, setSettings] = useState({
@@ -61,6 +63,10 @@ const SettingsPage = () => {
         gender: user.gender || '',
         bloodGroup: user.bloodGroup || ''
       }));
+      // Load profile picture if exists
+      if (user.profilePicture) {
+        setProfilePicturePreview(user.profilePicture);
+      }
     }
   }, []);
 
@@ -69,6 +75,32 @@ const SettingsPage = () => {
       ...prev,
       [key]: !prev[key]
     }));
+  };
+  
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size must be less than 2MB');
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      setProfilePicture(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
   
   const handleSaveProfile = async () => {
@@ -82,11 +114,14 @@ const SettingsPage = () => {
         phone: settings.phone,
         dateOfBirth: settings.dateOfBirth,
         gender: settings.gender,
-        bloodGroup: settings.bloodGroup
+        bloodGroup: settings.bloodGroup,
+        profilePicture: profilePicturePreview || userData.profilePicture || null
       };
+      
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUserData(updatedUser);
       setIsEditingProfile(false);
+      console.log('✅ Profile updated:', updatedUser);
       alert('Profile updated successfully!');
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -120,14 +155,28 @@ const SettingsPage = () => {
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-4">Profile Picture</h3>
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-[#234f83] rounded-full flex items-center justify-center">
-            <User className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 bg-[#234f83] rounded-full flex items-center justify-center overflow-hidden">
+            {profilePicturePreview ? (
+              <img src={profilePicturePreview} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-10 h-10 text-white" />
+            )}
           </div>
           <div className="flex-1">
-            <button className="bg-[#234f83] text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center">
+            <input
+              type="file"
+              id="profile-picture-upload"
+              accept="image/*"
+              onChange={handleProfilePictureChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="profile-picture-upload"
+              className="bg-[#234f83] text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors inline-flex items-center cursor-pointer"
+            >
               <Camera className="w-4 h-4 mr-2" />
               Change Photo
-            </button>
+            </label>
             <p className="text-xs text-gray-500 mt-2">JPG, PNG. Max size 2MB</p>
           </div>
         </div>
