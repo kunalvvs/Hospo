@@ -15,6 +15,7 @@ const {
   placeOrder,
   getMyOrders,
   getChemistOrders,
+  updateOrderStatus,
   addRating,
   getChemistRatings
 } = require('../controllers/chemistController');
@@ -33,6 +34,7 @@ router.get('/profile-completion', protect, getProfileCompletion);
 router.post('/orders', protect, placeOrder);
 router.get('/orders/my-orders', protect, getMyOrders);
 router.get('/orders/chemist-orders', protect, getChemistOrders);
+router.put('/orders/:orderId/status', protect, updateOrderStatus);
 
 // Rating routes
 router.post('/:id/rating', protect, addRating);

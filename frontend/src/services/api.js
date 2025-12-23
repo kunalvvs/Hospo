@@ -294,6 +294,12 @@ export const chemistAPI = {
   getChemistOrders: async () => {
     const response = await API.get('/chemists/orders/chemist-orders');
     return response.data;
+  },
+  
+  // Update order status
+  updateOrderStatus: async (orderId, status) => {
+    const response = await API.put(`/chemists/orders/${orderId}/status`, { status });
+    return response.data;
   }
 };
 

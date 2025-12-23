@@ -78,21 +78,50 @@ const ChemistDashboard = () => {
   // Orders state
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   // Fetch chemist orders
   const fetchChemistOrders = async () => {
     try {
       setOrdersLoading(true);
+      console.log('Fetching chemist orders...');
       const response = await chemistAPI.getChemistOrders();
       
+      console.log('Chemist orders response:', response);
+      
       if (response.success) {
+        console.log('Orders data:', response.data);
         setOrders(response.data);
+      } else {
+        console.error('Failed to fetch orders:', response.message);
       }
     } catch (error) {
       console.error('Error fetching chemist orders:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setOrdersLoading(false);
     }
+  };
+
+  // Handle accept order
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      const response = await chemistAPI.updateOrderStatus(orderId, 'accepted');
+      if (response.success) {
+        alert('Order accepted successfully!');
+        fetchChemistOrders(); // Refresh orders
+      }
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      alert('Failed to accept order');
+    }
+  };
+
+  // Handle view details
+  const handleViewDetails = (order) => {
+    setSelectedOrder(order);
+    setShowOrderModal(true);
   };
 
   // Fetch chemist profile from backend
@@ -857,9 +886,19 @@ const ChemistDashboard = () => {
                           )}
                         </div>
                         <div className="order-actions">
-                          <button className="btn-secondary">View Details</button>
+                          <button 
+                            className="btn-secondary"
+                            onClick={() => handleViewDetails(order)}
+                          >
+                            View Details
+                          </button>
                           {order.status === 'pending' && (
-                            <button className="btn-primary">Accept Order</button>
+                            <button 
+                              className="btn-primary" 
+                              onClick={() => handleAcceptOrder(order._id)}
+                            >
+                              Accept Order
+                            </button>
                           )}
                           {['accepted', 'processing'].includes(order.status) && (
                             <button className="btn-primary">Update Status</button>
@@ -871,6 +910,103 @@ const ChemistDashboard = () => {
                 )}
               </div>
             </section>
+          )}
+
+          {/* Order Detail Modal */}
+          {showOrderModal && selectedOrder && (
+            <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}}>
+                <div className="modal-header">
+                  <h2>Order Details</h2>
+                  <button onClick={() => setShowOrderModal(false)} className="modal-close">&times;</button>
+                </div>
+                <div className="modal-body">
+                  <div style={{padding: '20px'}}>
+                    <div style={{marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                      <h3 style={{marginBottom: '10px'}}>Order Information</h3>
+                      <p><strong>Order #:</strong> {selectedOrder.orderNumber}</p>
+                      <p><strong>Status:</strong> <span className={`status-badge ${selectedOrder.status}`}>{selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1).replace('-', ' ')}</span></p>
+                      <p><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleDateString('en-IN')} at {new Date(selectedOrder.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p><strong>Total Amount:</strong> ₹{selectedOrder.totalAmount}</p>
+                    </div>
+                    
+                    <div style={{marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                      <h3 style={{marginBottom: '10px'}}>Customer Details</h3>
+                      <p><strong>Name:</strong> {selectedOrder.user?.name || 'N/A'}</p>
+                      <p><strong>Email:</strong> {selectedOrder.user?.email || 'N/A'}</p>
+                      <p><strong>Phone:</strong> {selectedOrder.user?.phone || 'N/A'}</p>
+                    </div>
+                    
+                    {selectedOrder.deliveryAddress && (
+                      <div style={{marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                        <h3 style={{marginBottom: '10px'}}>Delivery Address</h3>
+                        <p>{selectedOrder.deliveryAddress.street}</p>
+                        <p>{selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.state} - {selectedOrder.deliveryAddress.pincode}</p>
+                      </div>
+                    )}
+                    
+                    <div style={{marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                      <h3 style={{marginBottom: '10px'}}>Medicines Ordered</h3>
+                      {selectedOrder.medicines && selectedOrder.medicines.map((medicine, index) => (
+                        <div key={index} style={{padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '10px'}}>
+                          <p><strong>{medicine.medicineName}</strong></p>
+                          <p>Quantity: {medicine.quantity}</p>
+                          <p>Price: ₹{medicine.price} each</p>
+                          {medicine.discount > 0 && <p>Discount: ₹{medicine.discount}</p>}
+                          <p><strong>Subtotal: ₹{medicine.price * medicine.quantity - (medicine.discount || 0)}</strong></p>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {selectedOrder.prescriptionImage && (
+                      <div style={{marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0'}}>
+                        <h3 style={{marginBottom: '10px'}}>Prescription</h3>
+                        <img 
+                          src={selectedOrder.prescriptionImage} 
+                          alt="Prescription" 
+                          style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #ddd'}}
+                          onClick={() => window.open(selectedOrder.prescriptionImage, '_blank')}
+                        />
+                        <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>Click to view full size</p>
+                      </div>
+                    )}
+                    
+                    <div style={{marginBottom: '20px'}}>
+                      <h3 style={{marginBottom: '10px'}}>Payment Details</h3>
+                      <p><strong>Payment Method:</strong> {selectedOrder.paymentMethod || 'Cash on Delivery'}</p>
+                      {selectedOrder.customerNotes && (
+                        <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '8px'}}>
+                          <p><strong>Customer Notes:</strong></p>
+                          <p>{selectedOrder.customerNotes}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                      {selectedOrder.status === 'pending' && (
+                        <button 
+                          className="btn-primary" 
+                          onClick={() => {
+                            handleAcceptOrder(selectedOrder._id);
+                            setShowOrderModal(false);
+                          }}
+                          style={{flex: 1}}
+                        >
+                          Accept Order
+                        </button>
+                      )}
+                      <button 
+                        className="btn-secondary" 
+                        onClick={() => setShowOrderModal(false)}
+                        style={{flex: 1}}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Basic Identity Section */}

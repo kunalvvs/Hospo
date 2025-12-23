@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Upload, CreditCard, Wallet, DollarSign } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { chemistAPI, getUserData } from '../services/api';
+import { chemistAPI, addressAPI, getUserData } from '../services/api';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -17,8 +17,12 @@ const CheckoutPage = () => {
     state: '',
     pincode: ''
   });
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
   const [placing, setPlacing] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   
   const user = getUserData();
 
@@ -43,16 +47,82 @@ const CheckoutPage = () => {
       setChemist(JSON.parse(savedChemist));
     }
 
-    // Pre-fill user address if available
-    if (user && user.address) {
-      setDeliveryAddress({
-        street: user.address || '',
-        city: user.city || '',
-        state: user.state || '',
-        pincode: user.pincode || ''
-      });
-    }
+    // Fetch addresses from API
+    fetchAddresses();
   }, [navigate]);
+
+  const fetchAddresses = async () => {
+    try {
+      const response = await addressAPI.getAddresses();
+      if (response.success && response.data.length > 0) {
+        setSavedAddresses(response.data);
+        // Set default address or first address
+        const defaultAddr = response.data.find(addr => addr.isDefault) || response.data[0];
+        setDeliveryAddress(defaultAddr);
+        const defaultIndex = response.data.findIndex(addr => addr._id === defaultAddr._id);
+        setSelectedAddressIndex(defaultIndex >= 0 ? defaultIndex : 0);
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      // Fallback to user profile address
+      const savedUser = getUserData();
+      if (savedUser && savedUser.address && savedUser.address.street) {
+        const primaryAddress = {
+          name: savedUser.name || 'Home',
+          street: savedUser.address.street || '',
+          city: savedUser.address.city || '',
+          state: savedUser.address.state || '',
+          pincode: savedUser.address.pincode || '',
+          phone: savedUser.phone || ''
+        };
+        setSavedAddresses([primaryAddress]);
+        setDeliveryAddress(primaryAddress);
+      }
+    }
+  };
+
+  const handleChangeAddress = () => {
+    setShowAddressModal(true);
+  };
+
+  const handleSelectAddress = (index) => {
+    setSelectedAddressIndex(index);
+    setDeliveryAddress(savedAddresses[index]);
+    setShowAddressModal(false);
+    toast.success('Address selected');
+  };
+
+  const handleAddNewAddress = () => {
+    setIsEditingAddress(true);
+  };
+
+  const handleSaveNewAddress = async () => {
+    if (!deliveryAddress.street || !deliveryAddress.city || !deliveryAddress.state || !deliveryAddress.pincode) {
+      toast.error('Please fill all address fields');
+      return;
+    }
+    
+    try {
+      const addressData = {
+        name: deliveryAddress.name || 'Home',
+        street: deliveryAddress.street,
+        city: deliveryAddress.city,
+        state: deliveryAddress.state,
+        pincode: deliveryAddress.pincode,
+        phone: deliveryAddress.phone || user.phone
+      };
+      
+      const response = await addressAPI.addAddress(addressData);
+      if (response.success) {
+        await fetchAddresses(); // Refresh addresses
+        setIsEditingAddress(false);
+        toast.success('Address saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving address:', error);
+      toast.error('Failed to save address');
+    }
+  };
 
   const requiresPrescription = cart.some(item => item.prescriptionRequired);
 
@@ -71,7 +141,7 @@ const CheckoutPage = () => {
 
     try {
       // Upload to your backend/cloudinary
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/chemists/upload`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -215,46 +285,155 @@ const CheckoutPage = () => {
 
         {/* Delivery Address */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center mb-3">
-            <MapPin className="w-5 h-5 text-dblue mr-2" />
-            <h3 className="font-semibold text-gray-800">Delivery Address</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <MapPin className="w-5 h-5 text-dblue mr-2" />
+              <h3 className="font-semibold text-gray-800">Deliver to:</h3>
+            </div>
+            <button
+              onClick={handleChangeAddress}
+              className="text-dblue text-sm font-medium px-3 py-1 border border-dblue rounded hover:bg-dblue hover:text-white transition-colors"
+            >
+              Change
+            </button>
           </div>
           
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Street Address"
-              value={deliveryAddress.street}
-              onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="City"
-                value={deliveryAddress.city}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
-                className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <input
-                type="text"
-                placeholder="State"
-                value={deliveryAddress.state}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, state: e.target.value})}
-                className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+          {deliveryAddress.street ? (
+            <div className="mt-2">
+              <p className="font-semibold text-gray-900">{deliveryAddress.name || user?.name}</p>
+              <p className="text-gray-700 mt-1">{deliveryAddress.street}</p>
+              <p className="text-gray-600">
+                {deliveryAddress.city}, {deliveryAddress.state} - {deliveryAddress.pincode}
+              </p>
+              {deliveryAddress.phone && (
+                <p className="text-gray-600 mt-1">{deliveryAddress.phone}</p>
+              )}
             </div>
-            
-            <input
-              type="text"
-              placeholder="Pincode"
-              value={deliveryAddress.pincode}
-              onChange={(e) => setDeliveryAddress({...deliveryAddress, pincode: e.target.value})}
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+          ) : (
+            <p className="text-gray-500 mt-2">No address selected</p>
+          )}
         </div>
+
+        {/* Address Selection Modal */}
+        {showAddressModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center">
+            <div className="bg-white rounded-t-3xl sm:rounded-lg w-full sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col animate-slide-up">
+              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+                <h2 className="text-lg font-semibold">Select delivery address</h2>
+                <button onClick={() => setShowAddressModal(false)} className="text-2xl text-gray-500 hover:text-gray-700">&times;</button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-gray-700">Saved addresses</h3>
+                    <button 
+                      onClick={handleAddNewAddress}
+                      className="text-dblue text-sm font-medium flex items-center"
+                    >
+                      <span className="text-xl mr-1">+</span> Add New
+                    </button>
+                  </div>
+                  
+                  {isEditingAddress ? (
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Name (e.g., Home, Office)"
+                        value={deliveryAddress.name || ''}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, name: e.target.value})}
+                        className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Street Address"
+                        value={deliveryAddress.street}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                        className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={deliveryAddress.city}
+                          onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                          className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="State"
+                          value={deliveryAddress.state}
+                          onChange={(e) => setDeliveryAddress({...deliveryAddress, state: e.target.value})}
+                          className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Pincode"
+                        value={deliveryAddress.pincode}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, pincode: e.target.value})}
+                        className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Phone Number"
+                        value={deliveryAddress.phone || ''}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, phone: e.target.value})}
+                        className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveNewAddress}
+                          className="flex-1 bg-dblue text-white py-3 rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                        >
+                          Save Address
+                        </button>
+                        <button
+                          onClick={() => setIsEditingAddress(false)}
+                          className="px-6 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {savedAddresses.map((addr, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleSelectAddress(index)}
+                          className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            selectedAddressIndex === index
+                              ? 'border-dblue bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <MapPin className="w-4 h-4 text-gray-600" />
+                                <span className="font-semibold text-gray-900">{addr.name}</span>
+                                {selectedAddressIndex === index && (
+                                  <span className="text-xs bg-dblue text-white px-2 py-0.5 rounded">Currently selected</span>
+                                )}
+                              </div>
+                              <p className="text-gray-700 text-sm ml-6">{addr.street}</p>
+                              <p className="text-gray-600 text-sm ml-6">
+                                {addr.city}, {addr.state} - {addr.pincode}
+                              </p>
+                              {addr.phone && <p className="text-gray-600 text-sm ml-6">{addr.phone}</p>}
+                            </div>
+                            <button className="text-gray-400 hover:text-gray-600 ml-2">⋯</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Prescription Upload (if required) */}
         {requiresPrescription && (

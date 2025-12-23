@@ -180,6 +180,34 @@ export const chemistAPI = {
   }
 };
 
+// ==================== ADDRESS APIs ====================
+export const addressAPI = {
+  // Get all addresses
+  getAddresses: async () => {
+    return api.get('/addresses');
+  },
+
+  // Add new address
+  addAddress: async (addressData) => {
+    return api.post('/addresses', addressData);
+  },
+
+  // Update address
+  updateAddress: async (addressId, addressData) => {
+    return api.put(`/addresses/${addressId}`, addressData);
+  },
+
+  // Delete address
+  deleteAddress: async (addressId) => {
+    return api.delete(`/addresses/${addressId}`);
+  },
+
+  // Set default address
+  setDefaultAddress: async (addressId) => {
+    return api.put(`/addresses/${addressId}/default`);
+  }
+};
+
 // ==================== HELPER FUNCTIONS ====================
 
 // Store auth token

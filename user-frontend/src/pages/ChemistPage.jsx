@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { Search, MapPin, Clock, Star, Phone } from "lucide-react";
+import { Search, MapPin, Clock, Star, Phone, ShoppingCart } from "lucide-react";
 import { IoBagAddSharp } from "react-icons/io5";
 import { FaHeart } from "react-icons/fa";
 import { IoPeopleSharp } from "react-icons/io5";
 import { FaPersonDress } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { chemistAPI } from "../services/api";
 import { toast } from "react-hot-toast";
 
 const ChemistPage = () => {
+  const navigate = useNavigate();
   const [chemists, setChemists] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +19,13 @@ const ChemistPage = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [activeTab, setActiveTab] = useState("chemists"); // "chemists" or "medicines"
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  // Get cart item count
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    setCartItemCount(cart.length);
+  }, []);
 
   const categories = [
     {
@@ -201,7 +209,20 @@ const ChemistPage = () => {
     <div className="min-h-screen bg-gray-100 pb-20">
       {/* Header */}
       <div className="bg-dblue p-4 pt-8 sticky top-0 z-10">
-        <Header title="Chemist" />
+        <div className="flex items-center justify-between mb-4">
+          <Header title="Chemist"  />
+          <button 
+            onClick={() => navigate('/cart')} 
+            className="relative text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <ShoppingCart size={24} />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* Search Bar */}
         <div className="relative">

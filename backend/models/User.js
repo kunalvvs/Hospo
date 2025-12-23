@@ -61,6 +61,27 @@ const userSchema = new mongoose.Schema({
     }
   },
   
+  // Multiple Addresses
+  addresses: [{
+    name: {
+      type: String,
+      default: 'Home'
+    },
+    street: String,
+    city: String,
+    state: String,
+    pincode: String,
+    phone: String,
+    isDefault: {
+      type: Boolean,
+      default: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
   // Emergency Contact
   emergencyContact: {
     name: String,

@@ -85,6 +85,7 @@ app.use('/api/chemists', require('./routes/chemistRoutes'));
 app.use('/api/pathlabs', require('./routes/pathlabRoutes'));
 app.use('/api/ambulances', require('./routes/ambulanceRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
+app.use('/api/addresses', require('./routes/addressRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

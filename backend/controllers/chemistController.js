@@ -745,43 +745,61 @@ const placeOrder = async (req, res) => {
     const totalAmount = subtotal - totalDiscount + deliveryCharge;
 
     // Generate order number
-    const count = await ChemistOrder.countDocuments();
-    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(4, '0')}`;
-
-    // Create order
-    const order = await ChemistOrder.create({
-      orderNumber,
-      user: req.user.id,
-      chemist: chemistId,
-      medicines,
-      prescriptionImage: prescriptionImage || '',
-      subtotal,
-      discount: totalDiscount,
-      deliveryCharge,
-      totalAmount,
-      deliveryAddress,
-      deliveryType: deliveryType || 'home-delivery',
-      paymentMethod: paymentMethod || 'cash',
-      customerNotes: customerNotes || ''
-    });
-
-    // Emit socket event to chemist
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`chemist_${chemistId}`).emit('new_order', {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-        medicineCount: medicines.length
+    try {
+      const count = await ChemistOrder.countDocuments();
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(4, '0')}`;
+      
+      console.log('Generated orderNumber:', orderNumber);
+      console.log('Order data:', {
+        orderNumber,
+        user: req.user.id,
+        chemist: chemistId,
+        medicinesCount: medicines.length,
+        totalAmount
       });
-    }
 
-    res.status(201).json({
-      success: true,
-      message: 'Order placed successfully',
-      data: order
-    });
+      // Create order
+      const order = await ChemistOrder.create({
+        orderNumber,
+        user: req.user.id,
+        chemist: chemistId,
+        medicines,
+        prescriptionImage: prescriptionImage || '',
+        subtotal,
+        discount: totalDiscount,
+        deliveryCharge,
+        totalAmount,
+        deliveryAddress,
+        deliveryType: deliveryType || 'home-delivery',
+        paymentMethod: paymentMethod || 'cash',
+        customerNotes: customerNotes || ''
+      });
+
+      console.log('Order created successfully:', order.orderNumber);
+
+      console.log('Order created successfully:', order.orderNumber);
+
+      // Emit socket event to chemist
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`chemist_${chemistId}`).emit('new_order', {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          medicineCount: medicines.length
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Order placed successfully',
+        data: order
+      });
+    } catch (orderError) {
+      console.error('Error creating order:', orderError);
+      throw orderError;
+    }
   } catch (error) {
     console.error('Error in placeOrder:', error);
     res.status(500).json({
@@ -821,20 +839,26 @@ const getMyOrders = async (req, res) => {
 // @access  Private (Chemist)
 const getChemistOrders = async (req, res) => {
   try {
-    // Get chemist profile to find chemist ID
-    const chemist = await Chemist.findOne({ email: req.user.email });
+    console.log('getChemistOrders called by user:', req.user);
     
-    if (!chemist) {
+    // Use chemist ID directly from req.user (already authenticated)
+    const chemistId = req.user.id || req.user._id;
+    
+    console.log('Using chemist ID:', chemistId);
+    
+    if (!chemistId) {
       return res.status(404).json({
         success: false,
-        message: 'Chemist profile not found'
+        message: 'Chemist ID not found in token'
       });
     }
 
     // Fetch all orders for this chemist
-    const orders = await ChemistOrder.find({ chemist: chemist._id })
+    const orders = await ChemistOrder.find({ chemist: chemistId })
       .populate('user', 'name email phone')
       .sort({ createdAt: -1 });
+
+    console.log('Found orders count:', orders.length);
 
     res.status(200).json({
       success: true,
@@ -937,6 +961,66 @@ const getChemistRatings = async (req, res) => {
   }
 };
 
+// @desc    Update order status (accept/reject/process)
+// @route   PUT /api/chemists/orders/:orderId/status
+// @access  Private (Chemist)
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    console.log('Updating order status:', { orderId, status, user: req.user });
+
+    // Validate status
+    const validStatuses = ['pending', 'accepted', 'processing', 'ready', 'out-for-delivery', 'delivered', 'rejected', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    // Find the order
+    const order = await ChemistOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Verify chemist owns this order
+    const chemistId = req.user.id || req.user._id;
+    console.log('Verifying chemist ownership:', { chemistId: chemistId.toString(), orderChemist: order.chemist.toString() });
+
+    if (order.chemist.toString() !== chemistId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update this order'
+      });
+    }
+
+    // Update order status
+    order.status = status;
+    await order.save();
+
+    console.log('Order status updated successfully:', order._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order status updated successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in updateOrderStatus:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order status',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -952,6 +1036,7 @@ module.exports = {
   placeOrder,
   getMyOrders,
   getChemistOrders,
+  updateOrderStatus,
   addRating,
   getChemistRatings
 };

@@ -1,77 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Home, Briefcase, Plus, Edit2, Trash2, Star } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { addressAPI } from '../services/api';
 
 const SavedAddressesPage = () => {
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    type: 'home',
     name: '',
     phone: '',
-    addressLine1: '',
-    addressLine2: '',
-    landmark: '',
+    street: '',
     city: '',
     state: '',
     pincode: '',
     isDefault: false
   });
 
-  const addresses = [
-    {
-      id: 1,
-      type: 'home',
-      name: 'Ashutosh Kumar',
-      phone: '+91 9876543210',
-      addressLine1: 'House No. 123, Sector 45',
-      addressLine2: 'Near City Mall',
-      landmark: 'Opposite Metro Station',
-      city: 'Delhi',
-      state: 'Delhi',
-      pincode: '110001',
-      isDefault: true
-    },
-    {
-      id: 2,
-      type: 'work',
-      name: 'Ashutosh Kumar',
-      phone: '+91 9876543210',
-      addressLine1: 'Tower B, 5th Floor, Cyber Hub',
-      addressLine2: 'DLF Cyber City',
-      landmark: 'Near Ambience Mall',
-      city: 'Gurugram',
-      state: 'Haryana',
-      pincode: '122002',
-      isDefault: false
-    },
-    {
-      id: 3,
-      type: 'other',
-      name: 'Priya Kumar (Mother)',
-      phone: '+91 9876543211',
-      addressLine1: 'Flat 402, Green Apartments',
-      addressLine2: 'Sector 18',
-      landmark: 'Near Park',
-      city: 'Noida',
-      state: 'Uttar Pradesh',
-      pincode: '201301',
-      isDefault: false
-    }
-  ];
+  // Fetch addresses on mount
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
 
-  const getAddressIcon = (type) => {
-    switch (type) {
-      case 'home':
-        return { icon: Home, color: 'text-blue-600', bg: 'bg-blue-100' };
-      case 'work':
-        return { icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100' };
-      default:
-        return { icon: MapPin, color: 'text-orange-600', bg: 'bg-orange-100' };
+  const fetchAddresses = async () => {
+    try {
+      setLoading(true);
+      const response = await addressAPI.getAddresses();
+      if (response.success) {
+        setAddresses(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      toast.error('Failed to load addresses');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,53 +51,100 @@ const SavedAddressesPage = () => {
     }));
   };
 
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
-    console.log('Adding address:', formData);
-    setShowAddModal(false);
-    // Reset form
-    setFormData({
-      type: 'home',
-      name: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      landmark: '',
-      city: '',
-      state: '',
-      pincode: '',
-      isDefault: false
-    });
+    try {
+      const response = await addressAPI.addAddress(formData);
+      if (response.success) {
+        toast.success('Address added successfully');
+        setShowAddModal(false);
+        // Reset form
+        setFormData({
+          name: '',
+          phone: '',
+          street: '',
+          city: '',
+          state: '',
+          pincode: '',
+          isDefault: false
+        });
+        // Refresh addresses
+        fetchAddresses();
+      }
+    } catch (error) {
+      console.error('Error adding address:', error);
+      toast.error('Failed to add address');
+    }
   };
 
   const handleEditAddress = (address) => {
     setSelectedAddress(address);
-    setFormData(address);
+    setFormData({
+      name: address.name || '',
+      phone: address.phone || '',
+      street: address.street || '',
+      city: address.city || '',
+      state: address.state || '',
+      pincode: address.pincode || '',
+      isDefault: address.isDefault || false
+    });
     setShowEditModal(true);
   };
 
-  const handleUpdateAddress = (e) => {
+  const handleUpdateAddress = async (e) => {
     e.preventDefault();
-    console.log('Updating address:', formData);
-    setShowEditModal(false);
-    setSelectedAddress(null);
+    try {
+      const response = await addressAPI.updateAddress(selectedAddress._id, formData);
+      if (response.success) {
+        toast.success('Address updated successfully');
+        setShowEditModal(false);
+        setSelectedAddress(null);
+        // Refresh addresses
+        fetchAddresses();
+      }
+    } catch (error) {
+      console.error('Error updating address:', error);
+      toast.error('Failed to update address');
+    }
   };
 
-  const handleDeleteAddress = (id) => {
+  const handleDeleteAddress = async (addressId) => {
     if (window.confirm('Are you sure you want to delete this address?')) {
-      console.log('Deleting address:', id);
+      try {
+        const response = await addressAPI.deleteAddress(addressId);
+        if (response.success) {
+          toast.success('Address deleted successfully');
+          // Refresh addresses
+          fetchAddresses();
+        }
+      } catch (error) {
+        console.error('Error deleting address:', error);
+        toast.error('Failed to delete address');
+      }
+    }
+  };
+
+  const handleSetDefault = async (addressId) => {
+    try {
+      const response = await addressAPI.setDefaultAddress(addressId);
+      if (response.success) {
+        toast.success('Default address updated');
+        // Refresh addresses
+        fetchAddresses();
+      }
+    } catch (error) {
+      console.error('Error setting default address:', error);
+      toast.error('Failed to set default address');
     }
   };
 
   const AddressCard = ({ address }) => {
-    const { icon: IconComponent, color, bg } = getAddressIcon(address.type);
-
     return (
       <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-4 hover:shadow-md transition-shadow">
         <div className="flex gap-4">
           {/* Icon */}
-          <div className={`w-12 h-12 md:w-14 md:h-14 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-            <IconComponent className={`w-6 h-6 md:w-7 md:h-7 ${color}`} />
+          <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Home className="w-6 h-6 md:w-7 md:h-7 text-blue-600" />
           </div>
 
           {/* Content */}
@@ -137,8 +152,8 @@ const SavedAddressesPage = () => {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-base md:text-lg font-bold text-gray-800 capitalize">
-                    {address.type}
+                  <h3 className="text-base md:text-lg font-bold text-gray-800">
+                    {address.name || 'Address'}
                   </h3>
                   {address.isDefault && (
                     <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
@@ -147,7 +162,6 @@ const SavedAddressesPage = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-sm md:text-base text-gray-600">{address.name}</p>
                 <p className="text-sm md:text-base text-gray-600">{address.phone}</p>
               </div>
             </div>
@@ -155,10 +169,9 @@ const SavedAddressesPage = () => {
             {/* Address Details */}
             <div className="bg-gray-50 rounded-xl p-3 md:p-4 mb-4">
               <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                {address.addressLine1}<br />
-                {address.addressLine2}<br />
-                {address.landmark && `Landmark: ${address.landmark}`}<br />
-                {address.city}, {address.state} - {address.pincode}
+                {address.street}<br />
+                {address.city}, {address.state}<br />
+                Pincode: {address.pincode}
               </p>
             </div>
 
@@ -172,14 +185,17 @@ const SavedAddressesPage = () => {
                 Edit
               </button>
               <button
-                onClick={() => handleDeleteAddress(address.id)}
+                onClick={() => handleDeleteAddress(address._id)}
                 className="flex-1 bg-red-100 text-red-600 py-2.5 md:py-3 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-red-200 transition-colors flex items-center justify-center"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </button>
               {!address.isDefault && (
-                <button className="sm:w-auto bg-green-100 text-green-600 py-2.5 md:py-3 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-green-200 transition-colors">
+                <button 
+                  onClick={() => handleSetDefault(address._id)}
+                  className="sm:w-auto bg-green-100 text-green-600 py-2.5 md:py-3 px-4 rounded-lg font-medium text-sm md:text-base hover:bg-green-200 transition-colors"
+                >
                   Set Default
                 </button>
               )}
@@ -192,33 +208,6 @@ const SavedAddressesPage = () => {
 
   const AddressForm = ({ onSubmit, isEdit = false }) => (
     <form onSubmit={onSubmit} className="space-y-4">
-      {/* Address Type */}
-      <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Address Type *</label>
-        <div className="grid grid-cols-3 gap-3">
-          {['home', 'work', 'other'].map((type) => (
-            <label
-              key={type}
-              className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.type === type
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-            >
-              <input
-                type="radio"
-                name="type"
-                value={type}
-                checked={formData.type === type}
-                onChange={handleInputChange}
-                className="sr-only"
-              />
-              <span className="text-sm md:text-base font-medium text-gray-800 capitalize">{type}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
       {/* Name & Phone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -245,42 +234,17 @@ const SavedAddressesPage = () => {
         </div>
       </div>
 
-      {/* Address Lines */}
+      {/* Street Address */}
       <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Address Line 1 *</label>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Street Address *</label>
         <input
           type="text"
-          name="addressLine1"
-          value={formData.addressLine1}
+          name="street"
+          value={formData.street}
           onChange={handleInputChange}
-          placeholder="House/Flat No., Building Name"
+          placeholder="House No., Building Name, Street, Area"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Address Line 2 *</label>
-        <input
-          type="text"
-          name="addressLine2"
-          value={formData.addressLine2}
-          onChange={handleInputChange}
-          placeholder="Street, Area, Sector"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Landmark</label>
-        <input
-          type="text"
-          name="landmark"
-          value={formData.landmark}
-          onChange={handleInputChange}
-          placeholder="Near famous location"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -388,9 +352,14 @@ const SavedAddressesPage = () => {
 
         {/* Address List */}
         <div>
-          {addresses.length > 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading addresses...</p>
+            </div>
+          ) : addresses.length > 0 ? (
             addresses.map((address) => (
-              <AddressCard key={address.id} address={address} />
+              <AddressCard key={address._id} address={address} />
             ))
           ) : (
             <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12 text-center">
