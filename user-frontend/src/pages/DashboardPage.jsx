@@ -22,7 +22,7 @@ import UserSidebar from "@/components/UserSidebar";
 import { Link, useNavigate } from "react-router-dom";
 import { FaStethoscope, FaBriefcaseMedical, FaLocationDot } from "react-icons/fa6";
 import { IoStarSharp } from "react-icons/io5";
-import { getUserData, isAuthenticated, appointmentAPI } from "../services/api";
+import { getUserData, isAuthenticated, appointmentAPI, chemistAPI } from "../services/api";
 
 const featureCards = [
   {
@@ -88,29 +88,30 @@ const pathLabTests = [
   },
 ];
 
-const featuredMeds = [
-  {
-    id: 1,
-    img: "/doctor1.png",
-    title: "Paracitamol 500mg",
-    price: "$30",
-    off: "15%",
-  },
-  {
-    id: 2,
-    img: "/doctor1.png",
-    title: "Ibuprofen 400mg",
-    price: "$25",
-    off: "10%",
-  },
-  {
-    id: 3,
-    img: "/doctor1.png",
-    title: "Aspirin 75mg",
-    price: "$20",
-    off: "20%",
-  },
-];
+// Dummy medicine data - replaced with real data from database
+// const featuredMeds = [
+//   {
+//     id: 1,
+//     img: "/doctor1.png",
+//     title: "Paracitamol 500mg",
+//     price: "$30",
+//     off: "15%",
+//   },
+//   {
+//     id: 2,
+//     img: "/doctor1.png",
+//     title: "Ibuprofen 400mg",
+//     price: "$25",
+//     off: "10%",
+//   },
+//   {
+//     id: 3,
+//     img: "/doctor1.png",
+//     title: "Aspirin 75mg",
+//     price: "$20",
+//     off: "20%",
+//   },
+// ];
 
 const ambulanceServices = [
   {
@@ -264,6 +265,8 @@ const DashboardPage = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [featuredMedicines, setFeaturedMedicines] = useState([]);
+  const [loadingMedicines, setLoadingMedicines] = useState(false);
 
   const promoImages = ["/cola.jpg", "/cola.jpg", "/cola.jpg"];
 
@@ -420,6 +423,56 @@ const DashboardPage = () => {
     };
 
     fetchTopDoctors();
+  }, []);
+
+  // Fetch featured medicines from all chemists
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      setLoadingMedicines(true);
+      try {
+        const response = await chemistAPI.getAllChemists();
+        console.log('Chemists API response:', response);
+        
+        if (response.success && response.data) {
+          // Collect all medicines from all chemists' inventory
+          const allMedicines = [];
+          response.data.forEach(chemist => {
+            console.log('Chemist inventory:', chemist.pharmacyName, chemist.inventory?.length || 0);
+            if (chemist.inventory && chemist.inventory.length > 0) {
+              // Filter for active products with stock
+              chemist.inventory.forEach(item => {
+                if (item.productStatus === 'active' && item.quantity > 0) {
+                  allMedicines.push({
+                    ...item,
+                    chemistId: chemist._id,
+                    chemistInfo: {
+                      _id: chemist._id,
+                      pharmacyName: chemist.pharmacyName,
+                      locality: chemist.locality,
+                      city: chemist.city,
+                      homeDelivery: chemist.homeDelivery
+                    }
+                  });
+                }
+              });
+            }
+          });
+          
+          console.log('Total medicines collected:', allMedicines.length);
+          
+          // Get random 6 medicines for featured section
+          const shuffled = allMedicines.sort(() => 0.5 - Math.random());
+          setFeaturedMedicines(shuffled.slice(0, 6));
+          console.log('✅ Featured medicines loaded:', shuffled.slice(0, 6).length);
+        }
+      } catch (error) {
+        console.error('Failed to fetch medicines:', error);
+      } finally {
+        setLoadingMedicines(false);
+      }
+    };
+
+    fetchMedicines();
   }, []);
 
   // Auto-slide effect
@@ -1136,45 +1189,90 @@ const DashboardPage = () => {
         </div>
         <div className="mt-4">
           {/* Featured Medicines Section */}
-          <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-3 scrollbar-hide">
-            {featuredMeds.map(({ id, img, title, price, off }) => (
-              <div
-                key={id}
-                className="bg-white rounded-2xl text-black p-4 sm:p-5 min-w-[65vw] sm:min-w-[45vw] md:min-w-0 flex-shrink-0 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg hover:shadow-blue-500/20 mx-auto"
-              >
-                <div className="flex flex-col gap-3 h-auto">
-                  {/* Image */}
-                  <div className="w-full h-[200px] aspect-square overflow-hidden rounded-xl">
-                    <img
-                      src={img}
-                      alt={title}
-                      className="object-cover w-full h-[200px] rounded-xl"
-                    />
-                  </div>
-
-                  {/* Title */}
-                  <div className="text-sm sm:text-base font-medium text-gray-800 text-left truncate">
-                    {title}
-                  </div>
-
-                  {/* Price & Offer */}
-                  <div className="flex flex-row justify-left items-left gap-2">
-                    <div className="text-dblue font-semibold">{price}</div>
-                    {off && (
-                      <div className="text-xs text-center p-1 px-2 text-teal-600 bg-teal-600/10 rounded-md">
-                        {off} OFF
+          {loadingMedicines ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <p className="ml-4 text-gray-600">Loading medicines...</p>
+            </div>
+          ) : featuredMedicines.length > 0 ? (
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-3 scrollbar-hide">
+              {featuredMedicines.map((medicine) => {
+                const discount = medicine.mrp && medicine.price ? 
+                  Math.round(((medicine.mrp - medicine.price) / medicine.mrp) * 100) : 0;
+                
+                return (
+                  <Link
+                    key={medicine._id}
+                    to={`/chemist/${medicine.chemistId}`}
+                    className="bg-white rounded-2xl text-black p-4 sm:p-5 min-w-[65vw] sm:min-w-[45vw] md:min-w-0 flex-shrink-0 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg hover:shadow-blue-500/20 mx-auto"
+                  >
+                    <div className="flex flex-col gap-3 h-auto">
+                      {/* Image */}
+                      <div className="w-full h-[200px] aspect-square overflow-hidden rounded-xl bg-gray-100">
+                        {medicine.mainImage ? (
+                          <img
+                            src={medicine.mainImage}
+                            alt={medicine.medicineName}
+                            className="object-cover w-full h-[200px] rounded-xl"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className="w-full h-[200px] flex items-center justify-center text-6xl" style={{ display: medicine.mainImage ? 'none' : 'flex' }}>
+                          💊
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Add Button */}
-                  <div className="w-full text-center p-2 bg-dblue text-white rounded-lg hover:bg-blue-700 transition">
-                    Add
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                      {/* Medicine Name & Strength */}
+                      <div>
+                        <div className="text-sm sm:text-base font-medium text-gray-800 text-left truncate">
+                          {medicine.medicineName}
+                        </div>
+                        {medicine.strength && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {medicine.strength}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Price & Offer */}
+                      <div className="flex flex-row justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="text-dblue font-semibold">₹{medicine.price}</div>
+                          {medicine.mrp && medicine.mrp > medicine.price && (
+                            <div className="text-xs text-gray-400 line-through">₹{medicine.mrp}</div>
+                          )}
+                        </div>
+                        {discount > 0 && (
+                          <div className="text-xs text-center p-1 px-2 text-teal-600 bg-teal-600/10 rounded-md">
+                            {discount}% OFF
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Chemist Info */}
+                      <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <Pill className="w-3 h-3" />
+                        {medicine.chemistInfo?.pharmacyName}
+                      </div>
+
+                      {/* View Details Button */}
+                      <div className="w-full text-center p-2 bg-dblue text-white rounded-lg hover:bg-blue-700 transition">
+                        View Details
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <Pill className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>No medicines available at the moment</p>
+            </div>
+          )}
         </div>
       </div>
 
