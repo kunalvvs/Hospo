@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Briefcase,
@@ -9,6 +9,8 @@ import BottomNav from "@/components/BottomNav";
 import { Link } from "react-router-dom";
 import { IoStarSharp, IoStar } from "react-icons/io5";
 import Header from "@/components/Header";
+import { hospitalAPI } from "../services/api";
+import toast from "react-hot-toast";
 
 const specializations = [
   { name: "Cardiology", icon: "❤️", hospital: 12, color: "bg-red-500" },
@@ -19,81 +21,43 @@ const specializations = [
   { name: "Pediatrics", icon: "👶", hospital: 11, color: "bg-pink-500" },
 ];
 
-const tophospital = [
-  {
-    id: 1,
-    name: "Aim Hospital",
-    specialization: "100",
-    experience: "Cardiology specialization",
-    rating: 4.8,
-    reviews: 892,
-    fee: 800,
-    image: "/hospital1.jpg",
-    available: true,
-    link: "/bookhospital",
-  },
-  {
-    id: 2,
-    name: "Aim Hospital",
-    specialization: "200",
-    experience: "Dentistry specialization",
-    rating: 4.9,
-    reviews: 1024,
-    fee: 700,
-    image: "/hospital2.jpg",
-    available: true,
-  },
-  {
-    id: 3,
-    name: "Aim Hospital",
-    specialization: "300",
-    experience: "Dermatology specialization",
-    rating: 4.7,
-    reviews: 756,
-    fee: 900,
-    image: "/hospital3.jpg",
-    available: false,
-  },
-];
-
-const nearbyDocs = [
-  {
-    id: 1,
-    name: "Aim Hospital",
-    specialization: "Cardiologist",
-    status: "available",
-    address: "Mumbai",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-  {
-    id: 2,
-    name: "Aim Hospital",
-    specialization: "Cardiologist",
-    status: "available",
-    address: "Delhi",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-  {
-    id: 3,
-    name: "Aim Hospital",
-    specialization: "Cardiologist",
-    status: "available",
-    address: "Hariyana",
-    fee: 800,
-    rating: "4.7",
-    distance: "1.4",
-    link: "/profile",
-  },
-];
-
 const HospitalPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [hospitals, setHospitals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch hospitals on component mount
+  useEffect(() => {
+    fetchHospitals();
+  }, []);
+
+  const fetchHospitals = async () => {
+    try {
+      setLoading(true);
+      const response = await hospitalAPI.getAllHospitals();
+      if (response.success) {
+        setHospitals(response.hospitals || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch hospitals:', error);
+      toast.error('Failed to load hospitals');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter hospitals based on search query
+  const filteredHospitals = hospitals.filter(hospital => 
+    hospital.hospitalName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    hospital.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    hospital.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Get top 3 hospitals for "Top hospital" section
+  const topHospitals = filteredHospitals.slice(0, 3);
+
+  // Get nearby hospitals (for now, showing next 3 hospitals)
+  const nearbyHospitals = filteredHospitals.slice(3, 6);
 
   return (
     <div className="min-h-screen bg-gray-100 text-white pb-28">
@@ -159,8 +123,13 @@ const HospitalPage = () => {
           </div>
 
           <div className="space-y-4">
-            {tophospital.map((hospital) => (
-              <Link key={hospital.id} to={`/hospital${hospital.link}`}>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : topHospitals.length > 0 ? (
+              topHospitals.map((hospital) => (
+              <Link key={hospital._id} to={`/hospital/bookhospital`}>
                 <div className="bg-white shadow-md rounded-xl p-4 hover:bg-gray-200 mb-2 transition-colors">
                   <div className="flex flex-col">
                     <div className="flex gap-4">
@@ -173,22 +142,22 @@ const HospitalPage = () => {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-1">
                           <h3 className="font-semibold text-base text-black">
-                            {hospital.name}
+                            {hospital.hospitalName || hospital.name}
                           </h3>
                         </div>
                         <p className="flex flex-row text-xs text-gray-400 mb-1 gap-1">
                           <FaBriefcaseMedical /> Total hospitals Available (
-                          {hospital.specialization})
+                          {hospital.numberOfBeds || 'N/A'})
                         </p>
                         <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
                           <span className="flex items-center gap-1 text-pink-500">
                             <Briefcase className="w-3 h-3" />
-                            {hospital.experience} Experience
+                            {hospital.practiceType || hospital.specializations?.[0] || 'Multi-specialty'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-blue-400 font-semibold">
-                            ₹{hospital.fee}
+                            {hospital.city || 'N/A'}
                           </span>
                         </div>
                       </div>
@@ -196,23 +165,36 @@ const HospitalPage = () => {
                   </div>
 
                   <div className="flex flex-row gap-3 mt-3">
-                    <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
-                      Available
-                    </span>
-                    <span className="bg-teal-500/20 text-teal-400 text-xs px-2 py-1 rounded-full">
-                      Top Choice
-                    </span>
-                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">
-                      Virtual
-                    </span>
-                    <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">
-                      In-Person
-                    </span>
+                    {hospital.isActive && (
+                      <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">
+                        Available
+                      </span>
+                    )}
+                    {hospital.isVerified && (
+                      <span className="bg-teal-500/20 text-teal-400 text-xs px-2 py-1 rounded-full">
+                        Verified
+                      </span>
+                    )}
+                    {hospital.emergencyServices && (
+                      <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full">
+                        Emergency
+                      </span>
+                    )}
+                    {hospital.is24x7 && (
+                      <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">
+                        24x7
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div></div>
               </Link>
-            ))}
+            ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No hospitals found
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -225,7 +207,12 @@ const HospitalPage = () => {
 
         {/* Scrollable hospital List */}
         <div className="flex flex-col gap-3 pb-3 scrollbar-hide">
-          {nearbyDocs.map((items) => (
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : nearbyHospitals.length > 0 ? (
+            nearbyHospitals.map((items) => (
             <div
               key={items.id}
               className="flex flex-row bg-white shadow-md rounded-2xl p-4 min-w-[80vw] sm:min-w-[60vw] md:min-w-[40vw] lg:min-w-[30vw] flex-shrink-0 hover:shadow-blue-400/20 hover:scale-105 transition-transform duration-300"
@@ -240,22 +227,22 @@ const HospitalPage = () => {
                 {/* Name + Status */}
                 <div className="flex justify-between items-center mb-1">
                   <div className="text-sm sm:text-base font-semibold text-black">
-                    {items.name}
+                    {items.hospitalName || items.name}
                   </div>
                   <div className="flex justify-center items-center text-[10px] sm:text-xs text-green-600 rounded-md bg-green-500/20 px-2 py-[2px]">
-                    {items.status}
+                    {items.isActive ? 'Available' : 'Closed'}
                   </div>
                 </div>
 
                 {/* Degree */}
                 <div className="text-blue-500 text-xs sm:text-sm font-medium">
-                  {items.degree}
+                  {items.practiceType || items.specializations?.[0] || 'Multi-specialty'}
                 </div>
 
                 {/* Address */}
                 <div className="flex items-center text-[10px] sm:text-xs text-gray-700 mt-1">
                   <FaLocationDot className="mr-1 text-black text-[11px]" />
-                  <span className="truncate">{items.address}</span>
+                  <span className="truncate">{items.city}, {items.locality || ''}</span>
                 </div>
 
                 {/* Fee */}
@@ -264,19 +251,24 @@ const HospitalPage = () => {
                     <div className="text-yellow-400 flex justify-center items-center mr-1">
                       <IoStar />
                     </div>
-                    <div className="text-black text-xs mr-4">{items.rating}</div>
+                    <div className="text-black text-xs mr-4">{items.averageRating || '0.0'}</div>
                     <div className="text-black text-sm justify-center items-center mr-1">
                       <FaRunning />
                     </div>
-                    <div className="text-black text-xs">{items.distance} km</div>
+                    <div className="text-black text-xs">--</div>
                   </div>
                   <div className="font-medium text-blue-500 bg-blue-500/10 px-2 py-[2px] rounded text-xs sm:text-sm">
-                    ₹{items.fee}
+                    {items.numberOfBeds || 0} Beds
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No nearby hospitals found
+            </div>
+          )}
         </div>
       </div>
 

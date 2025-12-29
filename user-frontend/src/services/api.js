@@ -180,6 +180,19 @@ export const chemistAPI = {
   }
 };
 
+// ==================== HOSPITAL APIs ====================
+export const hospitalAPI = {
+  // Get all hospitals
+  getAllHospitals: async () => {
+    return api.get('/hospitals');
+  },
+
+  // Get hospital by ID
+  getHospitalById: async (hospitalId) => {
+    return api.get(`/hospitals/${hospitalId}`);
+  }
+};
+
 // ==================== ADDRESS APIs ====================
 export const addressAPI = {
   // Get all addresses
