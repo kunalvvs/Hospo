@@ -235,13 +235,6 @@ const uploadFile = async (req, res) => {
 
     const { fieldName } = req.body;
 
-    if (!fieldName) {
-      return res.status(400).json({
-        success: false,
-        message: 'Field name is required'
-      });
-    }
-
     // Upload to Cloudinary using buffer
     const uploadStream = (buffer) => {
       return new Promise((resolve, reject) => {
@@ -279,43 +272,68 @@ const uploadFile = async (req, res) => {
       resourceType: result.resource_type
     });
 
-    // Update chemist profile with file URL
-    try {
-      const updateData = { [fieldName]: result.secure_url };
-      
-      const chemist = await Chemist.findByIdAndUpdate(
-        req.user.id,
-        { $set: updateData },
-        { new: true, runValidators: true }
-      ).select('-password');
+    // If fieldName is provided, try to update chemist profile
+    // Otherwise, just return the file URL (for prescriptions, etc.)
+    if (fieldName) {
+      try {
+        const updateData = { [fieldName]: result.secure_url };
+        
+        const chemist = await Chemist.findByIdAndUpdate(
+          req.user.id,
+          { $set: updateData },
+          { new: true, runValidators: true }
+        ).select('-password');
 
-      if (!chemist) {
-        return res.status(404).json({
-          success: false,
-          message: 'Chemist not found'
+        if (!chemist) {
+          // If not a chemist, just return the file URL
+          return res.status(200).json({
+            success: true,
+            message: 'File uploaded successfully',
+            fileUrl: result.secure_url,
+            publicId: result.public_id,
+            filename: req.file.originalname,
+            format: result.format,
+            resourceType: result.resource_type
+          });
+        }
+
+        // Calculate profile completion
+        chemist.calculateProfileCompletion();
+        await chemist.save();
+
+        return res.status(200).json({
+          success: true,
+          message: 'File uploaded successfully',
+          fileUrl: result.secure_url,
+          publicId: result.public_id,
+          filename: req.file.originalname,
+          format: result.format,
+          resourceType: result.resource_type,
+          data: chemist
+        });
+      } catch (dbError) {
+        console.error('Database update error:', dbError);
+        // Still return success with file URL
+        return res.status(200).json({
+          success: true,
+          message: 'File uploaded successfully',
+          fileUrl: result.secure_url,
+          publicId: result.public_id,
+          filename: req.file.originalname,
+          format: result.format,
+          resourceType: result.resource_type
         });
       }
-
-      // Calculate profile completion
-      chemist.calculateProfileCompletion();
-      await chemist.save();
-
-      res.status(200).json({
+    } else {
+      // No fieldName provided, just return the uploaded file URL
+      return res.status(200).json({
         success: true,
         message: 'File uploaded successfully',
         fileUrl: result.secure_url,
         publicId: result.public_id,
         filename: req.file.originalname,
         format: result.format,
-        resourceType: result.resource_type,
-        data: chemist
-      });
-    } catch (dbError) {
-      console.error('Database update error:', dbError);
-      res.status(500).json({
-        success: false,
-        message: 'File uploaded but failed to update profile',
-        error: dbError.message
+        resourceType: result.resource_type
       });
     }
   } catch (error) {
@@ -742,13 +760,16 @@ const placeOrder = async (req, res) => {
     });
 
     const deliveryCharge = deliveryType === 'home-delivery' ? 30 : 0;
-    const totalAmount = subtotal - totalDiscount + deliveryCharge;
+    // Price is already discounted, so just add delivery charge
+    const totalAmount = subtotal + deliveryCharge;
 
-    // Generate order number
+    // Generate unique order number with timestamp and random component
     try {
-      const count = await ChemistOrder.countDocuments();
-      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      const orderNumber = `ORD-${dateStr}-${String(count + 1).padStart(4, '0')}`;
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+      const timeStr = now.getTime().toString().slice(-6); // Last 6 digits of timestamp
+      const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase(); // Random 4 chars
+      const orderNumber = `ORD-${dateStr}-${timeStr}-${randomStr}`;
       
       console.log('Generated orderNumber:', orderNumber);
       console.log('Order data:', {

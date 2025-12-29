@@ -1,10 +1,122 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Home, Briefcase, Plus, Edit2, Trash2, Star } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import { addressAPI } from '../services/api';
+
+// AddressForm component moved outside to prevent recreation
+const AddressForm = React.memo(({ formData, onInputChange, onSubmit, onCancel, isEdit = false }) => (
+  <form onSubmit={onSubmit} className="space-y-4">
+    {/* Name & Phone */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Full Name *</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={onInputChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Phone Number *</label>
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={onInputChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+    </div>
+
+    {/* Street Address */}
+    <div>
+      <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Street Address *</label>
+      <input
+        type="text"
+        name="street"
+        value={formData.street}
+        onChange={onInputChange}
+        placeholder="House No., Building Name, Street, Area"
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        required
+      />
+    </div>
+
+    {/* City, State, Pincode */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">City *</label>
+        <input
+          type="text"
+          name="city"
+          value={formData.city}
+          onChange={onInputChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">State *</label>
+        <input
+          type="text"
+          name="state"
+          value={formData.state}
+          onChange={onInputChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Pincode *</label>
+        <input
+          type="text"
+          name="pincode"
+          value={formData.pincode}
+          onChange={onInputChange}
+          pattern="[0-9]{6}"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+    </div>
+
+    {/* Default Checkbox */}
+    <div className="flex items-center">
+      <input
+        type="checkbox"
+        name="isDefault"
+        checked={formData.isDefault}
+        onChange={onInputChange}
+        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+      />
+      <label className="ml-2 text-sm md:text-base text-gray-700">Set as default address</label>
+    </div>
+
+    {/* Buttons */}
+    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium text-sm md:text-base hover:bg-gray-300 transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="flex-1 bg-[#234f83] text-white py-3 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors"
+      >
+        {isEdit ? 'Update Address' : 'Save Address'}
+      </button>
+    </div>
+  </form>
+));
 
 const SavedAddressesPage = () => {
   const navigate = useNavigate();
@@ -206,123 +318,8 @@ const SavedAddressesPage = () => {
     );
   };
 
-  const AddressForm = ({ onSubmit, isEdit = false }) => (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {/* Name & Phone */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Full Name *</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Phone Number *</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-      </div>
-
-      {/* Street Address */}
-      <div>
-        <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Street Address *</label>
-        <input
-          type="text"
-          name="street"
-          value={formData.street}
-          onChange={handleInputChange}
-          placeholder="House No., Building Name, Street, Area"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        />
-      </div>
-
-      {/* City, State, Pincode */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">City *</label>
-          <input
-            type="text"
-            name="city"
-            value={formData.city}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">State *</label>
-          <input
-            type="text"
-            name="state"
-            value={formData.state}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">Pincode *</label>
-          <input
-            type="text"
-            name="pincode"
-            value={formData.pincode}
-            onChange={handleInputChange}
-            pattern="[0-9]{6}"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-      </div>
-
-      {/* Default Checkbox */}
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="isDefault"
-          checked={formData.isDefault}
-          onChange={handleInputChange}
-          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-        />
-        <label className="ml-2 text-sm md:text-base text-gray-700">Set as default address</label>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
-        <button
-          type="button"
-          onClick={() => {
-            isEdit ? setShowEditModal(false) : setShowAddModal(false);
-            setSelectedAddress(null);
-          }}
-          className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium text-sm md:text-base hover:bg-gray-300 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="flex-1 bg-[#234f83] text-white py-3 rounded-lg font-medium text-sm md:text-base hover:bg-blue-700 transition-colors"
-        >
-          {isEdit ? 'Update Address' : 'Save Address'}
-        </button>
-      </div>
-    </form>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#234f83] text-white">
+    <div className="min-h-screen bg-gray-50">     <div className="bg-[#234f83] text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
           <button
             onClick={() => navigate(-1)}
@@ -382,7 +379,23 @@ const SavedAddressesPage = () => {
                 <h2 className="text-xl md:text-2xl font-bold">Add New Address</h2>
               </div>
               <div className="p-6 md:p-8">
-                <AddressForm onSubmit={handleAddAddress} />
+                <AddressForm 
+                  formData={formData}
+                  onInputChange={handleInputChange}
+                  onSubmit={handleAddAddress}
+                  onCancel={() => {
+                    setShowAddModal(false);
+                    setFormData({
+                      name: '',
+                      phone: '',
+                      street: '',
+                      city: '',
+                      state: '',
+                      pincode: '',
+                      isDefault: false
+                    });
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -398,7 +411,16 @@ const SavedAddressesPage = () => {
                 <h2 className="text-xl md:text-2xl font-bold">Edit Address</h2>
               </div>
               <div className="p-6 md:p-8">
-                <AddressForm onSubmit={handleUpdateAddress} isEdit={true} />
+                <AddressForm 
+                  formData={formData}
+                  onInputChange={handleInputChange}
+                  onSubmit={handleUpdateAddress}
+                  onCancel={() => {
+                    setShowEditModal(false);
+                    setSelectedAddress(null);
+                  }}
+                  isEdit={true}
+                />
               </div>
             </div>
           </div>

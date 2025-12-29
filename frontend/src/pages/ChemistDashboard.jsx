@@ -964,7 +964,7 @@ const ChemistDashboard = () => {
                         <img 
                           src={selectedOrder.prescriptionImage} 
                           alt="Prescription" 
-                          style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #ddd'}}
+                          style={{maxWidth: '100%', borderRadius: '8px', border: '1px solid #ddd', cursor: 'pointer'}}
                           onClick={() => window.open(selectedOrder.prescriptionImage, '_blank')}
                         />
                         <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>Click to view full size</p>

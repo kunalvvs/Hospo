@@ -7,6 +7,7 @@ import { chemistAPI, addressAPI, getUserData } from '../services/api';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
+  const [groupedCart, setGroupedCart] = useState({});
   const [chemist, setChemist] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [prescriptionImage, setPrescriptionImage] = useState('');
@@ -34,7 +35,6 @@ const CheckoutPage = () => {
     }
 
     const savedCart = localStorage.getItem('medicineCart');
-    const savedChemist = localStorage.getItem('cartChemist');
     
     if (!savedCart || JSON.parse(savedCart).length === 0) {
       toast.error('Cart is empty');
@@ -42,9 +42,29 @@ const CheckoutPage = () => {
       return;
     }
 
-    setCart(JSON.parse(savedCart));
-    if (savedChemist) {
-      setChemist(JSON.parse(savedChemist));
+    const parsedCart = JSON.parse(savedCart);
+    setCart(parsedCart);
+
+    // Group cart by chemist
+    const grouped = parsedCart.reduce((acc, item) => {
+      const chemistId = item.chemistId || 'unknown';
+      if (!acc[chemistId]) {
+        acc[chemistId] = {
+          chemist: item.chemistInfo,
+          items: []
+        };
+      }
+      acc[chemistId].items.push(item);
+      return acc;
+    }, {});
+    setGroupedCart(grouped);
+
+    // If only one chemist, set it for backward compatibility
+    if (Object.keys(grouped).length === 1) {
+      const firstChemist = Object.values(grouped)[0].chemist;
+      if (firstChemist) {
+        setChemist(firstChemist);
+      }
     }
 
     // Fetch addresses from API
@@ -138,10 +158,15 @@ const CheckoutPage = () => {
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('fieldName', 'prescriptionImage'); // Required by backend
+
+    const uploadUrl = `${import.meta.env.VITE_API_URL}/chemists/upload`;
+    console.log('Uploading to:', uploadUrl);
+    console.log('File:', file.name, 'Size:', file.size);
 
     try {
       // Upload to your backend/cloudinary
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/chemists/upload`, {
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
         headers: {
@@ -149,12 +174,15 @@ const CheckoutPage = () => {
         }
       });
       
+      console.log('Upload response status:', response.status);
       const data = await response.json();
+      console.log('Upload response data:', data);
+      
       if (data.success) {
-        setPrescriptionImage(data.url);
+        setPrescriptionImage(data.fileUrl); // Use fileUrl from backend response
         toast.success('Prescription uploaded');
       } else {
-        toast.error('Upload failed');
+        toast.error(data.message || 'Upload failed');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -184,28 +212,54 @@ const CheckoutPage = () => {
     setPlacing(true);
 
     try {
-      const orderData = {
-        chemistId: chemist._id,
-        medicines: cart.map(item => ({
-          productId: item.productId,
-          medicineName: item.medicineName,
-          quantity: item.quantity,
-          price: item.price,
-          mrp: item.mrp,
-          discount: item.mrp - item.price,
-          prescriptionRequired: item.prescriptionRequired || false
-        })),
-        prescriptionImage: prescriptionImage || '',
-        deliveryType: 'home-delivery',
-        paymentMethod,
-        deliveryAddress,
-        customerNotes
-      };
+      // Place separate orders for each chemist
+      const orderPromises = Object.entries(groupedCart)
+        .filter(([chemistId, { chemist }]) => {
+          // Skip if chemistId is invalid or chemist info is missing
+          if (!chemist || chemistId === 'unknown' || !chemist._id) {
+            console.warn('Skipping invalid chemist:', chemistId);
+            toast.error('Some items have invalid chemist information');
+            return false;
+          }
+          return true;
+        })
+        .map(async ([chemistId, { chemist, items }]) => {
+          const orderData = {
+            chemistId: chemist._id, // Use chemist._id instead of key
+            medicines: items.map(item => ({
+              productId: item.productId,
+              medicineName: item.medicineName,
+              quantity: item.quantity,
+              price: item.price,
+              mrp: item.mrp,
+              discount: item.mrp - item.price,
+              prescriptionRequired: item.prescriptionRequired || false
+            })),
+            prescriptionImage: prescriptionImage || '',
+            deliveryType: 'home-delivery',
+            paymentMethod,
+            deliveryAddress,
+            customerNotes
+          };
 
-      const response = await chemistAPI.placeOrder(orderData);
+          console.log('Placing order for chemist:', chemist.pharmacyName, 'ID:', chemist._id);
+          return chemistAPI.placeOrder(orderData);
+        });
+
+      if (orderPromises.length === 0) {
+        toast.error('No valid orders to place');
+        setPlacing(false);
+        return;
+      }
+
+      const responses = await Promise.all(orderPromises);
       
-      if (response.success) {
-        toast.success('Order placed successfully!');
+      // Check if all orders succeeded
+      const allSuccess = responses.every(response => response.success);
+      
+      if (allSuccess) {
+        const orderCount = responses.length;
+        toast.success(`${orderCount} ${orderCount === 1 ? 'order' : 'orders'} placed successfully!`);
         
         // Clear cart
         localStorage.removeItem('medicineCart');
@@ -214,7 +268,8 @@ const CheckoutPage = () => {
         // Navigate to orders page
         navigate('/orders');
       } else {
-        toast.error(response.message || 'Failed to place order');
+        const failedCount = responses.filter(r => !r.success).length;
+        toast.error(`${failedCount} order(s) failed. Please try again.`);
       }
     } catch (error) {
       console.error('Order placement error:', error);

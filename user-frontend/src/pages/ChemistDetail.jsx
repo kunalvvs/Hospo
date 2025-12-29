@@ -40,27 +40,37 @@ const ChemistDetail = () => {
 
   const loadCartFromStorage = () => {
     const savedCart = localStorage.getItem('medicineCart');
-    const savedChemist = localStorage.getItem('cartChemist');
     if (savedCart) {
       const parsedCart = JSON.parse(savedCart);
-      // Only load cart if it's from the same chemist
-      if (savedChemist && JSON.parse(savedChemist)._id === id) {
-        setCart(parsedCart);
-      }
+      // Load all cart items and filter for current chemist display
+      const currentChemistItems = parsedCart.filter(item => item.chemistId === id);
+      setCart(currentChemistItems);
     }
   };
 
   const saveCartToStorage = (newCart) => {
-    localStorage.setItem('medicineCart', JSON.stringify(newCart));
-    if (chemist) {
-      localStorage.setItem('cartChemist', JSON.stringify({
+    // Get existing cart from storage
+    const savedCart = localStorage.getItem('medicineCart');
+    let allCartItems = savedCart ? JSON.parse(savedCart) : [];
+    
+    // Remove old items from this chemist
+    allCartItems = allCartItems.filter(item => item.chemistId !== id);
+    
+    // Add new items from this chemist with chemistId and chemist info
+    const itemsWithChemist = newCart.map(item => ({
+      ...item,
+      chemistId: id,
+      chemistInfo: chemist ? {
         _id: chemist._id,
         pharmacyName: chemist.pharmacyName,
         locality: chemist.locality,
         city: chemist.city,
         homeDelivery: chemist.homeDelivery
-      }));
-    }
+      } : null
+    }));
+    
+    allCartItems = [...allCartItems, ...itemsWithChemist];
+    localStorage.setItem('medicineCart', JSON.stringify(allCartItems));
   };
 
   const fetchChemistDetails = async () => {
